@@ -52,6 +52,7 @@ urlpatterns = [
     path('api/compile-code/', code_questions.compile_code, name='compile-code'),  # ajax
 
     # assessments
+    path('assessments/', assessments.view_assessments, name='view-assessments'),
     path('assessment/create/', assessments.create_assessment, name='create-assessment'),
     path('assessment/update/<int:assessment_id>/', assessments.update_assessment, name='update-assessment'),
     path('assessment/details/<int:assessment_id>/', assessments.assessment_details, name='assessment-details'),

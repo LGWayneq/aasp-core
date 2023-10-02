@@ -1,0 +1,156 @@
+{% extends 'layouts/master-nav.html' %}
+{% load utils %}
+{% load static %}
+
+{% block title %}Assessments{% endblock %}
+
+{% block styles %}
+{% endblock %}
+
+{% block content %}
+  <div class="page-heading">
+    <div class="page-title">
+      <div class="row">
+        <div class="col-12 col-md-6 order-md-1 order-last">
+          <h2>Your Assessments</h2>
+          <p class="text-subtitle text-muted">View or manage your assessments here!</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Active assessments -->
+    <div class="row">
+      <div class="col-12 m-2">
+        <div class="card">
+          <div class="card-header d-flex justify-content-between align-items-center">
+            <h4 class="card-title ">Active assessments</h4>
+            {% if request.user|has_group:'educator' %}
+              <a class="btn btn-sm btn-danger" href="{% url 'create-assessment' %}">Add Assessment</a>
+            {% endif %}
+          </div>
+          <div class="card-body">
+            <p class="card-text">Only assessments where you are the owner or maintainer will appear here.
+            </p>
+
+            <div class="table-responsive">
+              <table class="table table-sm">
+                <thead>
+                <tr>
+                  <th>Course</th>
+                  <th>Name</th>
+                  <th>Start</th>
+                  <th>End</th>
+                  <th>Published</th>
+                  <th>Role</th>
+                  <th>Actions</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% if active_assessments %}
+                  {% for c in active_assessments %}
+                    <tr>
+                      <td>{{ c.course }}</td>
+                      <td>{{ c.name }}</td>
+                      <td>{{ c.time_start }}</td>
+                      <td>{{ c.time_end }}</td>
+                      <td>{{ c.published }}</td>
+                      <td>
+                        {% if c.course.owner == request.user %}
+                          <span class="badge bg-light-success">Owner</span>
+                        {% else %}
+                          <span class="badge bg-light-info">Maintainer</span>
+                        {% endif %}
+                      </td>
+                      <td>
+                        <a class="btn btn-secondary" href="{% url 'assessment-details' assessment_id=c.id %}">View</a>
+                        {# only show edit button if user is assessment owner #}
+                        {% if c.course.owner == request.user %}
+                          <a class="btn btn-secondary" href="{% url 'update-assessment' assessment_id=c.id %}?next={{ request.path }}">Edit Details</a>
+                        {% endif %}
+                      </td>
+                    </tr>
+                  {% endfor %}
+                {% else %}
+                  <tr>
+                    <td class="text-center" colspan="7">You have no assessments!</td>
+                  </tr>
+                {% endif %}
+                </tbody>
+              </table>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Inactive assessments -->
+    <div class="row">
+      <div class="col-12 m-2">
+        <div class="card">
+          <div class="card-header d-flex justify-content-between align-items-center">
+            <h4 class="card-title ">Inactive assessments</h4>
+          </div>
+          <div class="card-body">
+            <p class="card-text">Only assessments where you are the owner or maintainer will appear here.
+            </p>
+
+            <div class="table-responsive">
+              <table class="table table-sm">
+                <thead>
+                <tr>
+                  <th>Course</th>
+                  <th>Name</th>
+                  <th>Start</th>
+                  <th>End</th>
+                  <th>Published</th>
+                  <th>Role</th>
+                  <th>Actions</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% if inactive_course %}
+                  {% for c in inactive_course %}
+                    <tr>
+                      <td>{{ c.course }}</td>
+                      <td>{{ c.name }}</td>
+                      <td>{{ c.time_start }}</td>
+                      <td>{{ c.time_end }}</td>
+                      <td>{{ c.published }}</td>
+                      <td>
+                        {% if c.course.owner == request.user %}
+                          <span class="badge bg-light-success">Owner</span>
+                        {% else %}
+                          <span class="badge bg-light-info">Maintainer</span>
+                        {% endif %}
+                      </td>
+                      <td>
+                        <a class="btn btn-secondary" href="{% url 'assessment-details' assessment_id=c.id %}">View</a>
+                        {# only show edit button if user is assessment owner #}
+                        {% if c.course.owner == request.user %}
+                          <a class="btn btn-secondary" href="{% url 'update-assessment' assessment_id=c.id %}?next={{ request.path }}">Edit Details</a>
+                        {% endif %}
+                      </td>
+                    </tr>
+                  {% endfor %}
+                {% else %}
+                  <tr>
+                    <td class="text-center" colspan="7">You have no inactive assessments!</td>
+                  </tr>
+                {% endif %}
+                </tbody>
+              </table>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+{% endblock %}
+
+{% block js %}
+  <script src="{% static 'vendors/jquery/jquery.min.js' %}"></script>
+{% endblock %}

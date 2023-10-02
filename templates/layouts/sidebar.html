@@ -32,6 +32,13 @@
           </a>
         </li>
 
+        {# Assessments #}
+        <li class="sidebar-item {% if request.path == '/assessments/' %} active {% endif %}">
+          <a href="{% url 'view-assessments' %}" class='sidebar-link'>
+            <i class="fa-solid fa-scroll"></i><span>Assessments</span>
+          </a>
+        </li>
+
         {# User Management: Enrol Students #}
         <li class="sidebar-item {% if request.path == '/enrol-students/' %} active {% endif %}">
           <a href="{% url 'enrol-students' %}" class='sidebar-link'><i class="fa-solid fa-graduation-cap">

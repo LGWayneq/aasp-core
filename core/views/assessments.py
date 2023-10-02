@@ -6,6 +6,7 @@ from django.core.exceptions import PermissionDenied
 from django.db import transaction
 from django.db.models import Q
 from django.shortcuts import get_object_or_404, redirect, render
+from django.utils import timezone
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.decorators import api_view, renderer_classes
@@ -19,6 +20,27 @@ from core.serializers import CodeQuestionsSerializer
 from core.views.utils import check_permissions_course, check_permissions_assessment, check_permissions_code_question, \
     construct_assessment_published_email
 
+
+@login_required()
+@groups_allowed(UserGroup.educator, UserGroup.lab_assistant)
+def view_assessments(request):
+    # retrieve courses for this user
+    courses = Course.objects.filter(Q(owner=request.user) | Q(maintainers=request.user)).distinct().prefetch_related(
+        'owner', 'maintainers')
+    assessments = Assessment.objects.filter(course__in=courses).prefetch_related('course')
+
+    now = timezone.now()
+
+    # Filter assessments based on time_end
+    active_assessments = assessments.filter(Q(time_end__gte=now) | Q(time_end__isnull=True))
+    inactive_assessments = assessments.filter(time_end__lt=now)
+
+    context = {
+        "active_assessments": active_assessments,
+        "inactive_assessments": inactive_assessments,
+        "assessments": assessments
+    }
+    return render(request, 'assessments/assessments.html', context)
 
 @login_required()
 @groups_allowed(UserGroup.educator)
