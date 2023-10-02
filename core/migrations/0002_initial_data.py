@@ -75,10 +75,20 @@ class Migration(migrations.Migration):
             is_staff=False,
             is_superuser=False,
         )
+        User.objects.create(
+            username="GLIAU001",
+            first_name="G WAYNE",
+            last_name="LIAU",
+            email='GLIAU001@E.NTU.EDU.SG',
+            password=make_password('password123'),
+            is_staff=False,
+            is_superuser=False,
+        )
         Group.objects.get(name="educator").user_set.add(User.objects.get(username='YRLOKE'))
         Group.objects.get(name="student").user_set.add(User.objects.get(username='JLEE254'))
         Group.objects.get(name="student").user_set.add(User.objects.get(username='WLIU020'))
         Group.objects.get(name="student").user_set.add(User.objects.get(username='CHUA0994'))
+        Group.objects.get(name="student").user_set.add(User.objects.get(username='GLIAU001'))
         Group.objects.get(name="lab_assistant").user_set.add(User.objects.get(username='LIM287'))
 
     # default languages and corresponding code templates
