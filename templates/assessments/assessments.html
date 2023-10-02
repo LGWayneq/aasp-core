@@ -13,7 +13,7 @@
       <div class="row">
         <div class="col-12 col-md-6 order-md-1 order-last">
           <h2>Your Assessments</h2>
-          <p class="text-subtitle text-muted">View or manage your assessments here!</p>
+          <p class="text-subtitle text-muted">View or manage your assessments here! Only assessments where you are the owner or maintainer will appear here.</p>
         </div>
       </div>
     </div>
@@ -29,9 +29,6 @@
             {% endif %}
           </div>
           <div class="card-body">
-            <p class="card-text">Only assessments where you are the owner or maintainer will appear here.
-            </p>
-
             <div class="table-responsive">
               <table class="table table-sm">
                 <thead>
@@ -93,8 +90,6 @@
             <h4 class="card-title ">Inactive assessments</h4>
           </div>
           <div class="card-body">
-            <p class="card-text">Only assessments where you are the owner or maintainer will appear here.
-            </p>
 
             <div class="table-responsive">
               <table class="table table-sm">
@@ -110,8 +105,8 @@
                 </tr>
                 </thead>
                 <tbody>
-                {% if inactive_course %}
-                  {% for c in inactive_course %}
+                {% if inactive_assessments %}
+                  {% for c in inactive_assessments %}
                     <tr>
                       <td>{{ c.course }}</td>
                       <td>{{ c.name }}</td>
@@ -137,6 +132,64 @@
                 {% else %}
                   <tr>
                     <td class="text-center" colspan="7">You have no inactive assessments!</td>
+                  </tr>
+                {% endif %}
+                </tbody>
+              </table>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Deleted assessments -->
+    <div class="row">
+      <div class="col-12 m-2">
+        <div class="card">
+          <div class="card-header d-flex justify-content-between align-items-center">
+            <h4 class="card-title ">Deleted assessments</h4>
+          </div>
+          <div class="card-body">
+
+            <div class="table-responsive">
+              <table class="table table-sm">
+                <thead>
+                <tr>
+                  <th>Course</th>
+                  <th>Name</th>
+                  <th>Start</th>
+                  <th>End</th>
+                  <th>Published</th>
+                  <th>Role</th>
+                  <th>Actions</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% if deleted_assessments %}
+                  {% for c in deleted_assessments %}
+                    <tr>
+                      <td>{{ c.course }}</td>
+                      <td>{{ c.name }}</td>
+                      <td>{{ c.time_start }}</td>
+                      <td>{{ c.time_end }}</td>
+                      <td>{{ c.published }}</td>
+                      <td>
+                        {% if c.course.owner == request.user %}
+                          <span class="badge bg-light-success">Owner</span>
+                        {% else %}
+                          <span class="badge bg-light-info">Maintainer</span>
+                        {% endif %}
+                      </td>
+                      <td>
+                        <a class="btn btn-secondary" href="{% url 'assessment-details' assessment_id=c.id %}">View</a>
+                      </td>
+                    </tr>
+                  {% endfor %}
+                {% else %}
+                  <tr>
+                    <td class="text-center" colspan="7">You have no deleted assessments!</td>
                   </tr>
                 {% endif %}
                 </tbody>

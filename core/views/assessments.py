@@ -29,8 +29,10 @@ def view_assessments(request):
         'owner', 'maintainers')
     assessments = Assessment.objects.filter(course__in=courses).prefetch_related('course')
 
-    now = timezone.now()
+    deleted_assessments = assessments.filter(deleted=True)
+    assessments = assessments.filter(deleted=False)
 
+    now = timezone.now()
     # Filter assessments based on time_end
     active_assessments = assessments.filter(Q(time_end__gte=now) | Q(time_end__isnull=True))
     inactive_assessments = assessments.filter(time_end__lt=now)
@@ -38,6 +40,7 @@ def view_assessments(request):
     context = {
         "active_assessments": active_assessments,
         "inactive_assessments": inactive_assessments,
+        "deleted_assessments": deleted_assessments,
         "assessments": assessments
     }
     return render(request, 'assessments/assessments.html', context)
