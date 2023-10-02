@@ -81,11 +81,12 @@ def create_assessment(request):
             messages.success(request, "The assessment has been successfully created!")
             return redirect('assessment-details', assessment_id=assessment.id)
 
-    context = {
-        'form': form,
-    }
+    elif request.method == "GET":
+        context = {
+            'form': form,
+        }
 
-    return render(request, 'assessments/create-assessment.html', context)
+        return render(request, 'assessments/create-assessment.html', context)
 
 
 @login_required()
