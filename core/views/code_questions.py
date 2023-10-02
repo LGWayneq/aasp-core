@@ -56,8 +56,20 @@ def create_code_question(request, parent, parent_id):
     # create form
     form = CodeQuestionForm()
 
-    # process POST requests
-    if request.method == "POST":
+    if request.method == "GET":
+        context = {
+        'assessment': assessment,
+        'question_bank': question_bank,
+        'description_placeholder': """This editor supports **markdown**! And math equations too!
+
+You can do this: $a \\ne 0$, and this:
+$$x = {-b \pm \sqrt{b^2-4ac} \over 2a}$$
+
+**Click preview!**""",
+            'form': form,
+        }
+        return render(request, 'code_questions/create-code-question.html', context)
+    elif request.method == "POST":
         form = CodeQuestionForm(request.POST)
         if form.is_valid():
             with transaction.atomic():
@@ -76,20 +88,6 @@ def create_code_question(request, parent, parent_id):
 
                 messages.success(request, "The code question has been created, please proceed to select the languages!")
                 return redirect('update-languages', code_question_id=code_question.id)
-
-    context = {
-        'assessment': assessment,
-        'question_bank': question_bank,
-        'description_placeholder': """This editor supports **markdown**! And math equations too!
-
-You can do this: $a \\ne 0$, and this:
-$$x = {-b \pm \sqrt{b^2-4ac} \over 2a}$$
-
-**Click preview!**""",
-        'form': form,
-    }
-
-    return render(request, 'code_questions/create-code-question.html', context)
 
 
 @login_required()

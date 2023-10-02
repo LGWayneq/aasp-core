@@ -9,296 +9,294 @@
 {% endblock %}
 
 {% block content %}
-  <div class="page-heading">
-    <div class="page-title">
-      <div class="row">
-        <div class="col-12 col-md-6 order-md-1 order-last">
-          <h2>New Assessment ✨</h2>
-          <p class="text-subtitle text-muted">Create a new assessment!</p>
-        </div>
+<div class="page-heading">
+  <div class="page-title">
+    <div class="row">
+      <div class="col-12 col-md-6 order-md-1 order-last">
+        <h2>New Assessment ✨</h2>
+        <p class="text-subtitle text-muted">Create a new assessment!</p>
       </div>
     </div>
-
-    <div class="card">
-      <div class="card-body">
-        <form class="form form-vertical" method="post">
-          {% csrf_token %}
-          <div class="form-body">
-
-            {# non-field errors #}
-            {% for error in form.non_field_errors %}
-              <div class="alert alert-danger py-2">{{ error }}</div>
-            {% endfor %}
-
-            <div class="row">
-              <!-- General -->
-              <div class="col-6">
-                <div class="pe-3 pb-3">
-                  <h5>General</h5>
-                  <!-- Course selection -->
-                  <div class="col-12">
-                    <div class="form-group">
-                      <label for="id_course">Course</label>
-                      <div class="position-relative">
-                        <select name="course" id="id_course" class="choices form-select">
-                          {# displays only courses owned or maintained by the user #}
-                          {% for value, text in form.course.field.choices %}
-                            <option value="{{ value }}" {% if value == form.course.value|add:"0" %}selected{% endif %}>{{ text }}</option>
-                          {% endfor %}
-                        </select>
-                      </div>
-                      {# course errors #}
-                      {% if form.course.errors %}
-                        <p class="text-danger">
-                          {% for e in form.course.errors %}
-                            {{ e }}<br>
-                          {% endfor %}
-                        </p>
-                      {% endif %}
-                    </div>
-                  </div>
-
-                  <!-- Assessment name input -->
-                  <div class="col-12">
-                    <div class="form-group has-icon-left">
-                      <label for="id_name">Assessment Name</label>
-                      <div class="position-relative">
-                        <input type="text"
-                              class="form-control {% if form.name.errors %}is-invalid{% endif %}"
-                              name="name" id="id_name" placeholder="e.g. Mid-term Quiz" maxlength="{{ form.fields.name.max_length }}"
-                              value="{{ form.name.value|default:"" }}"
-                              {% if form.fields.name.required %}required{% endif %}
-                        >
-                        <div class="form-control-icon"><i class="bi bi-type"></i></div>
-                      </div>
-                      {# assessment name errors #}
-                      {% if form.name.errors %}
-                        <p class="text-danger">
-                          {% for e in form.name.errors %}
-                            {{ e }}<br>
-                          {% endfor %}
-                        </p>
-                      {% endif %}
-                    </div>
-                  </div>
-
-                  <!-- Instructions input -->
-                  <div class="col-12">
-                    <div class="form-group has-icon-left">
-                      <label for="id_instructions">Pre-quiz Instructions</label>
-                      <div class="position-relative">
-                        <textarea class="form-control {% if form.instructions.errors %}is-invalid{% endif %}" name="instructions" id="id_instructions"
-                                  {% if form.fields.instructions.required %}required{% endif %}
-                        >{{ form.instructions.value|default:"" }}</textarea>
-                        <div class="form-control-icon"><i class="bi bi-type"></i></div>
-                      </div>
-                      {# instructions errors #}
-                      {% if form.instructions.errors %}
-                        <p class="text-danger">
-                          {% for e in form.instructions.errors %}
-                            {{ e }}<br>
-                          {% endfor %}
-                        </p>
-                      {% endif %}
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Assessment Options -->
-              <div class="col-6">
-                <div class="ps-3 pb-3">
-                  <h5>Assessment Options</h5>
-                  <div class="row">
-                    <!-- Duration input -->
-                    <div class="form-group col-6">
-                      <label for="id_duration">Duration (mins)</label>
-                      <input type="number" name="duration" class="form-control {% if form.duration.errors %}is-invalid{% endif %}" min="0"
-                              value="{{ form.duration.value|default:"60" }}" id="id_duration">
-                      <small class="text-muted">(0 for unlimited)</small>
-                      {# duration errors #}
-                      {% if form.duration.errors %}
-                        <p class="text-danger">
-                          {% for e in form.duration.errors %}
-                            {{ e }}<br>
-                          {% endfor %}
-                        </p>
-                      {% endif %}
-                    </div>
-
-                    <!-- No. attempts input -->
-                    <div class="form-group col-6">
-                      <label for="id_num_attempts">No. Attempts</label>
-                      <input type="number" name="num_attempts" class="form-control {% if form.num_attempts.errors %}is-invalid{% endif %}" min="0"
-                              value="{{ form.num_attempts.value|default:"1" }}" id="id_num_attempts">
-                      <small class="text-muted">(0 for unlimited)</small>
-                      {# num_attempts errors #}
-                      {% if form.num_attempts.errors %}
-                        <p class="text-danger">
-                          {% for e in form.num_attempts.errors %}
-                            {{ e }}<br>
-                          {% endfor %}
-                        </p>
-                      {% endif %}
-                    </div>
-
-                    <!-- Show grade checkbox -->
-                    <div class="checkbox">
-                      <input type="checkbox" id="id_show_grade" name="show_grade" class="form-check-input me-2"
-                              {% if form.show_grade.value %}checked{% endif %}>
-                      <label for="id_show_grade">Show Grade</label>
-                    </div>
-
-                    <!-- Require PIN checkbox -->
-                    <div class="checkbox">
-                      <input type="checkbox" id="id_require_pin" name="require_pin" class="form-check-input me-2"
-                              {% if form.require_pin.value %}checked{% endif %}>
-                      <label for="id_require_pin">Require PIN</label>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <hr/>
-            
-            <div class="row">
-              <!-- Date and Time -->
-              <div class="col-6">
-                <div class="pe-3 pt-3">
-                  <div class="col-12">
-                    <h5>Date and Time</h5>
-                    <div class="row">
-                      <p>Here, you can <b>optionally</b> set the allowed period where candidates can begin the assessment.</p>
-                      <!-- Time start -->
-                      <div class="form-group col-6">
-                        <label for="id_time_start">Date/Time Start</label>
-                        <input class="flatpickr flatpickr-input active form-control {% if form.time_start.errors %}is-invalid{% endif %}"
-                              id="id_time_start" name="time_start" type="text" placeholder="Select Start Date.."
-                              value="{{ form.time_start.value|default:"" }}">
-                        {# time_start errors #}
-                        {% if form.time_start.errors %}
-                          <p class="text-danger">
-                            {% for e in form.time_start.errors %}
-                              {{ e }}<br>
-                            {% endfor %}
-                          </p>
-                        {% endif %}
-                      </div>
-
-                      <!-- Time end -->
-                      <div class="form-group col-6">
-                        <label for="id_time_end">Date/Time End</label>
-                        <input class="flatpickr flatpickr-input active form-control {% if form.time_end.errors %}is-invalid{% endif %}"
-                              id="id_time_end" name="time_end" type="text" placeholder="Select End Date.."
-                              value="{{ form.time_end.value|default:"" }}">
-                        {# time_end errors #}
-                        {% if form.time_end.errors %}
-                          <p class="text-danger">
-                            {% for e in form.time_end.errors %}
-                              {{ e }}<br>
-                            {% endfor %}
-                          </p>
-                        {% endif %}
-                      </div>
-
-                      <!-- Clear button -->
-                      <div class="col-3 float-end">
-                        <button type="button" class="btn btn-sm btn-success" onclick="clearDates()">Clear</button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              
-              <!-- Proctoring Settings -->
-              <div class="col-6">
-                <div class="ps-3 pt-3">
-                  <h5>Proctoring Settings</h5>
-                  <p>Settings for supervision of candidates during the assessment.</p>
-                  <div class="row">
-                    <!-- Require webcam checkbox -->
-                    <div class="checkbox">
-                      <input type="checkbox" id="id_require_webcam" name="require_webcam" class="form-check-input me-2"
-                          {% if form.require_webcam.value %}checked{% endif %}>
-                      <label for="id_require_webcam">Enable candidate snapshots&nbsp;</label>
-                      <i class="bi bi-question-circle" data-bs-toggle="modal" data-bs-target="#webcam-modal"></i>
-                    </div>
-                    <!-- Limit tab switching checkbox -->
-                    <div class="checkbox">
-                      <input type="checkbox" id="id_limit_tab_switch" name="limit_tab_switching" class="form-check-input me-2"
-                          {% if form.limit_tab_switching.value %}checked{% endif %}>
-                      <label for="id_limit_tab_switch">Force submit assessment after multiple tab switching&nbsp;</label>
-                      <i class="bi bi-question-circle" data-bs-toggle="modal" data-bs-target="#tab-modal"></i>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Candidate snapshot details modal -->
-              <div class="modal fade" id="webcam-modal" tabindex="-1">
-                <div class="modal-dialog">
-                  <div class="modal-content">
-                    <div class="modal-header">
-                      <h5 class="modal-title">Candidate Snapshots</h5>
-                      <button type="button" class="btn-close" data-bs-dismiss="modal" />
-                    </div>
-                    <div class="modal-body">
-                      <div class="text-start" style="font-weight: bold;">Important:</div>
-                      <div class="text-start">Ensure that candidates have access to a functional webcam in order to take this assessment.</div>
-                    </div>
-                    <div class="modal-footer">
-                      <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Tab switching details modal -->
-              <div class="modal fade" id="tab-modal" tabindex="-1">
-                <div class="modal-dialog">
-                  <div class="modal-content">
-                    <div class="modal-header">
-                      <h5 class="modal-title">Force submit assessment after multiple tab switching</h5>
-                      <button type="button" class="btn-close" data-bs-dismiss="modal" />
-                    </div>
-                    <div class="modal-body">
-                      <div class="text-start" style="font-weight: bold;">Important:</div>
-                      <ol class="text-start">
-                        <li>
-                          Candidates will be given a warning if they leave the assessment browser tab (i.e. clicking anywhere outside the assessment screen). 
-                          This includes:
-                          <ul>
-                            <li>moving to a new window/tab</li>
-                            <li>opening a new application</li>
-                            <li>clicking on system-generated popups etc.</li>
-                          </ul>
-                        </li>
-                        <li>
-                          On the third tab switch, assessment will be automatically submitted.
-                        </li>
-                      </ol>
-                    </div>
-                    <div class="modal-footer">
-                      <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Submit and Reset buttons -->
-              <div class="col-12 d-flex justify-content-end">
-                <button type="reset" class="btn btn-light-secondary me-1 mb-1">Reset</button>
-                <button type="submit" class="btn btn-primary me-1 mb-1">Submit</button>
-              </div>
-            </div>
-
-          </div>
-        </form>
-      </div>
-    </div>
-    
   </div>
+
+  <div class="card">
+    <div class="card-body">
+      <form class="form form-vertical" method="post">
+        {% csrf_token %}
+        <div class="form-body">
+
+          {# non-field errors #}
+          {% for error in form.non_field_errors %}
+            <div class="alert alert-danger py-2">{{ error }}</div>
+          {% endfor %}
+
+          <div class="row">
+            <!-- General -->
+            <div class="col-6">
+              <div class="pe-3 pb-3">
+                <h5>General</h5>
+                <!-- Course selection -->
+                <div class="col-12">
+                  <div class="form-group">
+                    <label for="id_course">Course</label>
+                    <div class="position-relative">
+                      <select name="course" id="id_course" class="choices form-select">
+                        {# displays only courses owned or maintained by the user #}
+                        {% for value, text in form.course.field.choices %}
+                          <option value="{{ value }}" {% if value == form.course.value|add:"0" %}selected{% endif %}>{{ text }}</option>
+                        {% endfor %}
+                      </select>
+                    </div>
+                    {# course errors #}
+                    {% if form.course.errors %}
+                      <p class="text-danger">
+                        {% for e in form.course.errors %}
+                          {{ e }}<br>
+                        {% endfor %}
+                      </p>
+                    {% endif %}
+                  </div>
+                </div>
+
+                <!-- Assessment name input -->
+                <div class="col-12">
+                  <div class="form-group has-icon-left">
+                    <label for="id_name">Assessment Name</label>
+                    <div class="position-relative">
+                      <input type="text"
+                            class="form-control {% if form.name.errors %}is-invalid{% endif %}"
+                            name="name" id="id_name" placeholder="e.g. Mid-term Quiz" maxlength="{{ form.fields.name.max_length }}"
+                            value="{{ form.name.value|default:"" }}"
+                            {% if form.fields.name.required %}required{% endif %}
+                      >
+                      <div class="form-control-icon"><i class="bi bi-type"></i></div>
+                    </div>
+                    {# assessment name errors #}
+                    {% if form.name.errors %}
+                      <p class="text-danger">
+                        {% for e in form.name.errors %}
+                          {{ e }}<br>
+                        {% endfor %}
+                      </p>
+                    {% endif %}
+                  </div>
+                </div>
+
+                <!-- Instructions input -->
+                <div class="col-12">
+                  <div class="form-group has-icon-left">
+                    <label for="id_instructions">Pre-quiz Instructions</label>
+                    <div class="position-relative">
+                      <textarea class="form-control {% if form.instructions.errors %}is-invalid{% endif %}" name="instructions" id="id_instructions"
+                                {% if form.fields.instructions.required %}required{% endif %}
+                      >{{ form.instructions.value|default:"" }}</textarea>
+                      <div class="form-control-icon"><i class="bi bi-type"></i></div>
+                    </div>
+                    {# instructions errors #}
+                    {% if form.instructions.errors %}
+                      <p class="text-danger">
+                        {% for e in form.instructions.errors %}
+                          {{ e }}<br>
+                        {% endfor %}
+                      </p>
+                    {% endif %}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Assessment Options -->
+            <div class="col-6">
+              <div class="ps-3 pb-3">
+                <h5>Assessment Options</h5>
+                <div class="row">
+                  <!-- Duration input -->
+                  <div class="form-group col-6">
+                    <label for="id_duration">Duration (mins)</label>
+                    <input type="number" name="duration" class="form-control {% if form.duration.errors %}is-invalid{% endif %}" min="0"
+                            value="{{ form.duration.value|default:"60" }}" id="id_duration">
+                    <small class="text-muted">(0 for unlimited)</small>
+                    {# duration errors #}
+                    {% if form.duration.errors %}
+                      <p class="text-danger">
+                        {% for e in form.duration.errors %}
+                          {{ e }}<br>
+                        {% endfor %}
+                      </p>
+                    {% endif %}
+                  </div>
+
+                  <!-- No. attempts input -->
+                  <div class="form-group col-6">
+                    <label for="id_num_attempts">No. Attempts</label>
+                    <input type="number" name="num_attempts" class="form-control {% if form.num_attempts.errors %}is-invalid{% endif %}" min="0"
+                            value="{{ form.num_attempts.value|default:"1" }}" id="id_num_attempts">
+                    <small class="text-muted">(0 for unlimited)</small>
+                    {# num_attempts errors #}
+                    {% if form.num_attempts.errors %}
+                      <p class="text-danger">
+                        {% for e in form.num_attempts.errors %}
+                          {{ e }}<br>
+                        {% endfor %}
+                      </p>
+                    {% endif %}
+                  </div>
+
+                  <!-- Show grade checkbox -->
+                  <div class="checkbox">
+                    <input type="checkbox" id="id_show_grade" name="show_grade" class="form-check-input me-2"
+                            {% if form.show_grade.value %}checked{% endif %}>
+                    <label for="id_show_grade">Show Grade</label>
+                  </div>
+
+                  <!-- Require PIN checkbox -->
+                  <div class="checkbox">
+                    <input type="checkbox" id="id_require_pin" name="require_pin" class="form-check-input me-2"
+                            {% if form.require_pin.value %}checked{% endif %}>
+                    <label for="id_require_pin">Require PIN</label>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <hr/>
+          
+          <div class="row">
+            <!-- Date and Time -->
+            <div class="col-6">
+              <div class="pe-3 pt-3">
+                <div class="col-12">
+                  <h5>Date and Time</h5>
+                  <div class="row">
+                    <p>Here, you can <b>optionally</b> set the allowed period where candidates can begin the assessment.</p>
+                    <!-- Time start -->
+                    <div class="form-group col-6">
+                      <label for="id_time_start">Date/Time Start</label>
+                      <input class="flatpickr flatpickr-input active form-control {% if form.time_start.errors %}is-invalid{% endif %}"
+                            id="id_time_start" name="time_start" type="text" placeholder="Select Start Date.."
+                            value="{{ form.time_start.value|default:"" }}">
+                      {# time_start errors #}
+                      {% if form.time_start.errors %}
+                        <p class="text-danger">
+                          {% for e in form.time_start.errors %}
+                            {{ e }}<br>
+                          {% endfor %}
+                        </p>
+                      {% endif %}
+                    </div>
+
+                    <!-- Time end -->
+                    <div class="form-group col-6">
+                      <label for="id_time_end">Date/Time End</label>
+                      <input class="flatpickr flatpickr-input active form-control {% if form.time_end.errors %}is-invalid{% endif %}"
+                            id="id_time_end" name="time_end" type="text" placeholder="Select End Date.."
+                            value="{{ form.time_end.value|default:"" }}">
+                      {# time_end errors #}
+                      {% if form.time_end.errors %}
+                        <p class="text-danger">
+                          {% for e in form.time_end.errors %}
+                            {{ e }}<br>
+                          {% endfor %}
+                        </p>
+                      {% endif %}
+                    </div>
+
+                    <!-- Clear button -->
+                    <div class="col-3 float-end">
+                      <button type="button" class="btn btn-sm btn-success" onclick="clearDates()">Clear</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Proctoring Settings -->
+            <div class="col-6">
+              <div class="ps-3 pt-3">
+                <h5>Proctoring Settings</h5>
+                <p>Settings for supervision of candidates during the assessment.</p>
+                <div class="row">
+                  <!-- Require webcam checkbox -->
+                  <div class="checkbox">
+                    <input type="checkbox" id="id_require_webcam" name="require_webcam" class="form-check-input me-2"
+                        {% if form.require_webcam.value %}checked{% endif %}>
+                    <label for="id_require_webcam">Enable candidate snapshots&nbsp;</label>
+                    <i class="bi bi-question-circle" data-bs-toggle="modal" data-bs-target="#webcam-modal"></i>
+                  </div>
+                  <!-- Limit tab switching checkbox -->
+                  <div class="checkbox">
+                    <input type="checkbox" id="id_limit_tab_switch" name="limit_tab_switching" class="form-check-input me-2"
+                        {% if form.limit_tab_switching.value %}checked{% endif %}>
+                    <label for="id_limit_tab_switch">Force submit assessment after multiple tab switching&nbsp;</label>
+                    <i class="bi bi-question-circle" data-bs-toggle="modal" data-bs-target="#tab-modal"></i>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Candidate snapshot details modal -->
+            <div class="modal fade" id="webcam-modal" tabindex="-1">
+              <div class="modal-dialog">
+                <div class="modal-content">
+                  <div class="modal-header">
+                    <h5 class="modal-title">Candidate Snapshots</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" />
+                  </div>
+                  <div class="modal-body">
+                    <div class="text-start" style="font-weight: bold;">Important:</div>
+                    <div class="text-start">Ensure that candidates have access to a functional webcam in order to take this assessment.</div>
+                  </div>
+                  <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Tab switching details modal -->
+            <div class="modal fade" id="tab-modal" tabindex="-1">
+              <div class="modal-dialog">
+                <div class="modal-content">
+                  <div class="modal-header">
+                    <h5 class="modal-title">Force submit assessment after multiple tab switching</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" />
+                  </div>
+                  <div class="modal-body">
+                    <div class="text-start" style="font-weight: bold;">Important:</div>
+                    <ol class="text-start">
+                      <li>
+                        Candidates will be given a warning if they leave the assessment browser tab (i.e. clicking anywhere outside the assessment screen). 
+                        This includes:
+                        <ul>
+                          <li>moving to a new window/tab</li>
+                          <li>opening a new application</li>
+                          <li>clicking on system-generated popups etc.</li>
+                        </ul>
+                      </li>
+                      <li>
+                        On the third tab switch, assessment will be automatically submitted.
+                      </li>
+                    </ol>
+                  </div>
+                  <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Submit and Reset buttons -->
+            <div class="col-12 d-flex justify-content-end">
+              <button type="reset" class="btn btn-light-secondary me-1 mb-1">Reset</button>
+              <button type="submit" class="btn btn-primary me-1 mb-1">Submit</button>
+            </div>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
 {% endblock %}
 
 {% block js %}
