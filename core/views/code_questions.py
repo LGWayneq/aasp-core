@@ -106,8 +106,13 @@ def update_code_question(request, code_question_id):
     # prepare form
     form = CodeQuestionForm(instance=code_question)
 
-    # handle POST request
-    if request.method == "POST":
+    if request.method == "GET":
+        context = {
+            'code_question': code_question,
+            'form': form,
+        }
+        return render(request, 'code_questions/update-code-question.html', context)
+    elif request.method == "POST":
         form = CodeQuestionForm(request.POST, instance=code_question)
 
         if form.is_valid():
@@ -130,13 +135,6 @@ def update_code_question(request, code_question_id):
                     return redirect('question-bank-details', question_bank_id=code_question.question_bank.id)
                 else:
                     return redirect('assessment-details', assessment_id=code_question.assessment.id)
-
-    context = {
-        'code_question': code_question,
-        'form': form,
-    }
-
-    return render(request, 'code_questions/update-code-question.html', context)
 
 
 @login_required()
@@ -269,8 +267,17 @@ def update_languages(request, code_question_id):
     CodeSnippetFormset = inlineformset_factory(CodeQuestion, CodeSnippet, extra=0, fields=['language', 'code'])
     code_snippet_formset = CodeSnippetFormset(prefix='cs', instance=code_question)
 
-    # process POST requests
-    if request.method == "POST":
+    if request.method == "GET":
+        context = {
+            'creation': request.GET.get('next') is None,
+            'code_question': code_question,
+            'code_snippet_formset': code_snippet_formset,
+            'languages': Language.objects.all(),
+            'existing_languages': code_question.codesnippet_set.all().values_list('language', flat=True).distinct()
+        }
+
+        return render(request, 'code_questions/update-languages.html', context)
+    elif request.method == "POST":
         code_snippet_formset = CodeSnippetFormset(request.POST, instance=code_question, prefix='cs')
 
         if code_snippet_formset.is_valid():
@@ -315,15 +322,6 @@ def update_languages(request, code_question_id):
                 else:
                     return redirect('update-question-type', code_question_id=code_question.id)
 
-    context = {
-        'creation': request.GET.get('next') is None,
-        'code_question': code_question,
-        'code_snippet_formset': code_snippet_formset,
-        'languages': Language.objects.all(),
-        'existing_languages': code_question.codesnippet_set.all().values_list('language', flat=True).distinct()
-    }
-
-    return render(request, 'code_questions/update-languages.html', context)
 
 @login_required()
 @groups_allowed(UserGroup.educator)
