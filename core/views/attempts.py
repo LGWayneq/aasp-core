@@ -273,6 +273,7 @@ def submit_single_test_case(request, test_case_id):
                 }
                 return Response(error_context, status=status.HTTP_404_NOT_FOUND)
 
+            test_case.stdin = request.data["run_stdin"]
             params = construct_judge0_params(request, test_case)
 
             # call judge0
