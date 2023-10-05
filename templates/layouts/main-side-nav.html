@@ -1,22 +1,64 @@
-{% include 'layouts/base.html' %}
 {% load static %}
 
-<div id="sidebar" class="active">
-  {% include 'layouts/sidebar.html' %}
-</div>
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="shortcut icon" href="{% static 'images/favicon.ico' %}" type="image/x-icon" />
 
-<div id="main" style="min-height: 100vh;">
-  <div style="min-height: calc(100vh - 105px);">
-    <header class="mb-3">
-      <a href="#" class="burger-btn d-block d-xl-none"><i class="bi bi-justify fs-3"></i></a>
-    </header>
+    <title>
+      {% block title %}
+      {% endblock %}
+    </title>
 
-    {% include 'includes/messages.html' %}
-
-    {% block content %}
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.gstatic.com" />
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@300;400;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="{% static 'css/bootstrap.css' %}" />
+    <!-- Page plugins -->
+    <link rel="stylesheet" href="{% static 'vendors/perfect-scrollbar/perfect-scrollbar.css' %}" />
+    <!-- Icons -->
+    <link rel="stylesheet" href="{% static 'vendors/bootstrap-icons/bootstrap-icons.css' %}" />
+    <link rel="stylesheet" href="{% static 'vendors/fontawesome/all.min.css' %}" />
+    <!-- Mazer CSS -->
+    <link rel="stylesheet" href="{% static 'css/app.css' %}" />
+    <!-- Specific CSS -->
+    {% block stylesheets %}
     {% endblock %}
-  </div>
+  </head>
 
-  <!-- Footer -->
-  {% include 'includes/footer.html' %}
-</div>
+  <body>
+    <div id="app">
+      <div id="sidebar" class="active">
+        {% include 'layouts/sidebar.html' %}
+      </div>
+
+      <div id="main" style="min-height: 100vh;">
+        <div style="min-height: calc(100vh - 105px);">
+          <header class="mb-3">
+            <a href="#" class="burger-btn d-block d-xl-none"><i class="bi bi-justify fs-3"></i></a>
+          </header>
+
+          {% include 'includes/messages.html' %}
+
+          {% block content %}
+          {% endblock %}
+        </div>
+
+        <!-- Footer -->
+        {% include 'includes/footer.html' %}
+      </div>
+    </div>
+
+    <script src="{% static 'vendors/perfect-scrollbar/perfect-scrollbar.min.js' %}"></script>
+    <script src="{% static 'js/bootstrap.bundle.min.js' %}"></script>
+    <script src="{% static 'vendors/fontawesome/all.min.js' %}"></script>
+
+    <!-- Specific JS -->
+    {% block js %}
+    {% endblock %}
+
+    <script src="{% static 'js/mazer.js' %}"></script>
+  </body>
+</html>
