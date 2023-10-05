@@ -1,0 +1,59 @@
+{% include 'layouts/base.html' %}
+{% load static %}
+{% load utils %}
+
+<div id="sidebar" class="active">
+  {% include "layouts/sidebar.html" %}
+</div>
+<div id="main" class="layout-navbar" style="min-height: 100vh;">
+  <header class='mb-3' style="margin-bottom: 0px!important;">
+    <nav class="navbar navbar-expand navbar-light " style="padding-bottom: 0px;">
+      <div class="container-fluid">
+        <a href="#" class="burger-btn d-block d-xl-none">
+          <i class="bi bi-justify fs-3"></i>
+        </a>
+
+        <div class="collapse navbar-collapse" id="navbarSupportedContent">
+          <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
+
+          </ul>
+          <div class="dropdown">
+            <a href="#" data-bs-toggle="dropdown" aria-expanded="false">
+              <div class="user-menu d-flex">
+                <div class="user-name text-end me-3">
+                  <h6 class="mb-0 text-gray-600">{{ request.user.username }}</h6>
+                  {% if request.user.is_superuser %}
+                    <span class="badge bg-light-danger">ADMIN</span>
+                  {% elif request.user|has_group:'student' %}
+                    <span class="badge bg-light-success">STUDENT</span>
+                  {% elif request.user|has_group:'educator' %}
+                    <span class="badge bg-light-warning">EDUCATOR</span>
+                  {% elif request.user|has_group:'lab_assistant' %}
+                    <span class="badge bg-light-info">LAB ASSISTANT</span>
+                  {% endif %}
+                </div>
+                <div class="user-img d-flex align-items-center">
+                  <div class="avatar avatar-md">
+                    <img src="{% static 'images/faces/1.jpg' %}">
+                  </div>
+                </div>
+              </div>
+            </a>
+            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdownMenuButton" style="min-width: 11rem;">
+              <li><a class="dropdown-item" href="{% url 'logout' %}"><i class="fa-solid fa-right-from-bracket me-2"></i>Logout</a></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </nav>
+  </header>
+  <div id="main-content">
+    <div style="min-height: calc(100vh - 180px);">
+      {% include 'includes/messages.html' %}
+      {% block content %}{% endblock %}
+    </div>
+
+    <!-- Footer -->
+    {% include 'includes/footer.html' %}
+  </div>
+</div>

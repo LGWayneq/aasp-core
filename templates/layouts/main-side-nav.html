@@ -1,0 +1,22 @@
+{% include 'layouts/base.html' %}
+{% load static %}
+
+<div id="sidebar" class="active">
+  {% include 'layouts/sidebar.html' %}
+</div>
+
+<div id="main" style="min-height: 100vh;">
+  <div style="min-height: calc(100vh - 105px);">
+    <header class="mb-3">
+      <a href="#" class="burger-btn d-block d-xl-none"><i class="bi bi-justify fs-3"></i></a>
+    </header>
+
+    {% include 'includes/messages.html' %}
+
+    {% block content %}
+    {% endblock %}
+  </div>
+
+  <!-- Footer -->
+  {% include 'includes/footer.html' %}
+</div>
