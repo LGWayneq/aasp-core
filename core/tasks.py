@@ -30,7 +30,7 @@ def update_test_case_attempt_status(tca_id: int, token: str, last_status: int = 
 
         if status_id is not None:
             # if status_id is different from the previous run of this task, update db
-            if status_id != last_status:
+            if status_id not in [1, 2]:
                 last_status = status_id
                 tca = TestCaseAttempt.objects.prefetch_related('cq_submission').get(id=tca_id)
                 tca.status = status_id
@@ -41,8 +41,8 @@ def update_test_case_attempt_status(tca_id: int, token: str, last_status: int = 
                 update_cqs_passed_flag.delay(tca.cq_submission.id)
 
             # if submission is still queued or processing, re-queue this task
-            if status_id in [1, 2]:
-                update_test_case_attempt_status.apply_async((tca_id, token, last_status), countdown=0.5)
+            elif status_id in [1, 2]:
+                update_test_case_attempt_status.delay(tca_id, token, last_status)
     except ConnectionError:
         pass
 
