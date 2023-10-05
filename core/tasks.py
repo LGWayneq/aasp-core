@@ -41,8 +41,8 @@ def update_test_case_attempt_status(tca_id: int, token: str, last_status: int = 
                 update_cqs_passed_flag.delay(tca.cq_submission.id)
 
             # if submission is still queued or processing, re-queue this task
-            elif status_id in [1, 2]:
-                update_test_case_attempt_status.delay(tca_id, token, last_status)
+            else:
+                update_test_case_attempt_status.apply_async((tca_id, token, last_status), countdown=0.5)
     except ConnectionError:
         pass
 
