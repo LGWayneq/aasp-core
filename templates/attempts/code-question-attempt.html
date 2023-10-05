@@ -1031,7 +1031,7 @@
                       $("#submissions-accordion").prepend(clonedAccordionItem);
                       $("#submission-" + res.cqs_id).collapse('show');
                       // call updator function
-                      updateSubmissionStatus(res.cqs_id);
+                      updateSubmissionStatus(res.cqs_id, 0);
                   }, 500);
               }
           }).fail((jqXHR, textStatus, errorThrown) => {
@@ -1044,7 +1044,7 @@
       };
 
       // polls and updates the status of a submission and its testcases
-      const updateSubmissionStatus = (cqs_id) => {
+      const updateSubmissionStatus = (cqs_id, attempts) => {
           // ajax request
           $.ajax({
               type: 'GET',
@@ -1057,14 +1057,23 @@
 
                   // set testcase statuses
                   res.statuses.forEach((value) => {
+                      console.log(value)
                       setTestCaseStatus(value[0], value[1]);
                   });
 
                   // if submission is still processing, poll again in 1s
-                  if (res.outcome === "Processing")
-                      window.setTimeout(() => {
-                          updateSubmissionStatus(cqs_id);
+                  if (res.outcome === "Processing") {
+                      if (attempts >= 3) {
+                        setSubmissionStatus(cqs_id, "Timed Out");
+                        res.statuses.forEach((value) => {
+                          setTestCaseStatus(value[0], 5);
+                        });
+                      } else {
+                        window.setTimeout(() => {
+                          updateSubmissionStatus(cqs_id, attempts + 1);
                       }, 1000);
+                      }
+                  }
               }
           }).fail((jqXHR, textStatus, errorThrown) => {
               // 4xx status codes
@@ -1089,7 +1098,7 @@
               return;
           } else if (outcome === "Passed")
               cqsStatus.addClass("bg-light-success");
-          else if (outcome === "Failed")
+          else if (outcome === "Failed" || outcome === "Timed Out")
               cqsStatus.addClass("bg-light-danger");
 
           // enable buttons
@@ -1124,7 +1133,7 @@
       // handle ongoing submissions upon page load
       {% for cqs in code_question_submissions %}
           {% if cqs.outcome == "Processing" %}
-              updateSubmissionStatus({{cqs.id}});
+              updateSubmissionStatus({{cqs.id}}, 0);
               // disable buttons and set status
               sampleBtn.prop("disabled", true);
               submitBtn.prop("disabled", true);
