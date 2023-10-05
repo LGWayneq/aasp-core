@@ -561,6 +561,7 @@
   <!-- Unload warning -->
   <script>
     window.onbeforeunload = function () {
+      e.preventDefault();
       if ({{ assessment_attempt.assessment.limit_tab_switching|yesno:"true,false"}}) {
         window.onblur = () => {};
       }
