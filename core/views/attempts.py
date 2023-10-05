@@ -1,5 +1,6 @@
 from datetime import timedelta, datetime
 
+import base64
 import cv2
 import requests
 import os
@@ -364,6 +365,20 @@ def get_tc_details(request):
 
                 res = requests.get(url)
                 data = res.json()
+
+                # change to base64 encoding if needed
+                if "error" in data:
+                    url = url.replace("base64_encoded=false", "base64_encoded=true")
+                    res = requests.get(url)
+                    data = res.json()
+                    if data["stdout"]:
+                        data['stdout'] = base64.b64decode(data['stdout'])
+                    if data["stdin"]:
+                        data['stdin'] = base64.b64decode(data['stdin'])
+                    if data["expected_output"]:
+                        data['expected_output'] = base64.b64decode(data['expected_output'])
+                    if data["compile_output"]:
+                        data['compile_output'] = base64.b64decode(data['compile_output'])
 
                 # append friendly status name
                 data['status'] = judge0_statuses[int(data['status_id'])]
