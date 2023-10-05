@@ -1062,7 +1062,7 @@
 
                   // if submission is still processing, poll again in 1s
                   if (res.outcome === "Processing") {
-                      if (attempts >= 3) {
+                      if (attempts >= 8) {
                         setSubmissionStatus(cqs_id, "Timed Out");
                         res.statuses.forEach((value) => {
                           setTestCaseStatus(value[0], 5);
