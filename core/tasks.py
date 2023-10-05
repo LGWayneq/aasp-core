@@ -11,7 +11,7 @@ from django.utils import timezone
 from core.models import TestCaseAttempt, CodeQuestionSubmission, AssessmentAttempt, CandidateSnapshot
 
 @shared_task
-def update_test_case_attempt_status(tca_id: int, token: str, last_status: int = 1):
+def update_test_case_attempt_status(tca_id: int, token: str):
     """
     Polls judge0 to get the status_id of a single submission (one test case)
     If status_id has been changed, save the change to db.
@@ -28,23 +28,21 @@ def update_test_case_attempt_status(tca_id: int, token: str, last_status: int = 
         time = data.get('time')
         memory = data.get('memory')
 
-        if status_id is not None:
-            # if status_id is different from the previous run of this task, update db
-            if status_id not in [1, 2]:
-                last_status = status_id
-                tca = TestCaseAttempt.objects.prefetch_related('cq_submission').get(id=tca_id)
-                tca.status = status_id
-                tca.stdout = stdout
-                tca.time = time
-                tca.memory = memory
-                tca.save()
-                update_cqs_passed_flag.delay(tca.cq_submission.id)
+        if status_id not in [1, 2]:
+            tca = TestCaseAttempt.objects.prefetch_related('cq_submission').get(id=tca_id)
+            tca.status = status_id
+            tca.stdout = stdout
+            tca.time = time
+            tca.memory = memory
+            tca.save()
+            # check if all test cases have been completed
+            finished = not TestCaseAttempt.objects.filter(cq_submission_id=tca.cq_submission.id, status__in=[1, 2]).exists()
 
-            # if submission is still queued or processing, re-queue this task
-            else:
-                update_test_case_attempt_status.delay(tca_id, token, last_status)
-    except ConnectionError:
-        pass
+            # only continue if test cases are complete
+            if finished:
+                update_cqs_passed_flag.delay(tca.cq_submission.id)
+    except ConnectionError as e:
+        print(e.message)
 
 
 @shared_task
@@ -54,20 +52,20 @@ def update_cqs_passed_flag(cqs_id):
     Update the "passed" field of the CQS instance and initiates the computation of the submission score.
     If it was already calculated previously, nothing will be done.
     """
-    # check if all test cases have been completed
-    finished = not TestCaseAttempt.objects.filter(cq_submission_id=cqs_id, status__in=[1, 2]).exists()
+    # # check if all test cases have been completed
+    # finished = not TestCaseAttempt.objects.filter(cq_submission_id=cqs_id, status__in=[1, 2]).exists()
 
-    # only continue if test cases are complete
-    if finished:
-        # get cqs object
-        cqs = CodeQuestionSubmission.objects.get(id=cqs_id)
+    # # only continue if test cases are complete
+    # if finished:
+    # get cqs object
+    cqs = CodeQuestionSubmission.objects.get(id=cqs_id)
 
-        # only continue if it was not previously calculated
-        if cqs.passed is None:
-            # update the passed flag
-            passed = not TestCaseAttempt.objects.filter(cq_submission_id=cqs_id, status__range=(4, 14)).exists()
-            cqs.passed = passed
-            cqs.save()
+    # only continue if it was not previously calculated
+    if cqs.passed is None:
+        # update the passed flag
+        passed = not TestCaseAttempt.objects.filter(cq_submission_id=cqs_id, status__range=(4, 14)).exists()
+        cqs.passed = passed
+        cqs.save()
 
 
 @shared_task

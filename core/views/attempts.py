@@ -482,7 +482,8 @@ def code_question_submission(request, code_question_attempt_id):
 
             # queue celery tasks
             for tca in test_case_attempts:
-                update_test_case_attempt_status.delay(tca.id, tca.token, 1)
+                for i in range(1, 6):
+                    update_test_case_attempt_status.apply_async((tca.id, tca.token), countdown=i*2)
 
             context = {
                 "result": "success",
