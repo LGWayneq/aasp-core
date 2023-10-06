@@ -27,60 +27,58 @@
             <!-- outcome -->
             <h4 id="m-outcome"></h4>
             <hr>
+            
             <!-- stdin -->
             <h5>Standard Input</h5>
-            <pre><code class="language-plaintext rounded" id="m-stdin"></code></pre>
-              {% if is_software_language %}
-              <div class="row">
-                <!-- stdout -->
-                <div class="col-6">
-                  <h5>Standard Output</h5>
-                  <pre><code class="language-plaintext rounded" id="m-stdout"></code></pre>
-                </div>
-                <!-- expected output -->
-                <div class="col-6">
-                  <h5>Expected Output</h5>
-                  <pre><code class="language-plaintext rounded" id="m-expected-output"></code></pre>
-                </div>
-              </div>
-              {% else %}
-              <!-- waveform evaluation -->
-              <hr>
-              <div class="row">
+            <pre><code class="language-plaintext rounded" id="m-stdin" style="max-height: 100px; overflow: auto;"></code></pre>
+            {% if is_software_language %}
+
+            <!-- stdout -->
+            <h5>Standard Output</h5>
+            <pre><code class="language-plaintext rounded" id="m-stdout" style="max-height: 100px; overflow: auto;"></code></pre>
+
+            <!-- expected output -->
+            <h5>Expected Output</h5>
+            <pre><code class="language-plaintext rounded" id="m-expected-output" style="max-height: 100px; overflow: auto;"></code></pre>
+            {% else %}
+
+            <!-- waveform evaluation -->
+            <hr>
+            <div class="row">
                 <div class="col" id="m-timing">
-                  <h5>Timing diagrams for sample test case</h5>
-                  <div class="d-none" id="m-hidden">
-                    <pre><code class="language-plaintext rounded">Hidden</code></pre>
-                  </div>
-                  <!-- Accordion -->
-                  <div class="accordion" id="m-accordion">
-                    {% for output in wavedrom_output %}
-                    <div class="accordion-item">
-                        <h2 class="accordion-header" id="waveformHeading{{ forloop.counter }}">
-                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#waveformCollapse{{ forloop.counter }}" aria-expanded="false" aria-controls="waveformCollapse{{ forloop.counter }}">
-                                {{ output }}
-                            </button>
-                        </h2>
-                        <div id="waveformCollapse{{ forloop.counter }}" class="accordion-collapse collapse {% if forloop.counter is 1 %}show{% endif %}" aria-labelledby="waveformHeading{{ forloop.counter }}" data-bs-parent="#waveformAccordion">
-                            <div class="accordion-body">
-                                <div class="nowrap" style="overflow-x: auto">
-                                    <script type="WaveDrom">
-                                        { "signal": [] }
-                                    </script>
+                    <h5>Timing diagrams for sample test case</h5>
+                    <div class="d-none" id="m-hidden">
+                        <pre><code class="language-plaintext rounded">Hidden</code></pre>
+                    </div>
+                    <!-- Accordion -->
+                    <div class="accordion" id="m-accordion">
+                        {% for output in wavedrom_output %}
+                            <div class="accordion-item">
+                                <h2 class="accordion-header" id="waveformHeading{{ forloop.counter }}">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#waveformCollapse{{ forloop.counter }}" aria-expanded="false" aria-controls="waveformCollapse{{ forloop.counter }}">
+                                        {{ output }}
+                                    </button>
+                                </h2>
+                            <div id="waveformCollapse{{ forloop.counter }}" class="accordion-collapse collapse {% if forloop.counter is 1 %}show{% endif %}" aria-labelledby="waveformHeading{{ forloop.counter }}" data-bs-parent="#waveformAccordion">
+                                <div class="accordion-body">
+                                    <div class="nowrap" style="overflow-x: auto">
+                                        <script type="WaveDrom">
+                                            { "signal": [] }
+                                        </script>
+                                    </div>
                                 </div>
                             </div>
                         </div>
+                        {% endfor %}
                     </div>
-                    {% endfor %}
-                  </div>
                 </div>
                 <!-- error -->
                 <div class="d-none" id="m-error">
-                  <h5>Error</h5>
-                  <pre><code class="language-plaintext rounded" id="m-error-msg"></code></pre>
+                    <h5>Error</h5>
+                    <pre><code class="language-plaintext rounded" id="m-error-msg"></code></pre>
                 </div>
-              </div>
-              {% endif %}
+            </div>
+            {% endif %}
             </div>
           </div>
     </div>
