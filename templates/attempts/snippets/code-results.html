@@ -23,35 +23,35 @@
         </div>
     </div>
     <div style="margin-top: 15px;">
-        <div id="m-body" style="display:none;">
+        <div id="results-body" style="display:none;">
             <!-- outcome -->
-            <h4 id="m-outcome"></h4>
+            <h4 id="results-outcome"></h4>
             <hr>
             
             <!-- stdin -->
             <h5>Standard Input</h5>
-            <pre><code class="language-plaintext rounded" id="m-stdin" style="max-height: 100px; overflow: auto;"></code></pre>
+            <pre><code class="language-plaintext rounded" id="results-stdin" style="max-height: 100px; overflow: auto;"></code></pre>
             {% if is_software_language %}
 
             <!-- stdout -->
             <h5>Standard Output</h5>
-            <pre><code class="language-plaintext rounded" id="m-stdout" style="max-height: 100px; overflow: auto;"></code></pre>
+            <pre><code class="language-plaintext rounded" id="results-stdout" style="max-height: 100px; overflow: auto;"></code></pre>
 
             <!-- expected output -->
             <h5>Expected Output</h5>
-            <pre><code class="language-plaintext rounded" id="m-expected-output" style="max-height: 100px; overflow: auto;"></code></pre>
+            <pre><code class="language-plaintext rounded" id="results-expected-output" style="max-height: 100px; overflow: auto;"></code></pre>
             {% else %}
 
             <!-- waveform evaluation -->
             <hr>
             <div class="row">
-                <div class="col" id="m-timing">
+                <div class="col" id="results-timing">
                     <h5>Timing diagrams for sample test case</h5>
-                    <div class="d-none" id="m-hidden">
+                    <div class="d-none" id="results-hidden">
                         <pre><code class="language-plaintext rounded">Hidden</code></pre>
                     </div>
                     <!-- Accordion -->
-                    <div class="accordion" id="m-accordion">
+                    <div class="accordion" id="results-accordion">
                         {% for output in wavedrom_output %}
                             <div class="accordion-item">
                                 <h2 class="accordion-header" id="waveformHeading{{ forloop.counter }}">
@@ -73,9 +73,9 @@
                     </div>
                 </div>
                 <!-- error -->
-                <div class="d-none" id="m-error">
+                <div class="d-none" id="results-error">
                     <h5>Error</h5>
-                    <pre><code class="language-plaintext rounded" id="m-error-msg"></code></pre>
+                    <pre><code class="language-plaintext rounded" id="results-error-msg"></code></pre>
                 </div>
             </div>
             {% endif %}

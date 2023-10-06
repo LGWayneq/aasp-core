@@ -1,0 +1,95 @@
+<!-- Test Case Details Modal -->
+<div class="modal fade" id="detailsModal" tabindex="-1" role="dialog">
+  <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="exampleModalLongTitle">Test Case Details</h5>
+        <button type="button" class="close" data-bs-dismiss="modal">
+          <span>&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+
+        <!-- modal loading -->
+        <div id="m-loading">
+          <div class="p-3 d-flex justify-content-center">
+            <div class='spinner-border spinner-border-sm me-1'></div>
+            Loading ...
+          </div>
+        </div>
+
+        <!-- modal body details -->
+        <div id="m-body" style="display:none;">
+          <!-- token -->
+          <h6>Token</h6>
+          <p id="m-token"></p>
+          <hr>
+          <!-- stdin -->
+          <h6>Standard Input</h6>
+          <pre><code class="language-plaintext rounded" id="m-stdin"></code></pre>
+            {% if is_software_language %}
+            <div class="row">
+              <!-- stdout -->
+              <div class="col-6">
+                <h6>Standard Output</h6>
+                <pre><code class="language-plaintext rounded" id="m-stdout"></code></pre>
+              </div>
+              <!-- expected output -->
+              <div class="col-6">
+                <h6>Expected Output</h6>
+                <pre><code class="language-plaintext rounded" id="m-expected-output"></code></pre>
+              </div>
+            </div>
+            {% else %}
+            <!-- waveform evaluation -->
+            <hr>
+            <div class="row">
+              <div class="col" id="m-timing">
+                <h6>Timing diagrams for sample test case</h6>
+                <div class="d-none" id="m-hidden">
+                  <pre><code class="language-plaintext rounded">Hidden</code></pre>
+                </div>
+                <!-- Accordion -->
+                <div class="accordion" id="m-accordion">
+                  {% for output in wavedrom_output %}
+                  <div class="accordion-item">
+                      <h2 class="accordion-header" id="waveformHeading{{ forloop.counter }}">
+                          <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#waveformCollapse{{ forloop.counter }}" aria-expanded="false" aria-controls="waveformCollapse{{ forloop.counter }}">
+                              {{ output }}
+                          </button>
+                      </h2>
+                      <div id="waveformCollapse{{ forloop.counter }}" class="accordion-collapse collapse {% if forloop.counter is 1 %}show{% endif %}" aria-labelledby="waveformHeading{{ forloop.counter }}" data-bs-parent="#waveformAccordion">
+                          <div class="accordion-body">
+                              <div class="nowrap" style="overflow-x: auto">
+                                  <script type="WaveDrom">
+                                      { "signal": [] }
+                                  </script>
+                              </div>
+                          </div>
+                      </div>
+                  </div>
+                  {% endfor %}
+                </div>
+              </div>
+              <!-- error -->
+              <div class="d-none" id="m-error">
+                <h6>Error</h6>
+                <pre><code class="language-plaintext rounded" id="m-error-msg"></code></pre>
+              </div>
+            </div>
+            {% endif %}
+          </div>
+          <hr>
+
+          <!-- outcome -->
+          <h6>Outcome</h6>
+          <p id="m-outcome"></p>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

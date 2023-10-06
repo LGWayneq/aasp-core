@@ -264,6 +264,7 @@
   </div>
 
   {% include 'attempts/snippets/accordion-item-template.html' %}
+  {% include 'attempts/snippets/test-case-details-modal.html' %}
   {% include 'attempts/snippets/vcd-viewer-modal.html' %}
 
   <!-- Tab switching warning modal -->
@@ -619,7 +620,19 @@
       const submitBtn = $("#submit-btn");
       const waveformBtn = $("#waveform-btn");
 
-      // test case details modal elements
+      // test case results elements
+      const resultsBody = $("#results-body");
+      const resultsStdin = $("#results-stdin");
+      const resultsStdout = $("#results-stdout");
+      const resultsExpectedOutput = $("#results-expected-output");
+      const resultsOutcome = $("#results-outcome");
+      const resultsTiming = $("#results-timing");
+      const resultsAccordion = $("#results-accordion");
+      const resultsHidden = $("#results-hidden");
+      const resultsError = $("#results-error")
+      const resultsErrorMsg = $("#results-error-msg")
+
+      // submission details modal elements
       const modalToken = $("#m-token");
       const modalLoading = $("#m-loading");
       const modalBody = $("#m-body");
@@ -720,26 +733,26 @@
                       }, 1000);
                   } else { // finished
                       if (res.data.status_id === 3)
-                          modalOutcome.html(res.data.status + " &#x2705;");
+                          resultsOutcome.html(res.data.status + " &#x2705;");
                       else
-                          modalOutcome.html(res.data.status + " &#x274C;");
+                          resultsOutcome.html(res.data.status + " &#x274C;");
 
                       // hide waveforms
-                      modalTiming.addClass("d-none")
-                      modalAccordion.addClass("d-none")
-                      modalHidden.addClass("d-none")
-                      modalError.addClass("d-none")
+                      resultsTiming.addClass("d-none")
+                      resultsAccordion.addClass("d-none")
+                      resultsHidden.addClass("d-none")
+                      resultsError.addClass("d-none")
 
                       // set values
-                      modalStdin.html(res.data.stdin ? res.data.stdin : '&nbsp;');
+                      resultsStdin.html(res.data.stdin ? res.data.stdin : '&nbsp;');
 
                       if ('{{ is_software_language }}' === 'True') {
-                        modalStdout.html(res.data.stdout ? res.data.stdout : '&nbsp;');
-                        modalExpectedOutput.html(res.data.expected_output ? res.data.expected_output : '&nbsp;');
+                        resultsStdout.html(res.data.stdout ? res.data.stdout : '&nbsp;');
+                        resultsExpectedOutput.html(res.data.expected_output ? res.data.expected_output : '&nbsp;');
                       } else {
                         if (res.data.stdout && res.data.stdout !== 'Hidden') {
                           // show waveforms
-                          modalAccordion.removeClass("d-none")
+                          resultsAccordion.removeClass("d-none")
 
                           const wavedromGroups = compareWaveform(res.data.expected_output, res.data.stdout)
 
@@ -757,38 +770,34 @@
                             accordionButton.innerHTML = title;
 
                             // update waveform
-                            const modalWavedrom = document.getElementById(`InputJSON_${index + 1}`)
-                            modalWavedrom.innerHTML = JSON.stringify(wavedrom)
+                            const resultsWavedrom = document.getElementById(`InputJSON_${index + 1}`)
+                            resultsWavedrom.innerHTML = JSON.stringify(wavedrom)
                             WaveDrom.RenderWaveForm(index + 1, WaveDrom.eva(`InputJSON_${index + 1}`), "WaveDrom_Display_")
                           })
                         } else if (res.data.stdout === 'Hidden') {
                           // show hidden
-                          modalTiming.addClass("d-none")
-                          modalHidden.removeClass("d-none")
+                          resultsTiming.addClass("d-none")
+                          resultsHidden.removeClass("d-none")
                         } else if (res.data.status_id === 6) {  // compilation error
                           // hide timing diagram
-                          modalTiming.addClass("d-none")
+                          resultsTiming.addClass("d-none")
 
                           // show error message
-                          modalError.removeClass("d-none")
-                          modalErrorMsg.html(res.data.compile_output)
+                          resultsError.removeClass("d-none")
+                          resultsErrorMsg.html(res.data.compile_output)
                         } else {
                           // show error message
-                          modalError.removeClass("d-none")
-                          modalErrorMsg.html(res.data.stderr)
+                          resultsError.removeClass("d-none")
+                          resultsErrorMsg.html(res.data.stderr)
                         }
                       }
 
-                      modalLoading.hide();
-                      modalBody.show();
+                      resultsBody.show();
                         // enable buttons
                       sampleBtn.prop("disabled", false);
                       submitBtn.prop("disabled", false);
-                      // hide loading, show more details link
+                      // hide loading
                       mainLoading.hide();
-                      moreDetails.show();
-                      // set token
-                      moreDetails.data('token', token);
                       // set waveform button if compilation successful
                       if ((res.data.status_id === 3 | res.data.status_id === 4) && '{{ is_software_language }}' === 'False') {
                         waveformBtn.data('vcd', res.data.vcd_output);
@@ -951,6 +960,98 @@
 
         return mismatchWave
       }
+
+      // "More Details" or "Test Case x" clicked (opens modal)
+      const viewModal = (btn) => {
+          // get token
+          const token = $(btn).data('token');
+
+          // show m-loading, hide m-body
+          modalBody.hide();
+          modalLoading.show();
+
+          // hide waveforms
+          modalTiming.addClass("d-none")
+          modalAccordion.addClass("d-none")
+          modalHidden.addClass("d-none")
+          modalError.addClass("d-none")
+
+          // ajax request
+          $.ajax({
+              type: 'GET',
+              url: "{% url 'get-tc-details' %}",
+              data: {token, status_only: false},
+          }).done((res, textStatus, jqXHR) => {
+              if (res.result === "success") {
+                  // set values
+                  modalToken.html(token);
+                  modalStdin.html(res.data.stdin ? res.data.stdin : '&nbsp;');
+                  modalOutcome.html(res.data.status);
+
+                  if ('{{ is_software_language }}' === 'True') {
+                    modalStdout.html(res.data.stdout ? res.data.stdout : '&nbsp;');
+                    modalExpectedOutput.html(res.data.expected_output ? res.data.expected_output : '&nbsp;');
+                  } else {
+                    if (res.data.stdout && res.data.stdout !== 'Hidden') {
+                      // show waveforms
+                      modalAccordion.removeClass("d-none")
+
+                      const wavedromGroups = compareWaveform(res.data.expected_output, res.data.stdout)
+
+                      wavedromGroups.forEach((wavedrom, index) => {
+                        // update accordion header
+                        const accordionHeader = document.getElementById(`waveformHeading${index + 1}`);
+                        const accordionButton = accordionHeader.querySelector('.accordion-button');
+                        let title
+
+                        if (wavedrom.signal[6].wave.includes('h'))
+                          title = `${wavedrom.signal[2][1].name}<span style="margin-left: 30px">&#x274C;</span>`
+                        else
+                          title = `${wavedrom.signal[2][1].name}<span style="margin-left: 30px">&#x2705;</span>`
+                        
+                        accordionButton.innerHTML = title;
+
+                        // update waveform
+                        const modalWavedrom = document.getElementById(`InputJSON_${index + 1}`)
+                        modalWavedrom.innerHTML = JSON.stringify(wavedrom)
+                        WaveDrom.RenderWaveForm(index + 1, WaveDrom.eva(`InputJSON_${index + 1}`), "WaveDrom_Display_")
+                      })
+                    } else if (res.data.stdout === 'Hidden') {
+                      // show hidden
+                      modalTiming.addClass("d-none")
+                      modalHidden.removeClass("d-none")
+                    } else if (res.data.status_id === 6) {  // compilation error
+                      // hide timing diagram
+                      modalTiming.addClass("d-none")
+
+                      // show error message
+                      modalError.removeClass("d-none")
+                      modalErrorMsg.html(res.data.compile_output)
+                    } else {
+                      // show error message
+                      modalError.removeClass("d-none")
+                      modalErrorMsg.html(res.data.stderr)
+                    }
+                  }
+
+                  setTimeout(() => {
+                      modalLoading.hide();
+                      modalBody.show();
+                  }, 500);
+              }
+          }).fail((jqXHR, textStatus, errorThrown) => {
+              // 4xx status codes
+              if (Math.floor(jqXHR.status / 100) == 4) {
+                console.error("Internal API Error!");
+              }
+              else {
+                console.error("External API Error!");
+              }
+          });
+
+          // show modal
+          $('#detailsModal').modal('show');
+      };
 
       // submit code, create new submission
       const submit = () => {
