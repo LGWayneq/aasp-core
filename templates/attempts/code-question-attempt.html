@@ -98,9 +98,15 @@
       <div class="card">
         <div class="card-content">
           <div class="card-body">
-            <h4 class="card-title">Time Remaining</h4>
-            <h1 class="card-text" id="countdown-timer">{% if assessment_attempt.assessment.duration == 0 %}
-              Unlimited{% else %}-{% endif %}</h1>
+            <div class="row">
+              <div class="col-7">
+                <h5 class="card-text">Time Remaining</h5>
+              </div>
+              <div class="col-5">
+                <h4 class="card-text" id="countdown-timer">{% if assessment_attempt.assessment.duration == 0 %}
+                  Unlimited{% else %}-{% endif %}</h4>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -109,7 +115,7 @@
 
   <!-- Question & Answer row -->
   <div class="row">
-    <div class="card">
+    <div class="card" style="margin-bottom: 0px;">
       <!-- split panes -->
       <div class="split">
         <!-- Question pane -->
@@ -195,7 +201,7 @@
 
             <hr>
 
-            <div class="row">
+            <div class="row p-4">
               <h4>Submission History</h4>
               <div class="accordion" id="submissions-accordion">
 
@@ -258,7 +264,6 @@
   </div>
 
   {% include 'attempts/snippets/accordion-item-template.html' %}
-  {% include 'attempts/snippets/test-case-details-modal.html' %}
   {% include 'attempts/snippets/vcd-viewer-modal.html' %}
 
   <!-- Tab switching warning modal -->
@@ -715,11 +720,68 @@
                       }, 1000);
                   } else { // finished
                       if (res.data.status_id === 3)
-                          runStatus.html(res.data.status + " &#x2705;");
+                          modalOutcome.html(res.data.status + " &#x2705;");
                       else
-                          runStatus.html(res.data.status + " &#x274C;");
+                          modalOutcome.html(res.data.status + " &#x274C;");
 
-                      // enable buttons
+                      // hide waveforms
+                      modalTiming.addClass("d-none")
+                      modalAccordion.addClass("d-none")
+                      modalHidden.addClass("d-none")
+                      modalError.addClass("d-none")
+
+                      // set values
+                      modalStdin.html(res.data.stdin ? res.data.stdin : '&nbsp;');
+
+                      if ('{{ is_software_language }}' === 'True') {
+                        modalStdout.html(res.data.stdout ? res.data.stdout : '&nbsp;');
+                        modalExpectedOutput.html(res.data.expected_output ? res.data.expected_output : '&nbsp;');
+                      } else {
+                        if (res.data.stdout && res.data.stdout !== 'Hidden') {
+                          // show waveforms
+                          modalAccordion.removeClass("d-none")
+
+                          const wavedromGroups = compareWaveform(res.data.expected_output, res.data.stdout)
+
+                          wavedromGroups.forEach((wavedrom, index) => {
+                            // update accordion header
+                            const accordionHeader = document.getElementById(`waveformHeading${index + 1}`);
+                            const accordionButton = accordionHeader.querySelector('.accordion-button');
+                            let title
+
+                            if (wavedrom.signal[6].wave.includes('h'))
+                              title = `${wavedrom.signal[2][1].name}<span style="margin-left: 30px">&#x274C;</span>`
+                            else
+                              title = `${wavedrom.signal[2][1].name}<span style="margin-left: 30px">&#x2705;</span>`
+                            
+                            accordionButton.innerHTML = title;
+
+                            // update waveform
+                            const modalWavedrom = document.getElementById(`InputJSON_${index + 1}`)
+                            modalWavedrom.innerHTML = JSON.stringify(wavedrom)
+                            WaveDrom.RenderWaveForm(index + 1, WaveDrom.eva(`InputJSON_${index + 1}`), "WaveDrom_Display_")
+                          })
+                        } else if (res.data.stdout === 'Hidden') {
+                          // show hidden
+                          modalTiming.addClass("d-none")
+                          modalHidden.removeClass("d-none")
+                        } else if (res.data.status_id === 6) {  // compilation error
+                          // hide timing diagram
+                          modalTiming.addClass("d-none")
+
+                          // show error message
+                          modalError.removeClass("d-none")
+                          modalErrorMsg.html(res.data.compile_output)
+                        } else {
+                          // show error message
+                          modalError.removeClass("d-none")
+                          modalErrorMsg.html(res.data.stderr)
+                        }
+                      }
+
+                      modalLoading.hide();
+                      modalBody.show();
+                        // enable buttons
                       sampleBtn.prop("disabled", false);
                       submitBtn.prop("disabled", false);
                       // hide loading, show more details link
@@ -734,7 +796,6 @@
                         // show waveform button
                         waveformBtn.removeClass('d-none');
                       }
-                      
                   }
               }
           }).fail((jqXHR, textStatus, errorThrown) => {
@@ -890,98 +951,6 @@
 
         return mismatchWave
       }
-
-      // "More Details" or "Test Case x" clicked (opens modal)
-      const viewModal = (btn) => {
-          // get token
-          const token = $(btn).data('token');
-
-          // show m-loading, hide m-body
-          modalBody.hide();
-          modalLoading.show();
-
-          // hide waveforms
-          modalTiming.addClass("d-none")
-          modalAccordion.addClass("d-none")
-          modalHidden.addClass("d-none")
-          modalError.addClass("d-none")
-
-          // ajax request
-          $.ajax({
-              type: 'GET',
-              url: "{% url 'get-tc-details' %}",
-              data: {token, status_only: false},
-          }).done((res, textStatus, jqXHR) => {
-              if (res.result === "success") {
-                  // set values
-                  modalToken.html(token);
-                  modalStdin.html(res.data.stdin ? res.data.stdin : '&nbsp;');
-                  modalOutcome.html(res.data.status);
-
-                  if ('{{ is_software_language }}' === 'True') {
-                    modalStdout.html(res.data.stdout ? res.data.stdout : '&nbsp;');
-                    modalExpectedOutput.html(res.data.expected_output ? res.data.expected_output : '&nbsp;');
-                  } else {
-                    if (res.data.stdout && res.data.stdout !== 'Hidden') {
-                      // show waveforms
-                      modalAccordion.removeClass("d-none")
-
-                      const wavedromGroups = compareWaveform(res.data.expected_output, res.data.stdout)
-
-                      wavedromGroups.forEach((wavedrom, index) => {
-                        // update accordion header
-                        const accordionHeader = document.getElementById(`waveformHeading${index + 1}`);
-                        const accordionButton = accordionHeader.querySelector('.accordion-button');
-                        let title
-
-                        if (wavedrom.signal[6].wave.includes('h'))
-                          title = `${wavedrom.signal[2][1].name}<span style="margin-left: 30px">&#x274C;</span>`
-                        else
-                          title = `${wavedrom.signal[2][1].name}<span style="margin-left: 30px">&#x2705;</span>`
-                        
-                        accordionButton.innerHTML = title;
-
-                        // update waveform
-                        const modalWavedrom = document.getElementById(`InputJSON_${index + 1}`)
-                        modalWavedrom.innerHTML = JSON.stringify(wavedrom)
-                        WaveDrom.RenderWaveForm(index + 1, WaveDrom.eva(`InputJSON_${index + 1}`), "WaveDrom_Display_")
-                      })
-                    } else if (res.data.stdout === 'Hidden') {
-                      // show hidden
-                      modalTiming.addClass("d-none")
-                      modalHidden.removeClass("d-none")
-                    } else if (res.data.status_id === 6) {  // compilation error
-                      // hide timing diagram
-                      modalTiming.addClass("d-none")
-
-                      // show error message
-                      modalError.removeClass("d-none")
-                      modalErrorMsg.html(res.data.compile_output)
-                    } else {
-                      // show error message
-                      modalError.removeClass("d-none")
-                      modalErrorMsg.html(res.data.stderr)
-                    }
-                  }
-
-                  setTimeout(() => {
-                      modalLoading.hide();
-                      modalBody.show();
-                  }, 500);
-              }
-          }).fail((jqXHR, textStatus, errorThrown) => {
-              // 4xx status codes
-              if (Math.floor(jqXHR.status / 100) == 4) {
-                console.error("Internal API Error!");
-              }
-              else {
-                console.error("External API Error!");
-              }
-          });
-
-          // show modal
-          $('#detailsModal').modal('show');
-      };
 
       // submit code, create new submission
       const submit = () => {
