@@ -1,10 +1,18 @@
-from django.urls import path
+from django.urls import include, path, re_path
 from django.views.static import serve
 from django.conf import settings
 
 from .views import auth, user_management, dashboards, course_management, question_banks, code_questions, assessments, attempts, reports
 
+static_urlpatterns = [
+    re_path(r"^media/(?P<path>.*)$", serve, {"document_root": settings.MEDIA_ROOT}),
+    re_path(r"^static/(?P<path>.*)$", serve, {"document_root": settings.STATIC_ROOT}),
+]
+
 urlpatterns = [
+    # static files
+    path("", include(static_urlpatterns)),
+
     # global auth
     path('login/', auth.Login.as_view(), name='login'),
     path('logout/', auth.Logout.as_view(), name='logout'),
