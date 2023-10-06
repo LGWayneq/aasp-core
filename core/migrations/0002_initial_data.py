@@ -97,20 +97,23 @@ class Migration(migrations.Migration):
         CodeTemplate = apps.get_model('core', 'CodeTemplate')
 
         c = Language.objects.create(name='C (GCC 9.2.0)', judge_language_id=75, ace_mode='c_cpp')
+        cpp = Language.objects.create(name='C++ (GCC 9.2.0)', judge_language_id=76, ace_mode='c_cpp')
         java = Language.objects.create(name='Java (OpenJDK 13.0.1)', judge_language_id=79, ace_mode='java')
         python3 = Language.objects.create(name='Python 3.8.1', judge_language_id=83, ace_mode='python')
         verilog = Language.objects.create(name='Verilog (Icarus Verilog 11.0.0)', judge_language_id=90, ace_mode='verilog')
 
         # create code templates
-        ct1 = CodeTemplate(language=c, name="Default",
+        c_template = CodeTemplate(language=c, name="Default",
                            code="// ro-start\n#include <stdio.h>\n#include <stdlib.h>\n\nint main(){\n// ro-end\n	// enter your solution here...\n\n\n// ro-start\n	return 0;\n}\n// ro-end\n")
-        ct2 = CodeTemplate(language=java, name="Default",
+        cpp_template = CodeTemplate(language=cpp, name="Default",
+                           code="// ro-start\n#include <iostream>\n\nint main(){\n// ro-end\n	// enter your solution here...\n\n\n// ro-start\n	return 0;\n}\n// ro-end\n")
+        java_template = CodeTemplate(language=java, name="Default",
                            code="// ro-start\npublic class Main {\n    public static void main(String [] args) {\n// ro-end\n        // enter your solution here...\n\n// ro-start\n    }\n}\n// ro-end\n")
-        ct3 = CodeTemplate(language=python3, name="Default",
+        python_template = CodeTemplate(language=python3, name="Default",
                            code='# // ro-start\ndef main():\n# // ro-end\n	# enter your solution here...\n\n\n# // ro-start\nif __name__ == "__main__":\n	main()\n# // ro-end\n')
-        ct4 = CodeTemplate(language=verilog, name="Default",
+        verilog_template = CodeTemplate(language=verilog, name="Default",
                            code="module main (out, clk, reset);\n\n\toutput out;\n\tinput clk, reset;\n\n\talways @ (posedge clk)\n\tbegin\n\t\t//  enter your solution here...\n\n\n\tend\n\nendmodule")
-        CodeTemplate.objects.bulk_create([ct1, ct2, ct3, ct4])
+        CodeTemplate.objects.bulk_create([c_template, cpp_template, java_template, python_template, verilog_template])
 
 
     dependencies = [
