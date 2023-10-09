@@ -56,6 +56,7 @@ class CodeQuestion(models.Model):
     name = models.CharField(max_length=50, blank=False, null=False)
     description = models.TextField(blank=False, null=False)
     tags = models.ManyToManyField(Tag, blank=True)
+    is_concurrency_question = models.BooleanField(default=False, blank=False, null=False)
 
     # foreign keys (either linked to a QuestionBank or Assessment instance)
     question_bank = models.ForeignKey(QuestionBank, null=True, blank=True, on_delete=models.CASCADE)

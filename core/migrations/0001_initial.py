@@ -79,6 +79,7 @@ class Migration(migrations.Migration):
                 ('name', models.CharField(max_length=50)),
                 ('description', models.TextField()),
                 ('assessment', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.PROTECT, to='core.assessment')),
+                ('is_concurrency_question', models.BooleanField(default=False)),
             ],
         ),
         migrations.CreateModel(

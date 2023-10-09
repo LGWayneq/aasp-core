@@ -30,7 +30,7 @@
           <div class="card-body">
 
             <!-- Tabs (Not clickable) -->
-            <ul class="nav nav-pills mb-3">
+            <ul class="nav nav-pills">
               <li class="nav-item">
                 <p class="nav-link active">Step 1: Description</p>
               </li>
@@ -59,32 +59,38 @@
                 <div class="tab-pane fade show active pt-3" id="pill-description" role="tabpanel" aria-labelledby="pill-description-tab">
 
                   <!-- Question Name input -->
-                  <div class="row">
-                    <div class="col-8">
-                      <div class="form-group">
-                        <label for="id_name" class="mb-2">Question Name</label>
-                        <input type="text" name="name" class="form-control form-control-lg {% if form.name.errors %}is-invalid{% endif %}" id="id_name"
-                               placeholder="e.g. Two sum" value="{{ form.name.value|default:"" }}" required>
-                        {# name errors #}
-                        {% if form.name.errors %}
-                          <p class="text-danger">{{ e }}
-                            {% for e in form.name.errors %}
-                              {{ e }}<br>
-                            {% endfor %}
-                          </p>
-                        {% endif %}
-                      </div>
-                    </div>
-                    <div class="col-4">
-                      <div class="form-group">
-                        <label for="id_tags" class="mb-2">Tags</label>
-                        <input type="text" name="tags" id="id_tags"/>
-                      </div>
+                  <div>
+                    <div class="form-group">
+                      <label for="id_name" class="mb-2">Question Name</label>
+                      <input type="text" name="name" class="form-control form-control-lg {% if form.name.errors %}is-invalid{% endif %}" id="id_name"
+                              placeholder="e.g. Two sum" value="{{ form.name.value|default:"" }}" required>
+                      {# name errors #}
+                      {% if form.name.errors %}
+                        <p class="text-danger">{{ e }}
+                          {% for e in form.name.errors %}
+                            {{ e }}<br>
+                          {% endfor %}
+                        </p>
+                      {% endif %}
                     </div>
                   </div>
 
+                  <!-- Tag selection -->
+                  <div>
+                    <div class="form-group">
+                      <label for="id_tags" class="mb-2">Tags</label>
+                      <input type="text" name="tags" id="id_tags"/>
+                    </div>
+                  </div>
+
+                  <!-- Show grade checkbox -->
+                  <div class="checkbox mt-4">
+                    <input type="checkbox" id="is_concurrency_question" name="is_concurrency_question" class="form-check-input me-2">
+                    <label for="id_show_grade">Is Concurrency Question</label>
+                  </div>
+
                   <!-- Description input -->
-                  <div class="form-group mb-3">
+                  <div class="form-group mt-3 mb-3">
                     <div class="d-flex justify-content-between align-items-center mb-2">
                       <label for="id_description">Question Description</label>
                       <button type="button" class="btn btn-warning btn-sm" id="preview-btn">Show Preview</button>
@@ -135,7 +141,7 @@
       // toggle preview on button click
       previewButton.click(function () {
           simplemde.togglePreview();
-          if (simplemde.isPreviewActive())
+          if (previewButton.text() === "Show Markdown")
               previewButton.text("Show Preview")
           else {
               previewButton.text("Show Markdown")
