@@ -624,6 +624,8 @@
       const resultsBody = $("#results-body");
       const resultsStdin = $("#results-stdin");
       const resultsStdout = $("#results-stdout");
+      const resultsStderrContainer = $("#results-stderr-container");
+      const resultsStderr = $("#results-stderr");
       const resultsExpectedOutput = $("#results-expected-output");
       const resultsOutcome = $("#results-outcome");
       const resultsTiming = $("#results-timing");
@@ -732,6 +734,7 @@
                           updateSampleStatus(token);
                       }, 1000);
                   } else { // finished
+                      runStatus.html(res.data.status);
                       if (res.data.status_id === 3)
                           resultsOutcome.html(res.data.status + " &#x2705;");
                       else
@@ -749,6 +752,12 @@
                       if ('{{ is_software_language }}' === 'True') {
                         resultsStdout.html(res.data.stdout ? res.data.stdout : '&nbsp;');
                         resultsExpectedOutput.html(res.data.expected_output ? res.data.expected_output : '&nbsp;');
+                        if (res.data.stderr != undefined) {
+                          resultsStderrContainer.show();
+                          resultsStderr.html(res.data.stderr);
+                        } else {
+                          resultsStderrContainer.hide();
+                        }
                       } else {
                         if (res.data.stdout && res.data.stdout !== 'Hidden') {
                           // show waveforms

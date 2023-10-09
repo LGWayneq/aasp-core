@@ -30,16 +30,22 @@
             
             <!-- stdin -->
             <h5>Standard Input</h5>
-            <pre><code class="language-plaintext rounded" id="results-stdin" style="max-height: 100px; overflow: auto;"></code></pre>
+            <pre><code class="language-plaintext rounded" id="results-stdin" style="max-height: 130px; overflow-y: auto; white-space: pre-wrap; word-wrap: break-word;"></code></pre>
             {% if is_software_language %}
 
             <!-- stdout -->
             <h5>Standard Output</h5>
-            <pre><code class="language-plaintext rounded" id="results-stdout" style="max-height: 100px; overflow: auto;"></code></pre>
+            <pre><code class="language-plaintext rounded" id="results-stdout" style="max-height: 130px; overflow-y: auto; white-space: pre-wrap; word-wrap: break-word;"></code></pre>
+
+            <!-- stderr -->
+            <div id="results-stderr-container">
+                <h5>Standard Error</h5>
+                <pre><code class="language-plaintext rounded" id="results-stderr" style="max-height: 130px; overflow-y: auto; white-space: pre-wrap; word-wrap: break-word;"></code></pre>
+            </div>
 
             <!-- expected output -->
             <h5>Expected Output</h5>
-            <pre><code class="language-plaintext rounded" id="results-expected-output" style="max-height: 100px; overflow: auto;"></code></pre>
+            <pre><code class="language-plaintext rounded" id="results-expected-output" style="max-height: 130px; overflow-y: auto; white-space: pre-wrap; word-wrap: break-word;"></code></pre>
             {% else %}
 
             <!-- waveform evaluation -->
