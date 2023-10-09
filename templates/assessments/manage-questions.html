@@ -141,8 +141,7 @@
                             <div class="col-4">
                                 <div class="form-group">
                                     <label for="cq_id_question_bank">Question Bank</label>
-                                    <select class="form-select form-select-lg" name="question_bank"
-                                        id="cq_id_question_bank">
+                                    <select class="form-select form-select-lg" name="question_bank" onchange="filterCodeQuestion();" id="cq_id_question_bank">
                                         <option value="" selected="">---------</option>
                                         {% for qb in all_question_banks %}
                                         <option value="{{ qb.id }}">{{ qb.name }}</option>
@@ -155,7 +154,7 @@
                             <div class="col-4">
                                 <div class="form-group">
                                     <label for="cq_id_name">Question Name</label>
-                                    <input type="text" class="form-control form-control-lg" name="name" id="cq_id_name">
+                                    <input type="text" class="form-control form-control-lg" name="name" oninput="filterCodeQuestion();" id="cq_id_name">
                                 </div>
                             </div>
 
@@ -163,19 +162,11 @@
                             <div class="col-3">
                                 <div class="form-group">
                                     <label for="cq_id_tags">Tags</label>
-                                    <select name="tags" id="cq_id_tags" multiple>
+                                    <select name="tags" onchange="filterCodeQuestion();" id="cq_id_tags" multiple>
                                         {% for tag in tags %}
                                         <option value="{{ tag.id }}">{{ tag.name }}</option>
                                         {% endfor %}
                                     </select>
-                                </div>
-                            </div>
-
-                            <!-- Filter button -->
-                            <div class="col-1">
-                                <div class="form-group">
-                                    <button type="button" class="btn btn-primary mt-4" id="filter-cq-btn"
-                                        onclick="filterCodeQuestion();">Filter</button>
                                 </div>
                             </div>
                         </div>
