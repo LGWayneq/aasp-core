@@ -97,7 +97,7 @@ class Migration(migrations.Migration):
         CodeTemplate = apps.get_model('core', 'CodeTemplate')
 
         c = Language.objects.create(name='C (GCC 9.2.0)', judge_language_id=75, ace_mode='c_cpp')
-        cpp = Language.objects.create(name='C++ (GCC 9.2.0)', judge_language_id=76, ace_mode='c_cpp')
+        cpp = Language.objects.create(name='C++ (GCC 9.2.0)', judge_language_id=76, ace_mode='c_cpp', concurrency_support=True)
         java = Language.objects.create(name='Java (OpenJDK 13.0.1)', judge_language_id=79, ace_mode='java')
         python3 = Language.objects.create(name='Python 3.8.1', judge_language_id=83, ace_mode='python')
         verilog = Language.objects.create(name='Verilog (Icarus Verilog 11.0.0)', judge_language_id=90, ace_mode='verilog')

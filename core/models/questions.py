@@ -24,6 +24,7 @@ class Language(models.Model):
     judge_language_id = models.IntegerField(blank=False, null=False, unique=True)
     ace_mode = models.CharField(max_length=50, blank=False, null=False)
     software_language = models.BooleanField(null=False, blank=False, default=True)
+    concurrency_support = models.BooleanField(null=False, blank=False, default=False)
     
     def clean(self):
         super().clean()

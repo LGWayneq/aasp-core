@@ -123,6 +123,7 @@ class Migration(migrations.Migration):
                 ('name', models.CharField(max_length=50, unique=True)),
                 ('judge_language_id', models.IntegerField(unique=True)),
                 ('ace_mode', models.CharField(max_length=50)),
+                ('concurrency_support', models.BooleanField(default=False)),
             ],
         ),
         migrations.CreateModel(

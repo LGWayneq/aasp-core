@@ -267,12 +267,15 @@ def update_languages(request, code_question_id):
     CodeSnippetFormset = inlineformset_factory(CodeQuestion, CodeSnippet, extra=0, fields=['language', 'code'])
     code_snippet_formset = CodeSnippetFormset(prefix='cs', instance=code_question)
 
+    # filter languages offered
+    languages = Language.objects.filter(concurrency_support=True) if code_question.is_concurrency_question else Language.objects.all()
+
     if request.method == "GET":
         context = {
             'creation': request.GET.get('next') is None,
             'code_question': code_question,
             'code_snippet_formset': code_snippet_formset,
-            'languages': Language.objects.all(),
+            'languages': languages,
             'existing_languages': code_question.codesnippet_set.all().values_list('language', flat=True).distinct()
         }
 
