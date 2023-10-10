@@ -16,6 +16,7 @@
     const cqDescription = $("#cq-description");
     const cqTestCases = $("#cq-test-cases");
     const cqLanguages = $("#cq-languages");
+    const cqConcurrency = $("#cq-concurrency");
 
     const viewModal = (btn) => {
         // clear old data
@@ -51,6 +52,7 @@
                 cqDescription.html(marked.parse(res.code_question.description));
                 cqTestCases.append(rows);
                 cqLanguages.html(languages);
+                cqConcurrency.html(res.code_question.is_concurrency_question ? "True" : "False");
                 hljs.highlightAll();
 
                 // render math

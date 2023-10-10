@@ -30,6 +30,7 @@
                             <th>Test Cases</th>
                             <th>Max Score</th>
                             <th>Languages</th>
+                            <th>Concurrency</th>
                             <th>Tags</th>
                             <th>Actions
                                 <div class="spinner-border spinner-border-sm" id="actions-loading" style="display:none">
@@ -64,6 +65,13 @@
                                 {% if q.languages.count > 2 %}
                                 <span class="badge bg-light-secondary">+{{ q.languages.count|add:"-2" }} more</span>
                                 {% endif %}
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if q.is_concurrency_question %}
+                                  <span class="badge bg-light-success">Y</span>
+                                {% else %}
+                                  <span class="badge bg-light-danger">N</span>
                                 {% endif %}
                             </td>
                             <td>

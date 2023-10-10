@@ -32,7 +32,7 @@ class CodeQuestionsSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = CodeQuestion
-        fields = ['id', 'name', 'description', 'tags', 'question_bank', 'assessment', 'testcase_set', 'languages']
+        fields = ['id', 'name', 'description', 'tags', 'question_bank', 'assessment', 'testcase_set', 'languages', 'is_concurrency_question']
 
 
 class TestCaseSerializerLite(serializers.ModelSerializer):
