@@ -193,6 +193,8 @@ def construct_judge0_params(request, test_case) -> dict:
             "cpu_time_limit": test_case.time_limit,
             "memory_limit": test_case.memory_limit,
         }
+        if test_case.code_question.is_concurrency_question:
+            params['compiler_options'] = "-fsanitize=thread"
     else:
         # check if language is verilog
         language = Language.objects.get(judge_language_id=request.POST.get('lang-id'))
