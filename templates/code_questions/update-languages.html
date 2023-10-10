@@ -69,7 +69,7 @@
                 {{ error }}
               {% endfor %}
 
-              <form method="POST">
+              <form method="POST" id="code-snippet-form">
                 {% csrf_token %}
 
                 <!-- code snippet management form -->
@@ -384,5 +384,15 @@
         })
       }
     })
+  </script>
+
+  <!-- Prevent no language selected submission script -->
+  <script>
+    $("#code-snippet-form").submit(function (e) {
+      if ($(".language-checkbox:checked").length == 0 && $(".language-radio:checked").length == 0) {
+        e.preventDefault();
+        alert("Please select at least one language!");
+      }
+    });
   </script>
 {% endblock %}
