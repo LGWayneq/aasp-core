@@ -500,6 +500,12 @@
       const selected = langSelect.find("option:selected")
       // set the code snippet
       editor.session.setValue(selected.data("code"))
+
+      const language = selected.val();
+      const latestSubmission = `{{ latest_submission }}`;
+      if ('{{ latest_submission_language|safe }}' === language && latestSubmission !== '') {
+        editor.session.setValue(latestSubmission);
+      }
       //"{{ is_software_language }}" === "False" ? updatePorts() : editor.session.setValue(selected.data("code"))
       // set ace mode
       editor.session.setMode("ace/mode/" + selected.data("ace-mode"))
