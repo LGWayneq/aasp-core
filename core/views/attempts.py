@@ -483,9 +483,9 @@ def code_question_submission(request, code_question_attempt_id):
                 ])
 
             # queue celery tasks
-            for tca in test_case_attempts:
-                for i in range(1, 6):
-                    update_test_case_attempt_status.apply_async((tca.id, tca.token), countdown=i*2)
+            # for tca in test_case_attempts:
+            #     for i in range(1, 6):
+            #         update_test_case_attempt_status.apply_async((tca.id, tca.token), countdown=i*2)
 
             context = {
                 "result": "success",
@@ -502,6 +502,59 @@ def code_question_submission(request, code_question_attempt_id):
         }
         return Response(error_context, status=status.HTTP_400_BAD_REQUEST)
 
+def update_test_case_attempt_status(tca_id: int, token: str):
+    """
+    Polls judge0 to get the status_id of a single submission (one test case)
+    If status_id has been changed, save the change to db.
+    If the submission is still being processed, re-queue this task to be polled again later.
+    """
+    try:
+        # call judge0
+        url = f"{settings.JUDGE0_URL}/submissions/{token}?base64_encoded=false&fields=status_id,stdout,time,memory"
+        res = requests.get(url)
+        data = res.json()
+
+        status_id = data.get('status_id')
+        stdout = data.get('stdout')
+        time = data.get('time')
+        memory = data.get('memory')
+
+        if status_id not in [1, 2]:
+            tca = TestCaseAttempt.objects.prefetch_related('cq_submission').get(id=tca_id)
+            tca.status = status_id
+            tca.stdout = stdout
+            tca.time = time
+            tca.memory = memory
+            tca.save()
+            # check if all test cases have been completed
+            finished = not TestCaseAttempt.objects.filter(cq_submission_id=tca.cq_submission.id, status__in=[1, 2]).exists()
+
+            # only continue if test cases are complete
+            if finished:
+                update_cqs_passed_flag(tca.cq_submission.id)
+    except ConnectionError as e:
+        print(e.message)
+
+def update_cqs_passed_flag(cqs_id):
+    """
+    Checks if all test cases of a CodeQuestionSubmission has been processed by judge0.
+    Update the "passed" field of the CQS instance and initiates the computation of the submission score.
+    If it was already calculated previously, nothing will be done.
+    """
+    # # check if all test cases have been completed
+    # finished = not TestCaseAttempt.objects.filter(cq_submission_id=cqs_id, status__in=[1, 2]).exists()
+
+    # # only continue if test cases are complete
+    # if finished:
+    # get cqs object
+    cqs = CodeQuestionSubmission.objects.get(id=cqs_id)
+
+    # only continue if it was not previously calculated
+    if cqs.passed is None:
+        # update the passed flag
+        passed = not TestCaseAttempt.objects.filter(cq_submission_id=cqs_id, status__range=(4, 14)).exists()
+        cqs.passed = passed
+        cqs.save()
 
 @api_view(["GET"])
 @renderer_classes([JSONRenderer])
@@ -516,7 +569,13 @@ def get_cq_submission_status(request):
             cq_submission_id = request.GET.get("cqs_id")
 
             # get test case attempts
-            statuses = list(
+            test_cases = list(
+                TestCaseAttempt.objects.filter(cq_submission=cq_submission_id).values_list('id', 'token'))
+            
+            for test_case in test_cases:
+                update_test_case_attempt_status(test_case[0], test_case[1])
+
+            test_cases = list(
                 TestCaseAttempt.objects.filter(cq_submission=cq_submission_id).values_list('id', 'status', 'token'))
             cqs = CodeQuestionSubmission.objects.get(id=cq_submission_id)
 
@@ -527,12 +586,12 @@ def get_cq_submission_status(request):
                     "message": "You do not have permissions to perform this action.",
                 }
                 return Response(error_context, status=status.HTTP_401_UNAUTHORIZED)
-
+            
             context = {
                 "result": "success",
                 "cqs_id": cq_submission_id,
                 "outcome": cqs.outcome,
-                "statuses": statuses
+                "statuses": test_cases
             }
             return Response(context, status=status.HTTP_200_OK)
     
