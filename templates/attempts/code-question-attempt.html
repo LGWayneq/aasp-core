@@ -48,8 +48,15 @@
     <div class="page-title">
       <div class="row d-flex align-content-between">
         <div class="col-9">
-          <h5>Assessment</h5>
-          <h2>{{ question_attempt.assessment_attempt.assessment }}</h2>
+          <div style="display:flex; flex-direction: row; align-items: center;">
+            {% if not assessment.require_webcam and not assessment.limit_tab_switching %}
+            <i class="fa-solid fa-arrow-left-long fa-xl" style="margin-right: 20px; cursor: pointer;" onclick='javascript:history.go(-1);'></i>
+            {% endif %}
+            <div>
+              <h5>Assessment</h5>
+              <h2>{{ question_attempt.assessment_attempt.assessment }}</h2>
+            </div>
+          </div>
         </div>
         <div class="col-3">
           <form id="end-assessment-form" method="post"

@@ -217,6 +217,7 @@ def attempt_question(request, assessment_attempt_id, question_index):
 
     # context
     context = {
+        'assessment': assessment_attempt.assessment,
         'question_index': question_index,
         'assessment_attempt': assessment_attempt,
         'question_attempt': question_attempt,
