@@ -2,7 +2,7 @@ import csv
 
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
-from django.db.models import Q
+from django.db.models import Q, Avg, Sum
 from django.http import HttpResponse, Http404
 from django.shortcuts import render, get_object_or_404
 from django.utils import timezone
@@ -29,10 +29,19 @@ def assessment_report(request, assessment_id):
                                 .select_related("assessment") \
                                 .filter(Q(assessment=assessment, time_submitted__isnull=True) | Q(time_submitted__isnull=False, score__isnull=True))
 
+    mean_score = best_attempts.aggregate(Avg('score'))['score__avg']
+    count = best_attempts.count()
+    if count % 2 == 0:
+        median_score = (best_attempts[count // 2 - 1].score + best_attempts[count // 2].score) / 2
+    else:
+        median_score = best_attempts[count // 2].score
+
     context = {
         "assessment": assessment,
         "best_attempts": best_attempts,
         "ongoing_ungraded_attempts": ongoing_ungraded_attempts,
+        "mean_score": mean_score,
+        "median_score": median_score,
     }
 
     return render(request, "reports/assessment-report.html", context)

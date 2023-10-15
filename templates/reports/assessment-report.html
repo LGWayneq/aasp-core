@@ -27,6 +27,23 @@
     </div>
   </div>
 
+  <!-- Submission statistics -->
+  <div class="row">
+    <div class="card">
+      <div class="card-header d-flex align-content-between">
+        <div class="col-11">
+          <h4>Statistics</h4>
+          <p>Calculated based on best completed attempts of each candidate.</p>
+        </div>
+
+      </div>
+      <div class="card-body">
+        <h6>Mean: {{ mean_score }}/{{ assessment.total_score }}</h6>
+        <h6>Median: {{ median_score }}/{{ assessment.total_score }}</h6>
+      </div>
+    </div>
+  </div>
+
   <!-- Candidate attempts -->
   <div class="row">
     <div class="card">
