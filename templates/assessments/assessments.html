@@ -64,6 +64,7 @@
                         {% if c.course.owner == request.user %}
                           <a class="btn btn-secondary" href="{% url 'update-assessment' assessment_id=c.id %}?next={{ request.path }}">Edit</a>
                         {% endif %}
+                        <a class="btn btn-secondary" href="{% url 'assessment-report' assessment_id=c.id %}">Report</a>
                       </td>
                     </tr>
                   {% endfor %}
@@ -126,6 +127,7 @@
                         {% if c.course.owner == request.user %}
                           <a class="btn btn-secondary" href="{% url 'update-assessment' assessment_id=c.id %}?next={{ request.path }}">Edit</a>
                         {% endif %}
+                        <a class="btn btn-secondary" href="{% url 'assessment-report' assessment_id=c.id %}">Report</a>
                       </td>
                     </tr>
                   {% endfor %}
