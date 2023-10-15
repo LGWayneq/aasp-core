@@ -38,8 +38,10 @@
 
       </div>
       <div class="card-body">
+        <h6>Candidates: {{ best_attempts.count }}</h6>
         <h6>Mean: {{ mean_score }}/{{ assessment.total_score }}</h6>
         <h6>Median: {{ median_score }}/{{ assessment.total_score }}</h6>
+        {% include 'reports/snippets/bar-chart.html' %}
       </div>
     </div>
   </div>

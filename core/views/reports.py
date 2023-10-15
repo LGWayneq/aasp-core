@@ -36,16 +36,30 @@ def assessment_report(request, assessment_id):
     else:
         median_score = best_attempts[count // 2].score
 
+    graph_details = generate_graph(best_attempts, assessment)
+
     context = {
         "assessment": assessment,
         "best_attempts": best_attempts,
         "ongoing_ungraded_attempts": ongoing_ungraded_attempts,
         "mean_score": mean_score,
         "median_score": median_score,
+        "graph_details": graph_details,
     }
 
     return render(request, "reports/assessment-report.html", context)
 
+def generate_graph(best_attempts, assessment):
+    unique_scores = [i for i in range(assessment.total_score+1)]
+    y_values = [0 for _ in range(assessment.total_score+1)]
+    for attempt in best_attempts:
+        y_values[attempt.score] += 1
+        
+    return {
+        "x_labels": unique_scores,
+        "y_label": "Number of Students",
+        "y_values": y_values,
+    }
 
 @api_view(["GET"])
 @renderer_classes([JSONRenderer])
