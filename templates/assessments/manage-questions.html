@@ -167,7 +167,7 @@
                             </div>
 
                             <!-- Tags -->
-                            <div class="col-3">
+                            <div class="col-4">
                                 <div class="form-group">
                                     <label for="cq_id_tags">Tags</label>
                                     <select name="tags" onchange="filterCodeQuestion();" id="cq_id_tags" multiple>
@@ -189,6 +189,7 @@
                             <tr>
                                 <th>Name</th>
                                 <th style="width: 60%">Description</th>
+                                <th>Concurrency</th>
                                 <th>Tags</th>
                                 <th>Actions
                                     <div class="spinner-border spinner-border-sm" id="actions-loading"
@@ -273,7 +274,8 @@
                             cq.tags.forEach((t) => {
                                 tags += "<span class='badge bg-light-secondary me-1'>" + t.name + "</span>";
                             })
-                            newRows += "<tr><td>" + cq.name + "</td><td>" + cq.description + "</td><td>" + tags + "</td><td><button type='button' class='btn btn-success btn-sm' onclick='addCodeQuestion(this)' data-cq-id='" + cq.id + "'>Add</button></td></tr>"
+                            concurrency_value = cq.is_concurrency_question ? '<span class="badge bg-light-success">Y</span>' : '<span class="badge bg-light-danger">N</span>';
+                            newRows += "<tr><td>" + cq.name + "</td><td>" + cq.description + "</td><td>" + concurrency_value + "</td><td>" + tags + "</td><td><button type='button' class='btn btn-success btn-sm' onclick='addCodeQuestion(this)' data-cq-id='" + cq.id + "'>Add</button></td></tr>"
                         })
                         codeQuestionTableBody.append(newRows);
                     }
