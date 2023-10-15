@@ -22,8 +22,7 @@ from rest_framework.renderers import JSONRenderer
 from core.decorators import groups_allowed, UserGroup
 from core.models import Assessment, AssessmentAttempt, CodeQuestionAttempt, CodeQuestion, TestCase, CodeSnippet, \
     CodeQuestionSubmission, TestCaseAttempt, Language, CandidateSnapshot
-from core.tasks import update_test_case_attempt_status, force_submit_assessment, compute_assessment_attempt_score, \
-    detect_faces
+from core.tasks import update_test_case_attempt_status, force_submit_assessment, detect_faces
 from core.views.utils import get_assessment_attempt_question, check_permissions_course, user_enrolled_in_course, construct_judge0_params, vcd2wavedrom
 
 
@@ -627,7 +626,7 @@ def submit_assessment(request, assessment_attempt_id):
             assessment_attempt.save()
 
             # queue celery task to compute the assessment attempt's score (using results from test cases)
-            compute_assessment_attempt_score.delay(assessment_attempt.id)
+            compute_assessment_attempt_score(assessment_attempt.id)
 
             messages.success(request, "Assessment submitted successfully!")
 
@@ -636,6 +635,15 @@ def submit_assessment(request, assessment_attempt_id):
 
         return redirect('assessment-landing', assessment_id=assessment_attempt.assessment.id)
 
+def compute_assessment_attempt_score(assessment_attempt_id):
+    """
+    This task is queued when an AssessmentAttempt has been submitted (both user-initiated and server-side)
+    This tasks calculates the total score of the AssessmentAttempt, and determines if it is the best attempt.
+    If the AssessmentAttempt contains a submission that is still being processed, the task will be delayed.
+    """
+    # get the instance
+    assessment_attempt = AssessmentAttempt.objects.get(id=assessment_attempt_id)
+    assessment_attempt.compute_score()
 
 @api_view(["POST"])
 @renderer_classes([JSONRenderer])
