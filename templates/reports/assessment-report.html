@@ -38,10 +38,62 @@
 
       </div>
       <div class="card-body">
-        <h6>Candidates: {{ best_attempts.count }}</h6>
+        <h6>Unique Submissions: {{ best_attempts.count }}</h6>
         <h6>Mean: {{ mean_score }}/{{ assessment.total_score }}</h6>
         <h6>Median: {{ median_score }}/{{ assessment.total_score }}</h6>
         {% include 'reports/snippets/bar-chart.html' %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Question reports -->
+  <div class="row">
+    <div class="card">
+      <div class="card-header d-flex align-content-between">
+        <h4>Questions</h4>
+      </div>
+
+      <div class="card-body">
+        <table id="questions-table" class="table display table-borderless" style="width:100%">
+          <thead>
+          <tr>
+            <th>Question No.</th>
+            <th>Name</th>
+            <th>Max Score</th>
+            <td>Concurrency</td>
+            <td>Tags</td>
+            <th>Actions</th>
+          </tr>
+          </thead>
+          <tbody>
+          {% for cq in code_questions %}
+            <tr>
+              <td>{{ forloop.counter }}</td>
+              <td>{{ cq.name }}</td>
+              <td>{{ cq.max_score }}</td>
+              <td>
+                {% if cq.is_concurrency_question %}
+                  <span class="badge bg-light-success">Y</span>
+                {% else %}
+                  <span class="badge bg-light-danger">N</span>
+                {% endif %}
+              </td>
+              <td>
+                {% if cq.tags.all.count == 0 %}
+                -
+                {% else %}
+                {% for tag in cq.tags.all %}
+                <span class="badge bg-light-secondary">{{ tag.name }}</span>
+                {% endfor %}
+                {% endif %}
+              </td>
+              <td>
+                <a class="btn btn-secondary" href="{% url 'question-report' assessment_id=assessment.id question_id=cq.id %}">View Question Report</a>
+              </td>
+            </tr>
+          {% endfor %}
+          </tbody>
+        </table>
       </div>
     </div>
   </div>
@@ -206,6 +258,7 @@
 
   <!-- script for loading attempts modal -->
   <script>
+      $('#questions-table').DataTable();
       $('#best-attempts-table').DataTable();
       $('#ongoing-processing-table').DataTable();
       let modalTable = $("#modal-table").DataTable({searching: false, paging: false, info: false});

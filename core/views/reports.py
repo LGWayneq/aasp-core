@@ -2,7 +2,7 @@ import csv
 
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
-from django.db.models import Q, Avg, Sum
+from django.db.models import Q, Avg
 from django.http import HttpResponse, Http404
 from django.shortcuts import render, get_object_or_404
 from django.utils import timezone
@@ -13,7 +13,7 @@ from rest_framework.decorators import api_view, renderer_classes
 from rest_framework.renderers import JSONRenderer
 
 from core.decorators import UserGroup, groups_allowed
-from core.models import Assessment, AssessmentAttempt, CodeQuestionSubmission, TestCaseAttempt, TestCase, CandidateSnapshot
+from core.models import Assessment, AssessmentAttempt, CodeQuestionSubmission, CodeQuestionAttempt, CodeQuestion, TestCaseAttempt, TestCase, CandidateSnapshot
 from core.views.utils import check_permissions_assessment
 
 
@@ -21,6 +21,7 @@ from core.views.utils import check_permissions_assessment
 @groups_allowed(UserGroup.educator)
 def assessment_report(request, assessment_id):
     assessment = get_object_or_404(Assessment, id=assessment_id)
+    code_questions = CodeQuestion.objects.filter(assessment=assessment)
 
     best_attempts = AssessmentAttempt.objects \
                     .select_related("assessment") \
@@ -29,6 +30,7 @@ def assessment_report(request, assessment_id):
                                 .select_related("assessment") \
                                 .filter(Q(assessment=assessment, time_submitted__isnull=True) | Q(time_submitted__isnull=False, score__isnull=True))
 
+    # calculate mean and median score
     mean_score = best_attempts.aggregate(Avg('score'))['score__avg']
     count = best_attempts.count()
     if count % 2 == 0:
@@ -36,10 +38,12 @@ def assessment_report(request, assessment_id):
     else:
         median_score = best_attempts[count // 2].score
 
-    graph_details = generate_graph(best_attempts, assessment)
+    # generate graph data
+    graph_details = generate_graph(best_attempts, assessment.total_score)
 
     context = {
         "assessment": assessment,
+        "code_questions": code_questions,
         "best_attempts": best_attempts,
         "ongoing_ungraded_attempts": ongoing_ungraded_attempts,
         "mean_score": mean_score,
@@ -49,15 +53,65 @@ def assessment_report(request, assessment_id):
 
     return render(request, "reports/assessment-report.html", context)
 
-def generate_graph(best_attempts, assessment):
-    unique_scores = [i for i in range(assessment.total_score+1)]
-    y_values = [0 for _ in range(assessment.total_score+1)]
-    for attempt in best_attempts:
+@login_required()
+@groups_allowed(UserGroup.educator)
+def question_report(request, assessment_id, question_id):
+    assessment = get_object_or_404(Assessment, id=assessment_id)
+    code_question = get_object_or_404(CodeQuestion, id=question_id)
+
+    # get best submission for each student
+    submissions_from_best_attempts = CodeQuestionSubmission.objects \
+        .select_related('cq_attempt', 'cq_attempt__assessment_attempt') \
+        .filter(
+            Q(cq_attempt__code_question_id=question_id) &
+            Q(cq_attempt__assessment_attempt__best_attempt=True)
+        )
+    
+    user_submissions = {}
+    for submission in submissions_from_best_attempts:
+        candidate = submission.cq_attempt.assessment_attempt.candidate
+        if candidate not in user_submissions or user_submissions[candidate].score < submission.score:
+            user_submissions[candidate] = submission
+    best_submissions = list(user_submissions.values())
+
+    # calculate mean and median score
+    count = len(best_submissions)
+    mean_score = sum(submission.score for submission in best_submissions) / len(best_submissions)
+    best_submissions.sort(key=lambda x: x.score)
+    if count % 2 == 0:
+        median_score = (best_submissions[count // 2 - 1].score + best_submissions[count // 2].score) / 2
+    else:
+        median_score = best_submissions[count // 2].score
+
+    # get all submissions regardless of best attempt
+    all_submissions = CodeQuestionSubmission.objects \
+        .select_related('cq_attempt', 'cq_attempt__assessment_attempt') \
+        .filter(cq_attempt__code_question_id=question_id)
+    
+    # generate graph data
+    graph_details = generate_graph(best_submissions, code_question.max_score())
+
+    context = {
+        "assessment": assessment,
+        "code_question": code_question,
+        "best_submissions": best_submissions,
+        "mean_score": mean_score,
+        "median_score": median_score,
+        "all_submissions": all_submissions,
+        "graph_details": graph_details,
+    }
+
+    return render(request, "reports/question-report.html", context)
+
+def generate_graph(values, max_value, y_label = "Number of Students"):
+    unique_values = [i for i in range(max_value+1)]
+    y_values = [0 for _ in range(max_value+1)]
+    for attempt in values:
         y_values[attempt.score] += 1
-        
+
     return {
-        "x_labels": unique_scores,
-        "y_label": "Number of Students",
+        "x_labels": unique_values,
+        "y_label": y_label,
         "y_values": y_values,
     }
 
