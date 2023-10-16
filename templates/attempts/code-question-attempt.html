@@ -509,7 +509,10 @@
       editor.session.setValue(selected.data("code"))
 
       const language = selected.val();
-      const latestSubmission = `{{ latest_submission }}`;
+      let latestSubmission = "";
+      JSON.parse(`{{ latest_submission_ascii }}`).forEach((ascii) => {
+        latestSubmission += String.fromCharCode(ascii);
+      });
       if ('{{ latest_submission_language|safe }}' === language && latestSubmission !== '') {
         editor.session.setValue(latestSubmission);
       }

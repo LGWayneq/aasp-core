@@ -235,7 +235,7 @@ def attempt_question(request, assessment_attempt_id, question_index):
         code_snippets = CodeSnippet.objects.filter(code_question=code_question)
         sample_tc = TestCase.objects.filter(code_question=code_question, sample=True).first()
         code_question_submissions = CodeQuestionSubmission.objects.filter(cq_attempt=question_attempt).order_by('-id')
-        latest_submission = code_question_submissions[0].code if code_question_submissions else None
+        latest_submission_ascii = [ord(c) for c in code_question_submissions[0].code] if code_question_submissions else None
         latest_submission_language = code_question_submissions[0].language.name if code_question_submissions else None
 
         # add to base context
@@ -244,7 +244,7 @@ def attempt_question(request, assessment_attempt_id, question_index):
             'sample_tc': sample_tc,
             'code_snippets': code_snippets,
             'code_question_submissions': code_question_submissions,
-            'latest_submission': latest_submission,
+            'latest_submission_ascii': latest_submission_ascii,
             'latest_submission_language': latest_submission_language,
         })
 
