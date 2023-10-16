@@ -106,6 +106,7 @@ class AssessmentAttempt(models.Model):
 class CodeQuestionAttempt(models.Model):
     assessment_attempt = models.ForeignKey("AssessmentAttempt", null=False, blank=False, on_delete=models.CASCADE)
     code_question = models.ForeignKey("CodeQuestion", null=False, blank=False, on_delete=models.PROTECT)
+    time_spent = models.DurationField(null=False, blank=False)
 
     @property
     def attempted(self):

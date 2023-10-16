@@ -1091,6 +1091,7 @@
           formData.append("code", editor.getValue());
           formData.append("lang-id", langSelect.find("option:selected").data('judgeid'));
           formData.append("csrfmiddlewaretoken", "{{ csrf_token }}");
+          formData.append("start_time", "{{ start_time }}");
 
           // ajax call
           $.ajax({

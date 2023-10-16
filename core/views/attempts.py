@@ -214,6 +214,10 @@ def attempt_question(request, assessment_attempt_id, question_index):
     if not question_attempt:
         raise Http404()
 
+    # track start time
+    start_time_unformatted = timezone.localtime() - question_attempt.time_spent
+    start_time = start_time_unformatted.strftime("%Y-%m-%d %H:%M:%S")
+
     # context
     context = {
         'assessment': assessment_attempt.assessment,
@@ -222,6 +226,7 @@ def attempt_question(request, assessment_attempt_id, question_index):
         'question_attempt': question_attempt,
         'question_statuses': question_statuses,
         'is_software_language': question_attempt.code_question.is_software_language(),
+        'start_time': start_time,
     }
 
     # render different template depending on question type (currently only CodeQuestion)
@@ -485,6 +490,12 @@ def code_question_submission(request, code_question_attempt_id):
                 test_case_attempts = TestCaseAttempt.objects.bulk_create([
                     TestCaseAttempt(cq_submission=cqs, test_case=tc, token=token) for tc, token in zip(test_cases, tokens)
                 ])
+
+                start_time = request.POST.get('start_time')
+                current_time = timezone.localtime()
+                time_spent = current_time - timezone.make_aware(datetime.strptime(start_time, "%Y-%m-%d %H:%M:%S"))    
+                cqa.time_spent = time_spent        
+                cqa.save()
 
             # queue celery tasks
             # for tca in test_case_attempts:
