@@ -1,16 +1,15 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.2.1/dist/chart.umd.min.js"></script>
 <div style="height: 400px;">
-    <canvas id="chart"></canvas>
+    <canvas id="chart {{ forloop.counter }}"></canvas>
 </div>
 
 <script>
-    let ctx = document.getElementById("chart").getContext("2d");
-    let chart = new Chart(ctx, {
+    var ctx = document.getElementById("chart {{ forloop.counter }}").getContext("2d")
+    var chart = new Chart(ctx, {
         type: "bar",
         data: {
             labels: {{ graph_details.x_labels }},
             datasets: [{
-                label: "{{ graph_details.y_label}}",
                 backgroundColor: "#79AEC8",
                 borderColor: "#417690",
                 data: {{ graph_details.y_values }}
@@ -18,7 +17,30 @@
         },
         options: {  
             responsive: true,
-            maintainAspectRatio: false
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    title: {
+                        display: true,
+                        text: "{{ graph_details.y_title }}"
+                    }
+                },
+                x: {
+                    title: {
+                        display: true,
+                        text: "{{ graph_details.x_title }}"
+                    }
+                }
+            },
+            plugins: {
+                title: {
+                    display: true,
+                    text: "{{ graph_details.title }}"
+                },
+                legend: {
+                    display: false
+                }
+            }
         }
     });
 </script>
