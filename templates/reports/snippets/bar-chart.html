@@ -4,11 +4,16 @@
 </div>
 
 <script>
+    var x_values_string = "";
+    {{ graph_details.x_values }}.forEach((ascii) => {
+        x_values_string += String.fromCharCode(ascii);
+    });
+    var x_values = JSON.parse(x_values_string)
     var ctx = document.getElementById("chart {{ forloop.counter }}").getContext("2d")
     var chart = new Chart(ctx, {
         type: "bar",
         data: {
-            labels: {{ graph_details.x_labels }},
+            labels: x_values,
             datasets: [{
                 backgroundColor: [
                     'rgba(255, 99, 132, 0.8)',

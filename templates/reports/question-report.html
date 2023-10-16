@@ -43,9 +43,15 @@
             <div class="card-body">
                 <h6>Total Submissions: {{ all_submissions.count }}</h6>
                 <h6>Unique Submissions: {{ best_submissions|length }}</h6>
-                <h6>Mean: {{ mean_score }}/{{ assessment.total_score }}</h6>
-                <h6>Median: {{ median_score }}/{{ assessment.total_score }}</h6>
-                {% include 'reports/snippets/bar-chart.html' %}
+                <h6>Mean Score: {{ mean_score }}/{{ assessment.total_score }}</h6>
+                <h6>Median Score: {{ median_score }}/{{ assessment.total_score }}</h6>
+                <div class="row">
+                    {% for graph_details in graphs %}
+                        <div class="col-6">
+                            {% include 'reports/snippets/bar-chart.html' %}
+                        </div>
+                    {% endfor %}
+                  </div>
             </div>
         </div>
     </div>

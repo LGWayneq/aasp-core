@@ -13,9 +13,9 @@ from rest_framework.decorators import api_view, renderer_classes
 from rest_framework.renderers import JSONRenderer
 
 from core.decorators import UserGroup, groups_allowed
-from core.models import Assessment, AssessmentAttempt, CodeQuestionSubmission, CodeQuestionAttempt, CodeQuestion, TestCaseAttempt, TestCase, CandidateSnapshot
+from core.models import Assessment, AssessmentAttempt, CodeQuestionSubmission, CodeQuestion, TestCaseAttempt, TestCase, CandidateSnapshot
 from core.views.utils import check_permissions_assessment
-
+from core.views.charts import generate_score_distribution_graph, generate_assessment_time_spent_graph, generate_question_time_spent_graph
 
 @login_required()
 @groups_allowed(UserGroup.educator)
@@ -39,24 +39,8 @@ def assessment_report(request, assessment_id):
         median_score = best_attempts[count // 2].score
 
     # generate graph data
-    score_graph = generate_score_graph(best_attempts, assessment.total_score)
-    
-    unique_values = [i+1 for i in range(len(code_questions))]
-    y_values = [delta.total_seconds() for delta in CodeQuestionAttempt.objects \
-        .filter(code_question__in=code_questions) \
-        .values('code_question') \
-        .annotate(avg_time_spent=Avg('time_spent')) \
-        .order_by('code_question__id')
-        .values_list('avg_time_spent', flat=True)]
-    time_graph =  {
-        "title": "Average Time Spent per Question",
-        "x_title": "Question",
-        "x_labels": unique_values,
-        "y_title": "Avg Time Spent",
-        "y_values": y_values,
-    }
-
-    graphs = [score_graph, time_graph]
+    score_graph = generate_score_distribution_graph(best_attempts, assessment.total_score)
+    time_spent_graph = generate_assessment_time_spent_graph(code_questions)
 
     context = {
         "assessment": assessment,
@@ -65,7 +49,7 @@ def assessment_report(request, assessment_id):
         "ongoing_ungraded_attempts": ongoing_ungraded_attempts,
         "mean_score": mean_score,
         "median_score": median_score,
-        "graphs": graphs,
+        "graphs": [score_graph, time_spent_graph],
     }
 
     return render(request, "reports/assessment-report.html", context)
@@ -106,7 +90,8 @@ def question_report(request, assessment_id, question_id):
         .filter(cq_attempt__code_question_id=question_id)
     
     # generate graph data
-    graph_details = generate_score_graph(best_submissions, code_question.max_score())
+    score_graph = generate_score_distribution_graph(best_submissions, code_question.max_score())
+    time_spent_graph = generate_question_time_spent_graph(code_question)
 
     context = {
         "assessment": assessment,
@@ -115,24 +100,10 @@ def question_report(request, assessment_id, question_id):
         "mean_score": mean_score,
         "median_score": median_score,
         "all_submissions": all_submissions,
-        "graph_details": graph_details,
+        "graphs": [score_graph, time_spent_graph],
     }
 
     return render(request, "reports/question-report.html", context)
-
-def generate_score_graph(values, max_value, title = "Score Distribution", x_title = "Score", y_title = "Number of Students"):
-    unique_values = [i for i in range(max_value+1)]
-    y_values = [0 for _ in range(max_value+1)]
-    for attempt in values:
-        y_values[attempt.score] += 1
-
-    return {
-        "title": title,
-        "x_title": x_title,
-        "x_labels": unique_values,
-        "y_title": y_title,
-        "y_values": y_values,
-    }
 
 @api_view(["GET"])
 @renderer_classes([JSONRenderer])
