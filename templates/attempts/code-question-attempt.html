@@ -344,15 +344,11 @@
     const tabModal = $("#tab-modal");
     let leaving_screen_num = 0;
 
-    function randomSeconds(min, max) {
-      return  Math.floor(Math.random() * (max - min) + min);
-    }
-
     function handleTabSwitch() {
       leaving_screen_num++;
       tabModal.modal("show");
       if (leaving_screen_num >= 3) {  // force submit test on third tab switch
-        let seconds_allowed = randomSeconds(3, 10);
+        let seconds_allowed = 30 - leaving_screen_num * 5;
         let seconds_passed = 0;
         $("#tab-switch-countdown").html('- seconds remaining');
 
