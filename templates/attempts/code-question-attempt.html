@@ -510,12 +510,16 @@
 
       const language = selected.val();
       let latestSubmission = "";
-      JSON.parse(`{{ latest_submission_ascii }}`).forEach((ascii) => {
-        latestSubmission += String.fromCharCode(ascii);
-      });
-      if ('{{ latest_submission_language|safe }}' === language && latestSubmission !== '') {
-        editor.session.setValue(latestSubmission);
+      let lastestSubmissionAscii = `{{ latest_submission_ascii }}`;
+      if (lastestSubmissionAscii !== "None") {
+        JSON.parse(`{{ latest_submission_ascii }}`).forEach((ascii) => {
+          latestSubmission += String.fromCharCode(ascii);
+        });
+        if ('{{ latest_submission_language|safe }}' === language && latestSubmission !== '') {
+          editor.session.setValue(latestSubmission);
+        }
       }
+      
       //"{{ is_software_language }}" === "False" ? updatePorts() : editor.session.setValue(selected.data("code"))
       // set ace mode
       editor.session.setMode("ace/mode/" + selected.data("ace-mode"))
