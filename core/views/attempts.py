@@ -722,7 +722,7 @@ def detect_faces_initial(request):
     try:
         image = request.FILES['image']
         model_pack_name = "buffalo_sc"
-        app = FaceAnalysis(name=model_pack_name)
+        app = FaceAnalysis(name=model_pack_name, root=os.path.join(settings.BASE_DIR, model_pack_name))
         app.prepare(ctx_id=0, det_size=(640, 640))
         image_bytes = image.read()
         image_np = np.frombuffer(image_bytes, dtype=np.uint8)
