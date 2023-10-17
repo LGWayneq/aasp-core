@@ -497,24 +497,38 @@
 		}
 	}
 
+    let prevLanguage = langSelect.val();
+    const loadSubmittedCode = () => {
+      let latestSubmission = "";
+      let lastestSubmissionAscii = `{{ latest_submission_ascii }}`;
+      if (lastestSubmissionAscii === "None") return;
+      
+      JSON.parse(`{{ latest_submission_ascii }}`).forEach((ascii) => {
+        latestSubmission += String.fromCharCode(ascii);
+      });
+      if (latestSubmission === '') return;
+
+      const submittedCodeLanguageOption = $("#lang-select option").filter(function () { return $(this).val() === '{{ latest_submission_language|safe }}'; });
+      // set selected language as latest_submission_language
+      submittedCodeLanguageOption.prop("selected", true);
+      editor.session.setValue(latestSubmission);
+      prevLanguage = langSelect.val();
+    }
+
     // function that sets the language and code snippet
     const setLanguage = () => {
+      // save code before changing language
+      const code = editor.getValue();
+      if (code !== "") {
+        const prevOption = $("#lang-select option").filter(function () { return $(this).val() === prevLanguage; });
+        prevOption.data("code", code);
+        prevLanguage = langSelect.val();
+      }
+
       // get the selected option
       const selected = langSelect.find("option:selected")
       // set the code snippet
       editor.session.setValue(selected.data("code"))
-
-      const language = selected.val();
-      let latestSubmission = "";
-      let lastestSubmissionAscii = `{{ latest_submission_ascii }}`;
-      if (lastestSubmissionAscii !== "None") {
-        JSON.parse(`{{ latest_submission_ascii }}`).forEach((ascii) => {
-          latestSubmission += String.fromCharCode(ascii);
-        });
-        if ('{{ latest_submission_language|safe }}' === language && latestSubmission !== '') {
-          editor.session.setValue(latestSubmission);
-        }
-      }
       
       //"{{ is_software_language }}" === "False" ? updatePorts() : editor.session.setValue(selected.data("code"))
       // set ace mode
@@ -523,6 +537,8 @@
       updateReadonlyRanges()
     }
 
+    // load submitted code if any
+    loadSubmittedCode()
     // set language on first load
     setLanguage()
 
@@ -545,11 +561,6 @@
       // Render the updated waveform
       WaveDrom.RenderWaveForm(0, WaveDrom.eva("InputJSON_0"), "WaveDrom_Display_")
     })
-
-    // when language dropdown changed
-    langSelect.change(function () {
-        setLanguage();
-    });
 
     // prevent action on read-only lines
     editor.commands.on("exec", function (e) {
