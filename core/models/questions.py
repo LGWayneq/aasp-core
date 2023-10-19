@@ -58,6 +58,8 @@ class CodeQuestion(models.Model):
     description = models.TextField(blank=False, null=False)
     tags = models.ManyToManyField(Tag, blank=True)
     is_concurrency_question = models.BooleanField(default=False, blank=False, null=False)
+    solution_code = models.TextField(null=True, blank=True)
+    solution_code_language = models.ForeignKey(Language, null=True, blank=True, on_delete=models.CASCADE)
 
     # foreign keys (either linked to a QuestionBank or Assessment instance)
     question_bank = models.ForeignKey(QuestionBank, null=True, blank=True, on_delete=models.CASCADE)

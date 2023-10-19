@@ -14,7 +14,7 @@ class QuestionBankForm(forms.ModelForm):
 class CodeQuestionForm(forms.ModelForm):
     class Meta:
         model = CodeQuestion
-        fields = ['name', 'description', 'question_bank', 'assessment', 'is_concurrency_question']
+        fields = ['name', 'description', 'question_bank', 'assessment', 'is_concurrency_question', 'solution_code', 'solution_code_language']
 
 
 class ImportQuestionBankForm(forms.Form):

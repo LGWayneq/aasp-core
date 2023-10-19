@@ -200,6 +200,8 @@ def update_test_cases(request, code_question_id):
             
             del request.session['module']
             del request.session['testbench']
+    else:
+        code_question_form = CodeQuestionForm(instance=code_question)
 
     # process POST requests
     if request.method == "POST":
@@ -214,6 +216,10 @@ def update_test_cases(request, code_question_id):
                 question_sol = hdl_solution_form.save(commit=False)
                 question_sol.code_question = code_question
                 question_sol.save()
+        else:
+            code_question_form = CodeQuestionForm(request.POST, instance=code_question)
+            if code_question_form.is_valid():
+                question_sol = code_question_form.save(commit=True)
 
         testcase_formset = TestCaseFormset(request.POST, instance=code_question, prefix='tc')
 
@@ -234,7 +240,6 @@ def update_test_cases(request, code_question_id):
                     return redirect('question-bank-details', question_bank_id=code_question.question_bank.id)
                 else:
                     return redirect('assessment-details', assessment_id=code_question.assessment.id)
-    
     context = {
         'creation': request.GET.get('next') is None,
         'code_question': code_question,
@@ -242,6 +247,7 @@ def update_test_cases(request, code_question_id):
         'testcase_formset': testcase_formset,
         'question_type': question_type,
         'is_software_language': code_question.is_software_language(),
+        'code_question_form': code_question_form if code_question.is_software_language() else None,
         'hdl_solution_form': hdl_solution_form if not code_question.is_software_language() else None,
     }
 

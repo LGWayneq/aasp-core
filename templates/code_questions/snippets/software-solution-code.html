@@ -1,0 +1,112 @@
+{% load static %}
+
+<div>
+  <h4 class="pb-2">Solution Code</h4>
+  <h6>This will be used to evaluate correctness of submissions.</h6>
+  <div class="row">
+    <!-- Language selection -->
+    <div class="col-6">
+      <label for="lang-select">Language</label>
+      <select class="form-select" id="lang-select">
+        {% for cs in code_snippet %}
+          <option data-code="{{ cs.code }}" data-judgeid="{{ cs.language.judge_language_id }}" data-ace-mode="{{ cs.language.ace_mode }}" value="{{ cs.language.id }}">{{ cs.language.name }}</option>
+        {% endfor %}
+      </select>
+      <input type="hidden" name="solution_code_language" id="id_solution_code_language" value="{{ form.solution_code_language.value|default:'code_snippet.0.language.id' }}" />
+    </div>
+  </div>
+  <!-- Ace Code Editor -->
+  <div class="row p-2">
+    <pre id="editor" class="inner rounded" style="height: 500px;"></pre>
+    <input type="hidden" name="solution_code" id="id_solution_code" value="{{ form.solution_code.value|default:code_snippet.0.code }}" />
+  </div>
+
+  <input type="hidden" name="name" id="id_name" value="{{ form.name.value|default:'' }}" />
+  <input type="hidden" name="description" id="id_description" value="{{ form.description.value|default:'' }}" />
+  <input type="hidden" name="assessment" id="id_assessment" value="{{ form.assessment.value|default:'' }}" />
+  <input type="hidden" name="question_bank" id="id_question_bank" value="{{ form.question_bank.value|default:'' }}" />
+</div>
+
+{% block js %}
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+  <script src="{% static 'vendors/ace/src-noconflict/ace.js' %}" type="text/javascript" charset="utf-8"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/split.js/1.6.0/split.min.js"></script>
+  <script type="text/javascript" src="{% static 'vendors/toastify/toastify.js' %}"></script>
+
+  <!-- Ace code editor config -->
+  <script>
+    const Range = ace.require('ace/range').Range
+    
+    // language selections
+    const langSelect = $('#lang-select')
+    
+    // initialize ace editor
+    let editor = ace.edit('editor')
+    editor.renderer.setScrollMargin(10)
+    editor.setOptions({
+      fontFamily: 'JetBrains Mono',
+      fontSize: '16px',
+      theme: 'ace/theme/cloud9_day',
+      showPrintMargin: false,
+      highlightActiveLine: false,
+      wrap: true,
+      tabSize: 4
+    })
+    editor.setOption('dragEnabled', false)
+    
+    const arrowCommands = ['gotoleft', 'gotoright', 'golineup', 'golinedown']
+    let markers = []
+    
+    let prevLanguage = langSelect.val()
+    const loadSubmittedCode = () => {
+      let solutionCode = `{{ code_question.solution_code|safe }}`
+      if (solutionCode === '' || solutionCode === 'None') return
+    
+      const solutionCodeLanguageOption = $('#lang-select option').filter(function () {
+        return $(this).text() === '{{ code_question.solution_code_language|safe }}'
+      })
+      // set selected language as latest_submission_language
+      solutionCodeLanguageOption.prop('selected', true)
+      editor.session.setValue(solutionCode)
+      prevLanguage = langSelect.val()
+    }
+    
+    // function that sets the language and code snippet
+    const setLanguage = () => {
+      // save code before changing language
+      const code = editor.getValue()
+      if (code !== '') {
+        const prevOption = $('#lang-select option').filter(function () {
+          return $(this).val() === prevLanguage
+        })
+        prevOption.data('code', code)
+        prevLanguage = langSelect.val()
+      }
+    
+      // get the selected option
+      const selected = langSelect.find('option:selected')
+      // set the code snippet
+      editor.session.setValue(selected.data('code'))
+    
+      // set ace mode
+      editor.session.setMode('ace/mode/' + selected.data('ace-mode'))
+    }
+    
+    // load submitted code if any
+    loadSubmittedCode()
+    // set language on first load
+    setLanguage()
+    
+    // when language dropdown changed
+    langSelect.change(function () {
+      setLanguage()
+      document.getElementById('id_solution_code_language').value = prevLanguage
+    })
+    
+    // Synchronize Ace editor content with the hidden input field
+    editor.getSession().on('change', function () {
+      var code = editor.getValue()
+      document.getElementById('id_solution_code').value = code
+    })
+  </script>
+{% endblock %}

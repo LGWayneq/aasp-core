@@ -43,7 +43,7 @@
 
     <!-- Tab group row -->
     <div class="row">
-      <div class="col-10 m-2">
+      <div class="col-12 mt-2">
         {# Attempts deletion warning #}
         {% if code_question.assessment and code_question.assessment.published == False and code_question.assessment.assessmentattempt_set.count != 0 %}
           <div class="alert alert-warning">
@@ -108,18 +108,20 @@
                     {% include 'code_questions/snippets/module-testbench-test-case.html' with testcase_formset=testcase_formset hdl_solution_form=hdl_solution_form %}
                   {% endif %}
                   
-
                 {% endif %}
+                <!-- add test case button -->
+                <button type="button" class="btn btn-sm btn-warning {% if question_type == 'Testbench Design' %}d-none{% endif %}" id="addTestCase-btn">Add Test Case</button>
+                <hr></hr>
 
-                <!-- buttons -->
-                <div>
-                  <button type="button" class="btn btn-sm btn-warning {% if question_type == 'Testbench Design' %}d-none{% endif %}" id="addTestCase-btn">Add Test Case</button>
-                  <button type="submit" class="btn btn-sm btn-success float-end" onclick="">Save and Continue</button>
-                </div>
+                <!-- Solution Code section -->
+                {% if is_software_language %}
+                  {% include 'code_questions/snippets/software-solution-code.html' with form=code_question_form %}
+                {% endif %}
+                  
+                <!-- save button -->
+                <button type="submit" class="btn btn-sm btn-success float-end" onclick="">Save and Continue</button>
               </div>
-
             </form>
-
           </div>
         </div>
         </div>

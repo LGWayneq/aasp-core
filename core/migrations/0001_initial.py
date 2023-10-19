@@ -45,6 +45,16 @@ class Migration(migrations.Migration):
             ],
         ),
         migrations.CreateModel(
+            name='Language',
+            fields=[
+                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('name', models.CharField(max_length=50, unique=True)),
+                ('judge_language_id', models.IntegerField(unique=True)),
+                ('ace_mode', models.CharField(max_length=50)),
+                ('concurrency_support', models.BooleanField(default=False)),
+            ],
+        ),
+        migrations.CreateModel(
             name='Assessment',
             fields=[
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
@@ -74,6 +84,17 @@ class Migration(migrations.Migration):
             ],
         ),
         migrations.CreateModel(
+            name='QuestionBank',
+            fields=[
+                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('name', models.CharField(max_length=50)),
+                ('description', models.TextField()),
+                ('private', models.BooleanField(default=True)),
+                ('owner', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='owned_qbs', to=settings.AUTH_USER_MODEL)),
+                ('shared_with', models.ManyToManyField(blank=True, related_name='qbs_shared_with_me', to=settings.AUTH_USER_MODEL)),
+            ],
+        ),
+        migrations.CreateModel(
             name='CodeQuestion',
             fields=[
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
@@ -81,6 +102,8 @@ class Migration(migrations.Migration):
                 ('description', models.TextField()),
                 ('assessment', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.PROTECT, to='core.assessment')),
                 ('is_concurrency_question', models.BooleanField(default=False)),
+                ('solution_code', models.TextField(blank=True, null=True)),
+                ('solution_code_language', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, to='core.language')),
             ],
         ),
         migrations.CreateModel(
@@ -119,16 +142,6 @@ class Migration(migrations.Migration):
             },
         ),
         migrations.CreateModel(
-            name='Language',
-            fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('name', models.CharField(max_length=50, unique=True)),
-                ('judge_language_id', models.IntegerField(unique=True)),
-                ('ace_mode', models.CharField(max_length=50)),
-                ('concurrency_support', models.BooleanField(default=False)),
-            ],
-        ),
-        migrations.CreateModel(
             name='Tag',
             fields=[
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
@@ -160,17 +173,6 @@ class Migration(migrations.Migration):
                 ('memory', models.FloatField(blank=True, null=True)),
                 ('cq_submission', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='core.codequestionsubmission')),
                 ('test_case', models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, to='core.testcase')),
-            ],
-        ),
-        migrations.CreateModel(
-            name='QuestionBank',
-            fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('name', models.CharField(max_length=50)),
-                ('description', models.TextField()),
-                ('private', models.BooleanField(default=True)),
-                ('owner', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='owned_qbs', to=settings.AUTH_USER_MODEL)),
-                ('shared_with', models.ManyToManyField(blank=True, related_name='qbs_shared_with_me', to=settings.AUTH_USER_MODEL)),
             ],
         ),
         migrations.CreateModel(
