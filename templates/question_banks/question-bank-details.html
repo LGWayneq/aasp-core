@@ -188,7 +188,7 @@
                             <div class="dropdown-menu">
                               <a class="dropdown-item" href="{% url 'update-code-question' code_question_id=q.id %}">Description</a>
                               <a class="dropdown-item" href="{% url 'update-languages' code_question_id=q.id %}?next={{ request.path }}">Languages</a>
-                              <a class="dropdown-item" href="{% url 'update-test-cases' code_question_id=q.id %}?next={{ request.path }}">Test Cases</a>
+                              <a class="dropdown-item {% if q.languages.count == 0 %}disabled{% endif %}" href="{% url 'update-test-cases' code_question_id=q.id %}?next={{ request.path }}">Test Cases</a>
                             </div>
                           </div>
                         </div>
