@@ -12,7 +12,7 @@
           <option data-code="{{ cs.code }}" data-judgeid="{{ cs.language.judge_language_id }}" data-ace-mode="{{ cs.language.ace_mode }}" value="{{ cs.language.id }}">{{ cs.language.name }}</option>
         {% endfor %}
       </select>
-      <input type="hidden" name="solution_code_language" id="id_solution_code_language" value="{{ form.solution_code_language.value|default:'code_snippet.0.language.id' }}" />
+      <input type="hidden" name="solution_code_language" id="id_solution_code_language" value="{{ form.solution_code_language.value|default:code_snippet.0.language.id }}" />
     </div>
   </div>
   <!-- Ace Code Editor -->
@@ -61,7 +61,7 @@
     const loadSubmittedCode = () => {
       let solutionCode = `{{ code_question.solution_code|safe }}`
       if (solutionCode === '' || solutionCode === 'None') return
-    
+      
       const solutionCodeLanguageOption = $('#lang-select option').filter(function () {
         return $(this).text() === '{{ code_question.solution_code_language|safe }}'
       })
