@@ -108,6 +108,7 @@ def update_code_question(request, code_question_id):
 
     if request.method == "GET":
         context = {
+            'creation': CodeSnippet.objects.filter(code_question=code_question).count() == 0,
             'code_question': code_question,
             'form': form,
         }
@@ -278,7 +279,7 @@ def update_languages(request, code_question_id):
 
     if request.method == "GET":
         context = {
-            'creation': request.GET.get('next') is None,
+            'creation': request.GET.get('next') is None or CodeSnippet.objects.filter(code_question=code_question).count() == 0,
             'code_question': code_question,
             'code_snippet_formset': code_snippet_formset,
             'languages': languages,
@@ -371,7 +372,7 @@ def update_question_type(request, code_question_id):
                 return redirect('generate-module-code', code_question_id=code_question.id)
     
     context = {
-        'creation': request.GET.get('next') is None,
+        'creation': request.GET.get('next') is None or HDLQuestionConfig.objects.filter(code_question=code_question).count() == 0,
         'code_question': code_question,
         'question_type_form': question_type_form,
     }

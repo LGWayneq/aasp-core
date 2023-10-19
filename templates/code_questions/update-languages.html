@@ -20,24 +20,26 @@
 
     <!-- Tab group row -->
     <div class="row">
-      <div class="col-10 m-2">
+      <div class="col-12 m-2">
         <div class="card">
           <div class="card-body">
 
-            <!-- Tabs (Not clickable) -->
-            {% if creation %}
-              <ul class="nav nav-pills mb-3">
-                <li class="nav-item">
-                  <p class="nav-link">Step 1: Description</p>
-                </li>
-                <li class="nav-item">
-                  <p class="nav-link active" id="pill-languages-tab">Step 2: Languages</p>
-                </li>
-                <li class="nav-item">
-                  <p class="nav-link">Step 3: Test Cases</p>
-                </li>
-              </ul>
-            {% endif %}
+            <!-- Tabs -->
+            <ul class="nav nav-pills mb-3">
+              <li class="nav-item">
+                <a class="nav-link" href="{% url 'update-code-question' code_question_id=code_question.id %}">Question Description</a>
+              </li>
+              <li class="nav-item">
+                <p class="nav-link active" id="pill-languages-tab">Languages</p>
+              </li>
+              <li class="nav-item">
+                {% if creation %}
+                  <p class="nav-link">Test Cases</p>
+                {% else %}
+                  <a class="nav-link" href="{% url 'update-test-cases' code_question_id=code_question.id %}?next={{ request.path }}">Test Cases</a>
+                {% endif %}
+              </li>
+            </ul>
 
             <!-- Tab contents -->
             <div class="pt-3">

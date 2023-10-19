@@ -25,9 +25,25 @@
 
     <!-- Tab group row -->
     <div class="row">
-      <div class="col-10 m-2">
+      <div class="col-12 m-2">
         <div class="card">
           <div class="card-body">
+            <!-- Tabs -->
+            <ul class="nav nav-pills mb-3">
+              <li class="nav-item">
+                <p class="nav-link active" href="{% url 'update-code-question' code_question_id=code_question.id %}">Question Description</p>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" id="pill-languages-tab" href="{% url 'update-languages' code_question_id=code_question.id %}?next={{ request.path }}">Languages</a>
+              </li>
+              <li class="nav-item">
+                {% if creation %}
+                  <p class="nav-link">Test Cases</p>
+                {% else %}
+                  <a class="nav-link" href="{% url 'update-test-cases' code_question_id=code_question.id %}?next={{ request.path }}">Test Cases</a>
+                {% endif %}
+              </li>
+            </ul>
 
             {# non-field errors #}
             {% for error in form.non_field_errors %}
