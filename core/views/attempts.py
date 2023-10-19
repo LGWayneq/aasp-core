@@ -23,7 +23,7 @@ from core.decorators import groups_allowed, UserGroup
 from core.models import Assessment, AssessmentAttempt, CodeQuestionAttempt, CodeQuestion, TestCase, CodeSnippet, \
     CodeQuestionSubmission, TestCaseAttempt, Language, CandidateSnapshot
 from core.tasks import update_test_case_attempt_status, force_submit_assessment, detect_faces
-from core.views.utils import get_assessment_attempt_question, check_permissions_course, user_enrolled_in_course, construct_judge0_params, vcd2wavedrom
+from core.views.utils import get_assessment_attempt_question, check_permissions_course, user_enrolled_in_course, construct_expected_output_judge0_params, construct_judge0_params, vcd2wavedrom
 
 
 @login_required()
@@ -283,20 +283,42 @@ def submit_single_test_case(request, test_case_id):
                 }
                 return Response(error_context, status=status.HTTP_404_NOT_FOUND)
 
-            test_case.stdin = request.data["run_stdin"]
+            # evaluate expected_output using judge0 for custom inputs
+            if request.data["run_stdin"] != test_case.stdin:
+                test_case.stdin = request.data["run_stdin"]
+                expected_output_params = construct_expected_output_judge0_params(test_case)
+                if expected_output_params is None:
+                    context = {
+                        "result": "error",
+                        "message": "No solution code provided for custom test cases.",
+                    }
+                    return Response(context, status=status.HTTP_400_BAD_REQUEST)
+                # call judge0
+                url = settings.JUDGE0_URL + "/submissions/?base64_encoded=false&wait=false"
+                res = requests.post(url, json=expected_output_params)
+                data = res.json()
+
+                # return error if no token
+                token = data.get("token")
+                if not token:
+                    error_context = {
+                        "result": "error",
+                        "message": "Judge0 error.",
+                    }
+                    return Response(error_context, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+                # wait for expected_output to be evaluated
+                expected_output_result = check_tc_result(token)
+                while expected_output_result["status_id"] in [1, 2]:
+                    expected_output_result = check_tc_result(token)
+                test_case.stdout = expected_output_result['stdout']
+
             params = construct_judge0_params(request, test_case)
 
             # call judge0
-            try:
-                url = settings.JUDGE0_URL + "/submissions/?base64_encoded=false&wait=false"
-                res = requests.post(url, json=params)
-                data = res.json()
-            except requests.exceptions.ConnectionError:
-                error_context = {
-                    "result": "error",
-                    "message": "Judge0 API seems to be down.",
-                }
-                return Response(error_context, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            url = settings.JUDGE0_URL + "/submissions/?base64_encoded=false&wait=false"
+            res = requests.post(url, json=params)
+            data = res.json()
 
             # return error if no token
             token = data.get("token")
@@ -312,7 +334,12 @@ def submit_single_test_case(request, test_case_id):
                 "token": token,
             }
             return Response(context, status=status.HTTP_200_OK)
-    
+    except requests.exceptions.ConnectionError:
+        error_context = {
+            "result": "error",
+            "message": "Judge0 API seems to be down.",
+        }
+        return Response(error_context, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     except Exception as ex:
         error_context = {
             "result": "error",
@@ -336,23 +363,6 @@ def get_tc_details(request):
     - Used for checking the status of a submitted sample test case => status_only=true
     - Used for viewing the details of a submitted test case (in the test case details modal) => status_only=false
     """
-    # friendly names of status_ids
-    judge0_statuses = {
-        1: "In Queue",
-        2: "Processing",
-        3: "Accepted",
-        4: "Wrong Answer",
-        5: "Time Limit Exceeded",
-        6: "Compilation Error",
-        7: "Runtime Error SIGSEGV",
-        8: "Runtime Error SIGXFSZ",
-        9: "Runtime Error SIGFPE",
-        10: "Runtime Error SIGABRT",
-        11: "Runtime Error NZEC",
-        12: "Runtime Error Other",
-        13: "Internal Error",
-        14: "Exec Format Error",
-    }
 
     try:
         if request.method == "GET":
@@ -365,41 +375,7 @@ def get_tc_details(request):
 
             # call judge0
             try:
-                if status_only:
-                    url = f"{settings.JUDGE0_URL}/submissions/{token}?base64_encoded=false&fields=status_id"
-                elif vcd:
-                    url = f"{settings.JUDGE0_URL}/submissions/{token}?base64_encoded=false&fields=status_id,stdout,stderr,expected_output,vcd_output"
-                else:
-                    url = f"{settings.JUDGE0_URL}/submissions/{token}?base64_encoded=false&fields=status_id,stdin,stdout,stderr,expected_output,compile_output"
-
-                res = requests.get(url)
-                data = res.json()
-
-                # change to base64 encoding if needed
-                if "error" in data:
-                    url = url.replace("base64_encoded=false", "base64_encoded=true")
-                    res = requests.get(url)
-                    data = res.json()
-                    if data["stdout"]:
-                        data['stdout'] = base64.b64decode(data['stdout'])
-                    if data["stdin"]:
-                        data['stdin'] = base64.b64decode(data['stdin'])
-                    if data["stderr"]:
-                        data['stderr'] = base64.b64decode(data['stderr'])
-                    if data["expected_output"]:
-                        data['expected_output'] = base64.b64decode(data['expected_output'])
-                    if data["compile_output"]:
-                        data['compile_output'] = base64.b64decode(data['compile_output'])
-
-                # append friendly status name
-                data['status'] = judge0_statuses[int(data['status_id'])]
-
-                # hide fields if this belongs to a hidden test case
-                if TestCase.objects.filter(hidden=True, testcaseattempt__token=token).exists():
-                    data['stdin'] = "Hidden"
-                    data['stdout'] = "Hidden"
-                    data['expected_output'] = "Hidden"
-
+                data = check_tc_result(token, status_only, vcd)
                 context = {
                     "result": "success",
                     "data": data,
@@ -420,6 +396,63 @@ def get_tc_details(request):
         } 
         return Response(error_context, status=status.HTTP_400_BAD_REQUEST)
 
+def check_tc_result(token, status_only = False, vcd = False):
+    # friendly names of status_ids
+    judge0_statuses = {
+        1: "In Queue",
+        2: "Processing",
+        3: "Accepted",
+        4: "Wrong Answer",
+        5: "Time Limit Exceeded",
+        6: "Compilation Error",
+        7: "Runtime Error SIGSEGV",
+        8: "Runtime Error SIGXFSZ",
+        9: "Runtime Error SIGFPE",
+        10: "Runtime Error SIGABRT",
+        11: "Runtime Error NZEC",
+        12: "Runtime Error Other",
+        13: "Internal Error",
+        14: "Exec Format Error",
+    }
+    try:
+        if status_only:
+            url = f"{settings.JUDGE0_URL}/submissions/{token}?base64_encoded=false&fields=status_id"
+        elif vcd:
+            url = f"{settings.JUDGE0_URL}/submissions/{token}?base64_encoded=false&fields=status_id,stdout,stderr,expected_output,vcd_output"
+        else:
+            url = f"{settings.JUDGE0_URL}/submissions/{token}?base64_encoded=false&fields=status_id,stdin,stdout,stderr,expected_output,compile_output"
+
+        res = requests.get(url)
+        data = res.json()
+
+        # change to base64 encoding if needed
+        if "error" in data:
+            url = url.replace("base64_encoded=false", "base64_encoded=true")
+            res = requests.get(url)
+            data = res.json()
+            if data["stdout"]:
+                data['stdout'] = base64.b64decode(data['stdout'])
+            if data["stdin"]:
+                data['stdin'] = base64.b64decode(data['stdin'])
+            if data["stderr"]:
+                data['stderr'] = base64.b64decode(data['stderr'])
+            if data["expected_output"]:
+                data['expected_output'] = base64.b64decode(data['expected_output'])
+            if data["compile_output"]:
+                data['compile_output'] = base64.b64decode(data['compile_output'])
+
+        # append friendly status name
+        data['status'] = judge0_statuses[int(data['status_id'])]
+
+        # hide fields if this belongs to a hidden test case
+        if TestCase.objects.filter(hidden=True, testcaseattempt__token=token).exists():
+            data['stdin'] = "Hidden"
+            data['stdout'] = "Hidden"
+            data['expected_output'] = "Hidden"
+        return data
+    
+    except requests.exceptions.ConnectionError:
+        raise requests.exceptions.ConnectionError
 
 @api_view(["POST"])
 @renderer_classes([JSONRenderer])

@@ -5,7 +5,7 @@ import re
 from vcdvcd.vcdvcd import VCDVCD
 from math import floor, ceil
 
-from core.models import CodeQuestionAttempt, CourseGroup, User
+from core.models import CodeQuestion, CodeQuestionAttempt, CourseGroup, User
 from core.models.questions import Language
 from core.tasks import send_assessment_published_email
 
@@ -177,6 +177,25 @@ def construct_assessment_published_email(assessment, recipients=None):
 
     send_assessment_published_email.delay(assessment.id, assessment.name, str(assessment.course),\
                                           assessment.time_start, assessment.time_end, assessment.duration, recipients)
+
+def construct_expected_output_judge0_params(test_case):
+    # judge0 params
+    code_question = CodeQuestion.objects.filter(id=test_case.code_question_id).first()
+    if code_question.solution_code is None or code_question.solution_code_language is None:
+        return None
+
+    params = {
+        "source_code": code_question.solution_code,
+        "language_id": code_question.solution_code_language.judge_language_id,
+        "stdin": test_case.stdin,
+        "expected_output": test_case.stdout,
+        "cpu_time_limit": test_case.time_limit,
+        "memory_limit": test_case.memory_limit,
+    }
+    if test_case.code_question.is_concurrency_question:
+        params['compiler_options'] = "-fsanitize=thread"
+
+    return params
 
 def construct_judge0_params(request, test_case) -> dict:
     """
