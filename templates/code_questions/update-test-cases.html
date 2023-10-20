@@ -78,6 +78,12 @@
               </li>
             </ul>
 
+            <!-- Solution Code section -->
+            {% if is_software_language %}
+              {% include 'code_questions/snippets/software-solution-code.html' with form=code_question_form %}
+            {% endif %}
+            <hr></hr>
+
             <!-- Tab contents -->
             <form method="POST">
               {% csrf_token %}
@@ -120,12 +126,6 @@
                 {% endif %}
                 <!-- add test case button -->
                 <button type="button" class="btn btn-sm btn-warning {% if question_type == 'Testbench Design' %}d-none{% endif %}" id="addTestCase-btn">Add Test Case</button>
-                <hr></hr>
-
-                <!-- Solution Code section -->
-                {% if is_software_language %}
-                  {% include 'code_questions/snippets/software-solution-code.html' with form=code_question_form %}
-                {% endif %}
                   
                 <!-- save button -->
                 <button type="submit" class="btn btn-sm btn-success float-end" onclick="">Save and Continue</button>

@@ -38,7 +38,7 @@
 
   <div class="mt-2">
     <button class="btn btn-warning btn-sm" type="button" id="run-btn" onclick="compileAndRun()">Compile and Run</button>
-    <button class="btn btn-primary btn-sm" type="button" id="apply-btn" onclick="applyToAllOutputs()">Apply to All Outputs</button>
+    <button class="btn btn-primary btn-sm" type="button" id="apply-btn" onclick="applyToAllOutputs()">Apply Solution Code to All Outputs</button>
     <span class="h6" id="run-status" style="margin-left:5px;">Ready</span>
     <div class="spinner-border spinner-border-sm ms-2" id="loading" style="display:none;"></div>
   </div>
@@ -162,15 +162,14 @@
 
     const compileAndRun = () => {
       stdin = $("#run-stdin").val();
-      submit(stdin);
+      submit(stdin, updateSampleStatus);
     }
 
-    const submit = (stdin) => {
+    const submit = async (stdin, successCallback) => {
       // disable buttons
       runBtn.prop("disabled", true);
       applyBtn.prop("disabled", true);
 
-      // hide more details link
       loading.show();
       resultsBody.hide();
       runStatus.html('Submitting');
@@ -192,7 +191,7 @@
       }).done((res, textStatus, jqXHR) => {
           if (res.result === "success") {
               const token = res.token;
-              updateSampleStatus(token);
+              successCallback(token);
           }
       }).fail((jqXHR, textStatus, errorThrown) => {
           window.setTimeout(() => {
@@ -237,7 +236,7 @@
                   }
                     
                   resultsBody.show();
-                    // enable buttons
+                  // enable buttons
                   runBtn.prop("disabled", false);
                   applyBtn.prop("disabled", false);
                   // hide loading
@@ -259,7 +258,6 @@
 
     const showError = (msg) => {
       loading.hide();
-
       runStatus.html(msg);
       Toastify({
           text: "An error has occurred, please refresh the page and try again.",
@@ -270,7 +268,63 @@
   };
 
     const applyToAllOutputs = () => {
+      // disable buttons
+      runBtn.prop("disabled", true);
+      applyBtn.prop("disabled", true);
 
+      loading.show();
+      resultsBody.hide();
+      runStatus.html('Evaluating');
+      
+      for (let i = 0; i < totalForms; i++) {
+        const stdin = $(`#id_tc-${i}-stdin`).val();
+        $(`#id_tc-${i}-loading`).show();
+        submit(stdin, (token) => updateTestcaseOutput(i, token));
+      }
+    }
+
+    const updateTestcaseOutput = async (i, token) => {
+      $.ajax({
+        type: 'GET',
+        url: "{% url 'get-tc-details' %}",
+        data: {token, status_only: false, vcd: false},
+      }).done((res, textStatus, jqXHR) => {
+          if (res.result === "success") {
+              if (res.data.status_id === 1 || res.data.status_id === 2) {  // not finished
+                  window.setTimeout(() => {
+                    updateTestcaseOutput(i, token);
+                  }, 1000);
+              } else { // finished
+                  $(`#id_tc-${i}-loading`).hide();
+                  if (res.data.status_id > 4) {
+                    runStatus.html(res.data.status);
+                  } else {
+                    let stdout = $(`#id_tc-${i}-stdout`);
+                    stdout.val(res.data.stdout ? res.data.stdout : '');
+                    $(`#id_tc-${i}-loading`).hide();
+                    let loadingCount = 0;
+                    for (let i = 0; i < totalForms; i++) {
+                      if ($(`#id_tc-${i}-loading`).is(':visible')) {
+                        return;
+                      }
+                    }
+                    runStatus.html('Success');
+                  }
+                  
+                  runBtn.prop("disabled", false);
+                  applyBtn.prop("disabled", false);
+
+                  loading.hide();
+              }
+          }
+      }).fail((jqXHR, textStatus, errorThrown) => {
+          if (Math.floor(jqXHR.status / 100) == 4) {
+              console.error("Internal API Error!");
+          }
+          else {
+              console.error("External API Error!");
+          }
+      });
     }
   </script>
 {% endblock %}

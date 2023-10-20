@@ -43,7 +43,10 @@
   <!-- stdout input -->
   <div class="col-3">
     <div class="form-group">
-      <label for="id_tc-{{ prefix|default:"__prefix__" }}-stdout">Output</label>
+      <div>
+        <label for="id_tc-{{ prefix|default:"__prefix__" }}-stdout">Output</label>
+        <div class="spinner-border spinner-border-sm ms-2" id="id_tc-{{ prefix|default:"__prefix__" }}-loading" style="display:none;"></div>
+      </div>
       <textarea name="tc-{{ prefix|default:"__prefix__" }}-stdout"
                 id="id_tc-{{ prefix|default:"__prefix__" }}-stdout" rows="4"
                 class="form-control font-monospace">{{ form.stdout.value|default:"" }}</textarea>
