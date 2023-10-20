@@ -8,6 +8,17 @@
     <div class="page-title">
       <div class="row">
         <div class="col-12 col-md-12 order-md-1 order-last pb-3">
+          {% if code_question.question_bank != None %}
+            <a class="d-flex align-content-between mb-3" style="cursor: pointer;" href="{% url 'question-bank-details' question_bank_id=code_question.question_bank.id %}">
+              <i class="fa-solid fa-arrow-left-long fa-lg" style="margin-right: 10px;"></i>
+              <h6>Back to {{ code_question.question_bank.name }}</h6>
+            </a>
+          {% elif code_question.assessment != None %}
+            <a class="d-flex align-content-between mb-3" style="cursor: pointer;" href="{% url 'assessment-details' assessment_id=code_question.assessment.id %}">
+              <i class="fa-solid fa-arrow-left-long fa-lg" style="margin-right: 10px;"></i>
+              <h6>Back to {{ code_question.assessment.name }}</h6>
+            </a>
+          {% endif %}
           <h2>Update Question Type</h2>
           {% if code_question.question_bank != None %}
             <h5 class="text-muted">For {{ code_question.name }} in question bank: {{ code_question.question_bank.name }}</h5>
