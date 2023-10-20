@@ -1,5 +1,17 @@
 {% load static %}
 
+{% block styles %}
+  <style>
+      .run-results {
+        background: #011627;
+        color: #d6deeb;
+        display: block;
+        overflow-x: auto;
+        padding: 1em;
+      }
+  </style>
+{% endblock %}
+
 <div>
   <h4 class="pb-2">Solution Code</h4>
   <h6>This will be used to evaluate correctness of submissions.</h6>
@@ -19,6 +31,34 @@
   <div class="row p-2">
     <pre id="editor" class="inner rounded" style="height: 500px;"></pre>
     <input type="hidden" name="solution_code" id="id_solution_code" value="{{ form.solution_code.value|default:code_snippet.0.code }}" />
+  </div>
+
+  <label>Input</label>
+  <textarea id="run-stdin" rows="4" class="form-control font-monospace">1</textarea>
+
+  <div class="mt-2">
+    <button class="btn btn-warning btn-sm" type="button" id="run-btn" onclick="compileAndRun()">Compile and Run</button>
+    <button class="btn btn-primary btn-sm" type="button" id="apply-btn" onclick="applyToAllOutputs()">Apply to All Outputs</button>
+    <span class="h6" id="run-status" style="margin-left:5px;">Ready</span>
+    <div class="spinner-border spinner-border-sm ms-2" id="loading" style="display:none;"></div>
+  </div>
+
+  <div style="margin-top: 15px;">
+      <div id="results-body" style="display:none;">          
+          <!-- stdin -->
+          <h5>Standard Input</h5>
+          <pre><code class="language-plaintext rounded run-results" id="results-stdin" style="max-height: 130px; overflow-y: auto; white-space: pre-wrap; word-wrap: break-word;"></code></pre>
+
+          <!-- stdout -->
+          <h5>Standard Output</h5>
+          <pre><code class="language-plaintext rounded run-results" id="results-stdout" style="max-height: 130px; overflow-y: auto; white-space: pre-wrap; word-wrap: break-word;"></code></pre>
+
+          <!-- stderr -->
+          <div id="results-stderr-container">
+              <h5>Standard Error</h5>
+              <pre><code class="language-plaintext rounded run-results" id="results-stderr" style="max-height: 130px; overflow-y: auto; white-space: pre-wrap; word-wrap: break-word;"></code></pre>
+          </div>
+      </div>
   </div>
 
   <input type="hidden" name="name" id="id_name" value="{{ form.name.value|default:'' }}" />
@@ -108,5 +148,129 @@
       var code = editor.getValue()
       document.getElementById('id_solution_code').value = code
     })
+
+    // Compile and Run/Apply to All Outputs scripts
+    const runBtn = $('#run-btn')
+    const applyBtn = $('#apply-btn')
+    const runStatus = $('#run-status')
+    const resultsBody = $('#results-body')
+    const loading = $('#loading')
+    const resultsStdin = $('#results-stdin')
+    const resultsStdout = $('#results-stdout')
+    const resultsStderrContainer = $('#results-stderr-container')
+    const resultsStderr = $('#results-stderr')
+
+    const compileAndRun = () => {
+      stdin = $("#run-stdin").val();
+      submit(stdin);
+    }
+
+    const submit = (stdin) => {
+      // disable buttons
+      runBtn.prop("disabled", true);
+      applyBtn.prop("disabled", true);
+
+      // hide more details link
+      loading.show();
+      resultsBody.hide();
+      runStatus.html('Submitting');
+
+      // prepare form data
+      let formData = new FormData();
+      formData.append("code", editor.getValue());
+      formData.append("lang-id", langSelect.find("option:selected").data('judgeid'));
+      formData.append("csrfmiddlewaretoken", "{{ csrf_token }}");
+      formData.append("run_stdin", stdin);
+
+      // ajax call
+      $.ajax({
+          type: 'POST',
+          url: '{% url "submit-single-test-case" test_case_id=0 %}',
+          data: formData,
+          processData: false,
+          contentType: false,
+      }).done((res, textStatus, jqXHR) => {
+          if (res.result === "success") {
+              const token = res.token;
+              updateSampleStatus(token);
+          }
+      }).fail((jqXHR, textStatus, errorThrown) => {
+          window.setTimeout(() => {
+              // 4xx status codes
+              if (Math.floor(jqXHR.status / 100) == 4) {
+                  console.error('Internal API error!');
+                  showError("Internal API Error &#x274C;");
+              }
+              else {
+                  console.error('External API error!');
+                  showError("External API Error &#x274C;");
+              }
+          }, 1000);
+      });
+    };
+
+    // updates sample status by polling
+    const updateSampleStatus = (token) => {
+      $.ajax({
+          type: 'GET',
+          url: "{% url 'get-tc-details' %}",
+          data: {token, status_only: false, vcd: false},
+      }).done((res, textStatus, jqXHR) => {
+          if (res.result === "success") {
+              if (res.data.status_id === 1 || res.data.status_id === 2) {  // not finished
+                  runStatus.html(res.data.status);
+                  window.setTimeout(() => {
+                      updateSampleStatus(token);
+                  }, 1000);
+              } else { // finished
+                  runStatus.html(res.data.status === "Wrong Answer" || res.data.status === "Accepted" ? "Success" : res.data.status);
+
+                  // set values
+                  resultsStdin.html(res.data.stdin ? res.data.stdin : '&nbsp;');
+
+                  resultsStdout.html(res.data.stdout ? res.data.stdout : '&nbsp;');
+                  if (res.data.stderr != undefined) {
+                    resultsStderrContainer.show();
+                    resultsStderr.html(res.data.stderr);
+                  } else {
+                    resultsStderrContainer.hide();
+                  }
+                    
+                  resultsBody.show();
+                    // enable buttons
+                  runBtn.prop("disabled", false);
+                  applyBtn.prop("disabled", false);
+                  // hide loading
+                  loading.hide();
+              }
+          }
+      }).fail((jqXHR, textStatus, errorThrown) => {
+          // 4xx status codes
+          if (Math.floor(jqXHR.status / 100) == 4) {
+              console.error("Internal API Error!");
+              showError("Internal API Error &#x274C;");
+          }
+          else {
+              console.error("External API Error!");
+              showError("External API Error &#x274C;");
+          }
+      });
+    }
+
+    const showError = (msg) => {
+      loading.hide();
+
+      runStatus.html(msg);
+      Toastify({
+          text: "An error has occurred, please refresh the page and try again.",
+          duration: -1,
+          position: "center",
+          style: {"background": "#ff6961"}
+      }).showToast();
+  };
+
+    const applyToAllOutputs = () => {
+
+    }
   </script>
 {% endblock %}

@@ -275,13 +275,24 @@ def submit_single_test_case(request, test_case_id):
     try:
         if request.method == "POST":
             # get test case instance
-            test_case = TestCase.objects.filter(id=test_case_id).first()
-            if not test_case:
-                error_context = {
-                    "result": "error",
-                    "message": "The specified Test Case does not exist.",
-                }
-                return Response(error_context, status=status.HTTP_404_NOT_FOUND)
+            if test_case_id != 0:
+                test_case = TestCase.objects.filter(id=test_case_id).first()
+                if not test_case:
+                    error_context = {
+                        "result": "error",
+                        "message": "The specified Test Case does not exist.",
+                    }
+                    return Response(error_context, status=status.HTTP_404_NOT_FOUND)
+            else:
+                # create temporary test_case object
+                test_case = TestCase()
+                dummy_code_question = CodeQuestion()
+                dummy_code_question.name = ""
+                test_case.code_question = dummy_code_question
+                test_case.stdin = request.data["run_stdin"]
+                test_case.time_limit = 5
+                test_case.memory_limit = 40960
+                test_case.score = 0
 
             # evaluate expected_output using judge0 for custom inputs
             if request.data["run_stdin"] != test_case.stdin:

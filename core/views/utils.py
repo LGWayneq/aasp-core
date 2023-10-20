@@ -181,7 +181,7 @@ def construct_assessment_published_email(assessment, recipients=None):
 def construct_expected_output_judge0_params(test_case):
     # judge0 params
     code_question = CodeQuestion.objects.filter(id=test_case.code_question_id).first()
-    if code_question.solution_code is None or code_question.solution_code_language is None:
+    if code_question is None or code_question.solution_code is None or code_question.solution_code_language is None:
         return None
 
     params = {
