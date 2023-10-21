@@ -4,7 +4,7 @@
         {% if hidden %}
      id="empty-code-snippet-row" style="display:none"
         {% else %}
-     id="code-snippet-row-{{ lang_id|default_if_none:"0" }}"
+     id="code-snippet-row-{{ lang_id|default_if_none:"0" }}" style="display:none" data-ace-mode="{{ ace_mode }}"
         {% endif %}
      {% if form.DELETE.value %}style="display:none"{% endif %}
 >
@@ -21,8 +21,7 @@
 
   <!-- code input -->
   <div class="form-group">
-    <label for="id_cs-{{ prefix|default_if_none:"__prefix__" }}-code" class="lang-label">{{ form.instance.language }}</label>
-    <pre id="editor-{{ prefix|default_if_none:"__prefix__" }}" class="inner rounded" style="height: 500px;">{{ form.code.value|default_if_none:"" }}</pre>
+    <pre id="cs-{{ prefix|default_if_none:"__prefix__" }}-editor" class="inner rounded" style="height: 500px;">{{ form.code.value|default_if_none:"" }}</pre>
     <input type="hidden" name="cs-{{ prefix|default_if_none:"__prefix__" }}-code" id="id_cs-{{ prefix|default_if_none:"__prefix__" }}-code" class="form-control" value="{{ form.code.value|default_if_none:"" }}" />
   </div>
 </div>
@@ -37,10 +36,10 @@
 <script>
    var Range = Range == undefined ? ace.require('ace/range').Range : Range
    var editors = editors == undefined ? {} : editors
-
+   
    setupAceEditor({{ prefix }}, "{{ ace_mode }}")
    function setupAceEditor(prefix, aceMode) {
-      const editorKey = `editor-${prefix}`
+      const editorKey = `cs-${prefix}-editor`
       editors[editorKey] = ace.edit(editorKey)
       editors[editorKey].renderer.setScrollMargin(10)
       editors[editorKey].setOptions({
