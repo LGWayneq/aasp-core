@@ -4,19 +4,16 @@
 {% block title %}Allowed Languages{% endblock %}
 
 {% block styles %}
-  <!-- ace editor css -->
   <style>
-        @font-face {
-            font-family: 'JetBrains Mono';
-            src: url('{% static 'fonts/JetBrainsMono-Regular.ttf' %}') format('truetype');
-            font-weight: normal;
-            font-style: normal;
-        }
+    @font-face {
+      font-family: 'JetBrains Mono';
+      src: url('{% static 'fonts/JetBrainsMono-Regular.ttf' %}') format('truetype');
+    }
+    textarea {
+      font-family: 'JetBrains Mono';
+      font-style: normal;
+    }
   </style>
-
-  <link rel="stylesheet" href="{% static 'vendors/highlight.js/styles/night-owl.min.css' %}">
-  <link rel="stylesheet" href="{% static 'vendors/toastify/toastify.css' %}"/>
-
 {% endblock %}
 
 {% block content %}
@@ -108,11 +105,16 @@
                 <h5 class="mt-5">Code Snippets</h5>
 
                 <div id="code-snippets-container" class="mt-4">
+                  <div id="code-snippets-toggle-container">
+                    {% for language in languages %}
+                      <button class="btn btn-md btn-secondary code-snippet-toggle-{{ language.id }}" type="button" data-lang-id={{ language.id }} onclick="toggleSnippet({{language.id}})" style="{% if language.id not in existing_languages %}display: none;{% endif %}">
+                        {{ language.name }}
+                      </button>
+                    {% endfor %}
+                  </div>
                   {# have existing code snippets #}
                   {% for f in code_snippet_formset %}
-                    {% with languages|slice:f.language.value|last as language %}
-                    {% include 'code_questions/snippets/code-snippet-row.html' with prefix=forloop.counter0 form=f lang_id=f.language.value ace_mode=language.ace_mode %}
-                    {% endwith %}
+                    {% include 'code_questions/snippets/code-snippet-row.html' with prefix=forloop.counter0 form=f lang_id=f.language.value %}
                   {% endfor %}
                 </div>
 
@@ -136,116 +138,127 @@
 {% endblock %}
 
 {% block js %}
-  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
-  <script src="{% static 'vendors/ace/src-noconflict/ace.js' %}" type="text/javascript" charset="utf-8"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/split.js/1.6.0/split.min.js"></script>
-  <script type="text/javascript" src="{% static 'vendors/toastify/toastify.js' %}"></script>
   <script src="{% static 'vendors/jquery/jquery.min.js' %}"></script>
 
   <!-- Checkbox script -->
   <script>
-      // initialize ace editor
-      var Range = Range == undefined ? ace.require('ace/range').Range : Range
-      var editors = editors == undefined ? {} : editors
+      // on key listener to add tab functionality to textareas
+      $('textarea').keydown(function (e) {
+        var keyCode = e.keyCode || e.which;
+        if (keyCode === 9) {
+            e.preventDefault();
+    
+            const TAB_SIZE = 4;
+    
+            // The one-liner that does the magic
+            document.execCommand('insertText', false, ' '.repeat(TAB_SIZE));
+        }
+    });
 
-      function setupAceEditor(prefix, aceMode) {
-        const editorKey = `editor-${prefix}`
-        editors[editorKey] = ace.edit(editorKey)
-        editors[editorKey].renderer.setScrollMargin(10)
-        editors[editorKey].setOptions({
-            fontFamily: 'JetBrains Mono',
-            fontSize: '16px',
-            theme: 'ace/theme/cloud9_day',
-            showPrintMargin: false,
-            highlightActiveLine: false,
-            wrap: true,
-            tabSize: 4
-        })
-        editors[editorKey].setOption('dragEnabled', false)
-        // set ace mode
-        editors[editorKey].session.setMode('ace/mode/' + aceMode)
+      // initialise first code snippets to show
+      $('.code-snippet-row:first').show();
+      $('#code-snippets-toggle-container').children().filter('button:not(:hidden):first').addClass('btn-primary fw-bold')
+      $('#code-snippets-toggle-container').children().filter('button:not(:hidden):first').removeClass('btn-secondary')
 
-        // Synchronize Ace editor content with the hidden input field
-        editors[editorKey].getSession().on('change', function (e) {
-            var code = editors[editorKey].getValue()
-            document.getElementById(`id_cs-${prefix}-code`).value = code
-        })
+      // add click event listener to code snippet toggle buttons
+      function toggleSnippet(langId) {
+        $('#code-snippets-toggle-container').children().filter('button').addClass('btn-secondary')
+        $('#code-snippets-toggle-container').children().filter('button').removeClass('btn-primary fw-bold')
+        $(`.code-snippet-toggle-${langId}`).addClass('btn-primary fw-bold')
+        $(`.code-snippet-toggle-${langId}`).removeClass('btn-secondary')
+        $('.code-snippet-row').hide();
+        $(`#code-snippet-row-${langId}`).show();
       }
+
+      function hideSnippetToggle(langId) {
+        const toggleButton = $(`.code-snippet-toggle-${langId}`);
+        toggleButton.hide();
+        if (toggleButton.attr('class').includes('btn-primary')) {
+          const nextToggle = $('#code-snippets-toggle-container').children().filter('button:not(:hidden):first');
+          $('#code-snippets-toggle-container').children().filter('button').addClass('btn-secondary')
+          $('#code-snippets-toggle-container').children().filter('button').removeClass('btn-primary fw-bold')
+          if (nextToggle) {
+            const nextLangId = nextToggle.data('lang-id');
+            toggleSnippet(nextLangId);
+          } 
+        }
+      }
+
+      // function to update all prefixes
+      const updatePrefixes = () => {
+        const regex = RegExp(`cs-(\\d)-`, 'g');
+
+        snippetsContainer.children().filter(".code-snippet-row").each((idx, tcRow) => {
+          $(tcRow).html($(tcRow).html().replaceAll(regex, `cs-${idx}-`));
+        });
+      };
 
       const snippetsContainer = $("#code-snippets-container");
       const emptySnippetRow = $("#empty-code-snippet-row");
       const totalFormsInput = $("#id_cs-TOTAL_FORMS");
       let totalForms = totalFormsInput.val();
 
-      $(".language-checkbox").change(function (e) {
+      function addSnippet(langId, langName, langTemplate) {
+        // increment totalForms
+        totalForms++;
+        totalFormsInput.val(totalForms);
+
+        // clone empty snippet row
+        const cloned = emptySnippetRow.clone();
+
+        // set id, label and language-id
+        cloned.attr("id", `code-snippet-row-${langId}`);
+        cloned.find(".lang-label").first().html(langName);
+        cloned.find(".lang-id").first().val(langId);
+        cloned.find("textarea").first().text(langTemplate);
+
+        // update prefix
+        $(cloned).html($(cloned).html().replaceAll('__prefix__', `${totalForms - 1}`));
+        cloned.hide();
+
+        // append to container
+        snippetsContainer.append(cloned);
+        if ($('.code-snippet-row:not(:hidden)').length === 0) {
+          toggleSnippet(langId);
+        }
+      }
+
+      $(".language-checkbox").change(function () {
           const checkbox = $(this);
           const existing = checkbox.data("existing");
           const langId = checkbox.data("lang-id");
           const langName = checkbox.data("lang-name");
           const langTemplate = checkbox.data("lang-template");
-          const aceMode = checkbox.data("ace-mode");
-
-          // function to update all prefixes
-          const updatePrefixes = () => {
-              const regex = RegExp(`cs-(\\d)-`, 'g');
-
-              snippetsContainer.children().each((idx, tcRow) => {
-                  $(tcRow).html($(tcRow).html().replaceAll(regex, `cs-${idx}-`));
-              });
-          };
 
           if (this.checked) { // checkbox was checked (add)
-              if (existing) {
-                  const toShow = $("#code-snippets-container #code-snippet-row-" + langId);
-                  toShow.fadeIn(300, () => {
-                      const delete_checkbox = $(toShow).children(".delete-checkbox").first();
-                      $(delete_checkbox).prop('checked', false);
-                  });
-              } else {
-                  // increment totalForms
-                  totalForms++;
-                  totalFormsInput.val(totalForms);
-
-                  // clone empty snippet row
-                  const cloned = emptySnippetRow.clone();
-
-                  // remove id, style
-                  cloned.removeAttr('id style');
-
-                  // set id, label and language-id
-                  cloned.attr("id", `code-snippet-row-${langId}`);
-                  cloned.find(".lang-label").first().html(langName);
-                  cloned.find(".lang-id").first().val(langId);
-                  cloned.find("pre").first().text(langTemplate);
-                  cloned.find(`#id_cs-__prefix__-code`).first().val(langTemplate)
-
-                  // update prefix
-                  $(cloned).html($(cloned).html().replaceAll('__prefix__', `${totalForms - 1}`));
-
-                  // append to container
-                  snippetsContainer.append(cloned);
-                  setupAceEditor(totalForms - 1, aceMode)
-              }
-
+            $(`.code-snippet-toggle-${langId}`).show();
+            if (existing) {
+                const toShow = $("#code-snippets-container #code-snippet-row-" + langId);
+                if ($('.code-snippet-row:not(:hidden)').length === 0) {
+                  toggleSnippet(langId);
+                }
+                const delete_checkbox = $(toShow).children(".delete-checkbox").first();
+                $(delete_checkbox).prop('checked', false);
+            } else {
+                addSnippet(langId, langName, langTemplate);
+            }
           } else {  // checkbox was unchecked (remove)
               const toRemove = $("#code-snippets-container #code-snippet-row-" + langId);
+              hideSnippetToggle(langId);
 
               if (existing) {
                   // simply check the checkbox and hide the row
-                  toRemove.fadeOut(300, () => {
-                      const delete_checkbox = $(toRemove).children(".delete-checkbox").first();
-                      $(delete_checkbox).prop('checked', true);
-                  });
+                  toRemove.hide();
+                  const delete_checkbox = $(toRemove).children(".delete-checkbox").first();
+                  $(delete_checkbox).prop('checked', true);
               } else {
                   // decrement totalForms
                   totalForms--;
                   totalFormsInput.val(totalForms);
 
                   // remove and update prefixes
-                  toRemove.fadeOut('slow', () => {
-                      toRemove.remove();
-                      updatePrefixes();
-                  });
+                  toRemove.remove();
+                  updatePrefixes();
               }
           }
       });
@@ -259,46 +272,21 @@
       const langId = radio.data("lang-id");
       const langName = radio.data("lang-name");
       const langTemplate = radio.data("lang-template");
-      const aceMode = radio.data("ace-mode");
 
       // remove existing row
       $(".language-radio").each((idx, radio) => {
         if ($(radio).data("lang-id") !== langId) {
           const langId = $(radio).data("lang-id");
           const toRemove = $("#code-snippets-container #code-snippet-row-" + langId);
-          toRemove.fadeOut('300', () => {
-            toRemove.remove();
-          });
+          toRemove.remove();
 
           // decrement totalForms
           totalForms--;
           totalFormsInput.val(totalForms);
         }
       })
-
-      // increment totalForms
-      totalForms++;
-      totalFormsInput.val(totalForms);
-
-      // clone empty snippet row
-      const cloned = emptySnippetRow.clone();
-
-      // remove id, style
-      cloned.removeAttr('id style');
-
-      // set id, label and language-id
-      cloned.attr("id", `code-snippet-row-${langId}`);
-      cloned.find(".lang-label").first().html(langName);
-      cloned.find(".lang-id").first().val(langId);
-      cloned.find("pre").first().text(langTemplate);
-      cloned.find(`#id_cs-__prefix__-code`).first().val(langTemplate)
-
-      // update prefix
-      $(cloned).html($(cloned).html().replaceAll('__prefix__', `${totalForms - 1}`));
-
-      // append to container
-      snippetsContainer.append(cloned);
-      setupAceEditor(totalForms - 1, aceMode)
+      $(`.code-snippet-toggle-${langId}`).show();
+      addSnippet(langId, langName, langTemplate)
     });
   </script>
 
@@ -308,37 +296,26 @@
       const tab = $(this);
       const id = tab.attr('id');
 
-      const updatePrefixes = () => {
-        const regex = RegExp(`cs-(\\d)-`, 'g');
-
-        snippetsContainer.children().each((idx, tcRow) => {
-          $(tcRow).html($(tcRow).html().replaceAll(regex, `cs-${idx}-`));
-        });
-      };
-
       if (id == "software-tab") { // software tab was selected
         $(".language-radio").each((idx, radio) => {
           if ($(radio).prop("checked")) {
             const langId = $(radio).data("lang-id");
             const existing = $(radio).data("existing");
             const toRemove = $("#code-snippets-container #code-snippet-row-" + langId);
-
+            hideSnippetToggle(langId);
             if (existing) {
                 // simply check the checkbox and hide the row
-                toRemove.fadeOut(300, () => {
-                    const delete_checkbox = $(toRemove).children(".delete-checkbox").first();
-                    $(delete_checkbox).prop('checked', true);
-                });
+                toRemove.hide();
+                const delete_checkbox = $(toRemove).children(".delete-checkbox").first();
+                $(delete_checkbox).prop('checked', true);
             } else {
                 // decrement totalForms
                 totalForms--;
                 totalFormsInput.val(totalForms);
 
                 // remove and update prefixes
-                toRemove.fadeOut('slow', () => {
-                    toRemove.remove();
-                    updatePrefixes();
-                });
+                toRemove.remove();
+                updatePrefixes();
             }
           }
         })
@@ -351,39 +328,19 @@
             const langId = $(checkbox).data("lang-id");
             const langName = $(checkbox).data("lang-name");
             const langTemplate = $(checkbox).data("lang-template");
-            const aceMode = $(checkbox).data("ace-mode");
+            const shouldToggleSnippet = $('#code-snippets-row').filter(':not(:hidden)').length === 0;
+            $(`.code-snippet-toggle-${langId}`).show();
             
             if (existing) {
               // uncheck the checkbox
               const toShow = $("#code-snippets-container #code-snippet-row-" + langId);
-              toShow.fadeIn(300, () => {
-                  const delete_checkbox = $(toShow).children(".delete-checkbox").first();
-                  $(delete_checkbox).prop('checked', false);
-              });
+              if (shouldToggleSnippet) {
+                toggleSnippet(langId);
+              }
+              const delete_checkbox = $(toShow).children(".delete-checkbox").first();
+              $(delete_checkbox).prop('checked', false);
             } else {
-              // increment totalForms
-              totalForms++;
-              totalFormsInput.val(totalForms);
-
-              // clone empty snippet row
-              const cloned = emptySnippetRow.clone();
-
-              // remove id, style
-              cloned.removeAttr('id style');
-
-              // set id, label and language-id
-              cloned.attr("id", `code-snippet-row-${langId}`);
-              cloned.find(".lang-label").first().html(langName);
-              cloned.find(".lang-id").first().val(langId);
-              cloned.find("pre").first().text(langTemplate);
-              cloned.find(`#id_cs-__prefix__-code`).first().val(langTemplate)
-
-              // update prefix
-              $(cloned).html($(cloned).html().replaceAll('__prefix__', `${totalForms - 1}`));
-
-              // append to container
-              snippetsContainer.append(cloned);
-              setupAceEditor(totalForms - 1, aceMode)
+              addSnippet(langId, langName, langTemplate)
             }
         };
       })
@@ -393,23 +350,21 @@
             const langId = $(checkbox).data("lang-id");
             const existing = $(checkbox).data("existing");
             const toRemove = $("#code-snippets-container #code-snippet-row-" + langId);
+            hideSnippetToggle(langId);
 
             if (existing) {
                 // simply check the checkbox and hide the row
-                toRemove.fadeOut(300, () => {
-                    const delete_checkbox = $(toRemove).children(".delete-checkbox").first();
-                    $(delete_checkbox).prop('checked', true);
-                });
+                toRemove.hide();
+                const delete_checkbox = $(toRemove).children(".delete-checkbox").first();
+                $(delete_checkbox).prop('checked', true);
             } else {
                 // decrement totalForms
                 totalForms--;
                 totalFormsInput.val(totalForms);
 
                 // remove and update prefixes
-                toRemove.fadeOut('slow', () => {
-                    toRemove.remove();
-                    updatePrefixes();
-                });
+                toRemove.remove();
+                updatePrefixes();
             }
           }
         })
@@ -421,39 +376,16 @@
             const langId = $(radio).data("lang-id");
             const langName = $(radio).data("lang-name");
             const langTemplate = $(radio).data("lang-template");
-            const aceMode = $(radio).data("ace-mode");
+            $(`.code-snippet-toggle-${langId}`).show();
 
             if (existing) {
               // uncheck the checkbox
               const toShow = $("#code-snippets-container #code-snippet-row-" + langId);
-              toShow.fadeIn(300, () => {
-                  const delete_checkbox = $(toShow).children(".delete-checkbox").first();
-                  $(delete_checkbox).prop('checked', false);
-              });
+              toggleSnippet(langId);
+              const delete_checkbox = $(toShow).children(".delete-checkbox").first();
+              $(delete_checkbox).prop('checked', false);
             } else {
-              // increment totalForms
-              totalForms++;
-              totalFormsInput.val(totalForms);
-
-              // clone empty snippet row
-              const cloned = emptySnippetRow.clone();
-
-              // remove id, style
-              cloned.removeAttr('id style');
-
-              // set id, label and language-id
-              cloned.attr("id", `code-snippet-row-${langId}`);
-              cloned.find(".lang-label").first().html(langName);
-              cloned.find(".lang-id").first().val(langId);
-              cloned.find("pre").first().text(langTemplate);
-              cloned.find(`#id_cs-__prefix__-code`).first().val(langTemplate)
-
-              // update prefix
-              $(cloned).html($(cloned).html().replaceAll('__prefix__', `${totalForms - 1}`));
-
-              // append to container
-              snippetsContainer.append(cloned);
-              setupAceEditor(totalForms - 1, aceMode)
+              addSnippet(langId, langName, langTemplate)
             }
           }
         })
