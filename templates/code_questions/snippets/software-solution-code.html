@@ -94,9 +94,6 @@
     })
     editor.setOption('dragEnabled', false)
     
-    const arrowCommands = ['gotoleft', 'gotoright', 'golineup', 'golinedown']
-    let markers = []
-    
     let prevLanguage = langSelect.val()
     const loadSubmittedCode = () => {
       let solutionCode = `{{ code_question.solution_code|safe }}`

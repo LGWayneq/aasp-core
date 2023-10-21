@@ -19,7 +19,7 @@
         {% for lang in languages %}
           {% if lang.software_language %}
             <div class="form-check checkbox col-4">
-              <input type="checkbox" id="lang-{{ lang.id }}" data-lang-id="{{ lang.id }}" data-lang-name="{{ lang.name }}"
+              <input type="checkbox" id="lang-{{ lang.id }}" data-lang-id="{{ lang.id }}" data-lang-name="{{ lang.name }}" data-ace-mode={{ lang.ace_mode }}
                 class="form-check-input language-checkbox" data-lang-template="{{ lang.default_template.code }}"
                 {% if lang.id in existing_languages %}checked data-existing="true"{% else %}data-existing="false"{% endif %}>
               <label class="form-check-label" for="lang-{{ lang.id }}">{{ lang.name }}</label>
@@ -36,7 +36,7 @@
         {% for lang in languages %}
           {% if not lang.software_language %}
             <div class="form-check radio col-4">
-              <input type="radio" id="lang-{{ lang.id }}" name="hardwareLanguage" data-lang-id="{{ lang.id }}" data-lang-name="{{ lang.name }}"
+              <input type="radio" id="lang-{{ lang.id }}" name="hardwareLanguage" data-lang-id="{{ lang.id }}" data-lang-name="{{ lang.name }}" data-ace-mode={{ lang.ace_mode }}
                 class="form-check-input language-radio" data-lang-template="{{ lang.default_template.code }}"
                 {% if lang.id in existing_languages %}checked data-existing="true"{% else %}data-existing="false"{% endif %}>
               <label class="form-check-label" for="lang-{{ lang.id }}">{{ lang.name }}</label>

@@ -1,3 +1,5 @@
+{% load static %}
+
 <div class="row code-snippet-row"
         {% if hidden %}
      id="empty-code-snippet-row" style="display:none"
@@ -20,7 +22,71 @@
   <!-- code input -->
   <div class="form-group">
     <label for="id_cs-{{ prefix|default_if_none:"__prefix__" }}-code" class="lang-label">{{ form.instance.language }}</label>
-    <textarea name="cs-{{ prefix|default_if_none:"__prefix__" }}-code" cols="40" rows="10" id="id_cs-{{ prefix|default_if_none:"__prefix__" }}-code"
-              spellcheck="false" class="form-control font-monospace">{{ form.code.value|default_if_none:"" }}</textarea>
+    <pre id="editor-{{ prefix|default_if_none:"__prefix__" }}" class="inner rounded" style="height: 500px;">{{ form.code.value|default_if_none:"" }}</pre>
+    <input type="hidden" name="cs-{{ prefix|default_if_none:"__prefix__" }}-code" id="id_cs-{{ prefix|default_if_none:"__prefix__" }}-code" class="form-control" value="{{ form.code.value|default_if_none:"" }}" />
   </div>
 </div>
+
+{% block js %}
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+<script src="{% static 'vendors/ace/src-noconflict/ace.js' %}" type="text/javascript" charset="utf-8"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/split.js/1.6.0/split.min.js"></script>
+<script type="text/javascript" src="{% static 'vendors/toastify/toastify.js' %}"></script>
+
+<!-- Ace code editor config -->
+<script>
+   var Range = Range == undefined ? ace.require('ace/range').Range : Range
+   var editors = editors == undefined ? {} : editors
+
+   setupAceEditor({{ prefix }}, "{{ ace_mode }}")
+   function setupAceEditor(prefix, aceMode) {
+      const editorKey = `editor-${prefix}`
+      editors[editorKey] = ace.edit(editorKey)
+      editors[editorKey].renderer.setScrollMargin(10)
+      editors[editorKey].setOptions({
+          fontFamily: 'JetBrains Mono',
+          fontSize: '16px',
+          theme: 'ace/theme/cloud9_day',
+          showPrintMargin: false,
+          highlightActiveLine: false,
+          wrap: true,
+          tabSize: 4
+      })
+      editors[editorKey].setOption('dragEnabled', false)
+      // set ace mode
+      editors[editorKey].session.setMode('ace/mode/' + aceMode)
+
+      // Synchronize Ace editor content with the hidden input field
+      editors[editorKey].getSession().on('change', function (e) {
+         var code = editors[editorKey].getValue()
+         document.getElementById(`id_cs-${prefix}-code`).value = code
+      })
+   }
+   {% comment %} var Range = Range == undefined ? ace.require('ace/range').Range : Range
+    
+   // initialize ace editor
+   var editors = editors == undefined ? {} : editors
+   
+   editors["editor-{{ prefix|default_if_none:"__prefix__" }}"] = ace.edit("editor-{{ prefix|default_if_none:"__prefix__" }}")
+   editors["editor-{{ prefix|default_if_none:"__prefix__" }}"].renderer.setScrollMargin(10)
+   editors["editor-{{ prefix|default_if_none:"__prefix__" }}"].setOptions({
+      fontFamily: 'JetBrains Mono',
+      fontSize: '16px',
+      theme: 'ace/theme/cloud9_day',
+      showPrintMargin: false,
+      highlightActiveLine: false,
+      wrap: true,
+      tabSize: 4
+   })
+   editors["editor-{{ prefix|default_if_none:"__prefix__" }}"].setOption('dragEnabled', false)
+   // set ace mode
+   editors["editor-{{ prefix|default_if_none:"__prefix__" }}"].session.setMode('ace/mode/' + '{{ ace_mode }}')
+
+   // Synchronize Ace editor content with the hidden input field
+   editors["editor-{{ prefix|default_if_none:"__prefix__" }}"].getSession().on('change', function (e) {
+      var code = editors[editorKey].getValue()
+      console.log(e)
+      document.getElementById("id_cs-{{ prefix|default_if_none:"__prefix__" }}-code").value = code
+   }) {% endcomment %}
+</script>
+{% endblock %}
