@@ -288,14 +288,15 @@
                                 tags += "<span class='badge bg-light-secondary me-1'>" + t.name + "</span>";
                             })
                             preview_url = "{% url 'preview-question' code_question_id=0 %}".replace("0", cq.id);
+                            disabled_buttons = cq.languages.length === 0 || cq.testcase_set.length === 0
                             newRows += "<tr><td>" + cq.name 
                                 + "</td><td>" + trimmed_description 
                                 + "</td><td>" + test_cases 
                                 + "</td><td>" + languages 
                                 + "</td><td>" + concurrency 
                                 + "</td><td>" + tags 
-                                + "</td><td>" + `<a href=${preview_url} target="_blank" class="btn btn-sm btn-warning ${(cq.languages.length === 0 || cq.testcase_set.length === 0) && "disabled"}">Preview</a>`
-                                + "<button type='button' class='btn btn-success btn-sm' style='margin-left: 3px;' onclick='addCodeQuestion(this)' data-cq-id='" + cq.id + "'>Add</button>"
+                                + "</td><td>" + `<a href=${preview_url} target="_blank" class="btn btn-sm btn-warning ${disabled_buttons && "disabled"}">Preview</a>`
+                                + `<button type='button' class='btn btn-success btn-sm ${disabled_buttons && "disabled"}' style='margin-left: 3px;' onclick='addCodeQuestion(this)' data-cq-id='` + cq.id + "'>Add</button>"
                                 + "</td></tr>"
                         })
                         codeQuestionTableBody.append(newRows);
