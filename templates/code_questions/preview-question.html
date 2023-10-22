@@ -895,7 +895,7 @@
         runStatus.html('Submitting');
         
         const promises = []
-        const hidden_tc_stdin = JSON.parse("{{ hidden_tc_stdin|safe }}".replaceAll("'",  '"'))
+        const hidden_tc_stdin = JSON.parse(`{{ hidden_tc_stdin|safe }}`.replaceAll(`'`,  `"`))
         hidden_tc_stdin.forEach((stdin) => promises.push(evaluate(stdin)))
         try {
           const tokens = await Promise.all(promises);
