@@ -71,15 +71,15 @@
               </li>
             </ul>
 
-            <!-- Solution Code section -->
-            {% if is_software_language %}
-              {% include 'code_questions/snippets/software-solution-code.html' with form=code_question_form %}
-            {% endif %}
-            <hr></hr>
-
             <!-- Tab contents -->
             <form method="POST">
               {% csrf_token %}
+              <!-- Solution Code section -->
+              {% if is_software_language %}
+                {% include 'code_questions/snippets/software-solution-code.html' with form=code_question_form %}
+              {% endif %}
+              <hr></hr>
+
               <div>
                 {% if testcase_formset.errors %}
                   <div class="alert alert-danger">Please rectify the issues below</div>
