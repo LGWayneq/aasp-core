@@ -13,16 +13,21 @@
     const modalLoading = $("#m-loading");
     const modalBody = $("#m-body");
 
+    const cqName = $("#cq-name");
     const cqDescription = $("#cq-description");
     const cqTestCases = $("#cq-test-cases");
     const cqLanguages = $("#cq-languages");
     const cqConcurrency = $("#cq-concurrency");
+    const cqSolutionCode = $("#cq-solution-code");
 
     const viewModal = (btn) => {
         // clear old data
         cqTestCases.empty();
+        cqName.html("");
         cqDescription.html("");
         cqLanguages.html("");
+        cqConcurrency.html("");
+        cqSolutionCode.html("");
 
         // get code question id
         const cq_id = $(btn).data('cq-id');
@@ -49,10 +54,12 @@
                 })
 
                 // set values
+                cqName.html(res.code_question.name)
                 cqDescription.html(marked.parse(res.code_question.description));
                 cqTestCases.append(rows);
                 cqLanguages.html(languages);
                 cqConcurrency.html(res.code_question.is_concurrency_question ? "True" : "False");
+                cqSolutionCode.html(res.code_question.solution_code);
                 hljs.highlightAll();
 
                 // render math
