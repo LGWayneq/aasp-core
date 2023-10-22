@@ -599,3 +599,29 @@ def compile_code(request):
         # delete zip file
         if os.path.exists('submission.zip'):
             os.remove('submission.zip')
+
+@api_view(["GET"])
+@login_required()
+@groups_allowed(UserGroup.educator)
+def preview_question(request, code_question_id):
+    # get code question
+    code_question = get_object_or_404(CodeQuestion, id=code_question_id)
+
+    # if no question exist at the index, raise 404
+    if not code_question:
+        raise Http404()
+
+    code_snippets = CodeSnippet.objects.filter(code_question=code_question)
+    sample_tc = TestCase.objects.filter(code_question=code_question, sample=True).first()
+    hidden_tc_stdin = list(TestCase.objects.filter(code_question=code_question, sample=False).values_list('stdin', flat=True))
+
+    # context
+    context = {
+        'code_question': code_question,
+        'code_snippets': code_snippets,
+        'sample_tc': sample_tc,
+        'hidden_tc_stdin': hidden_tc_stdin,
+        'is_software_language': code_question.is_software_language(),
+    }
+
+    return render(request, "code_questions/preview-question.html", context)

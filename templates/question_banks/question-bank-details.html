@@ -174,8 +174,10 @@
                       {% endif %}
                     </td>
                     <td>
+                      <a href="{% url 'preview-question' code_question_id=q.id %}"
+                        class="btn btn-sm btn-warning">Preview</a>
                       <button type="button" id="more-details" class="btn btn-sm btn-primary view-modal" data-cq-id="{{ q.id }}"
-                              onclick="viewModal(this)">
+                        onclick="viewModal(this)">
                         View
                       </button>
                       {% if question_bank.owner == request.user %}

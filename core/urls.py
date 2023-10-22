@@ -58,6 +58,7 @@ urlpatterns = [
     path('code-question/update/<int:code_question_id>/', code_questions.update_code_question, name='update-code-question'),
     path('api/get-code-question-details/', code_questions.get_cq_details, name='get-code-question-details'),  # ajax
     path('api/compile-code/', code_questions.compile_code, name='compile-code'),  # ajax
+    path('code-question/preview/<int:code_question_id>/', code_questions.preview_question, name='preview-question'),  # step 1
 
     # assessments
     path('assessments/', assessments.view_assessments, name='view-assessments'),
