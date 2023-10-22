@@ -177,7 +177,7 @@
                 <label for="lang-select">Language</label>
                 <select class="form-select" id="lang-select">
                   {% for cs in code_snippets %}
-                    <option data-code="{{ cs.code }}" data-judgeid="{{ cs.language.judge_language_id }}"
+                    <option data-code="{{ cs.code }}" data-initial-code="{{ cs.code }}" data-judgeid="{{ cs.language.judge_language_id }}"
                             data-ace-mode="{{ cs.language.ace_mode }}">{{ cs.language.name }}</option>
                   {% endfor %}
                 </select>
@@ -626,7 +626,14 @@
       }
       
       if (confirm("Are you sure you wish to reset?")) {
-          setLanguage();
+        // get the selected option
+        const selected = langSelect.find("option:selected")
+        // set to initial code snippet
+        editor.session.setValue(selected.data("initial-code"))
+        
+        // set ace mode
+        editor.session.setMode("ace/mode/" + selected.data("ace-mode"))
+        updateReadonlyRanges()
       }
 
       if ({{ assessment_attempt.assessment.limit_tab_switching|yesno:"true,false"}}) {
