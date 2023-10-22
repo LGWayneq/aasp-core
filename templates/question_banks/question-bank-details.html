@@ -175,7 +175,7 @@
                     </td>
                     <td>
                       <a href="{% url 'preview-question' code_question_id=q.id %}"
-                        class="btn btn-sm btn-warning">Preview</a>
+                        class="btn btn-sm btn-warning {% if q.languages.count == 0 or q.testcase_set.count == 0 %}disabled{% endif %}">Preview</a>
                       <button type="button" id="more-details" class="btn btn-sm btn-primary view-modal" data-cq-id="{{ q.id }}"
                         onclick="viewModal(this)">
                         View

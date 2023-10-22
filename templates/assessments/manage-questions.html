@@ -85,7 +85,7 @@
                             </td>
                             <td>
                                 <a href="{% url 'preview-question' code_question_id=q.id %}"
-                                    class="btn btn-sm btn-warning">Preview</a>
+                                    class="btn btn-sm btn-warning {% if q.languages.count == 0 or q.testcase_set.count == 0 %}disabled{% endif %}">Preview</a>
                                 <button type="button" id="more-details" class="btn btn-sm btn-primary view-modal"
                                     data-cq-id="{{ q.id }}" onclick="viewModal(this)">
                                     View
@@ -190,10 +190,12 @@
                         <thead>
                             <tr>
                                 <th>Name</th>
-                                <th style="width: 60%">Description</th>
+                                <th style="width: 30%">Description</th>
+                                <th>Test Cases</th>
+                                <th>Languages</th>
                                 <th>Concurrency</th>
                                 <th>Tags</th>
-                                <th>Actions
+                                <th style="width: 115px;">Actions
                                     <div class="spinner-border spinner-border-sm" id="actions-loading"
                                         style="display:none"></div>
                                 </th>
@@ -272,12 +274,29 @@
                     else {
                         let newRows = "";
                         res.code_questions.forEach((cq) => {
+                            trimmed_description = cq.description.length > 100 ? cq.description.substring(0, 100) + " <b>...</b>" : cq.description;
+                            concurrency = cq.is_concurrency_question ? '<span class="badge bg-light-success">Y</span>' : '<span class="badge bg-light-danger">N</span>';
+                            test_cases = cq.testcase_set.length == 0 ? '<span class="badge bg-light-danger">No test cases set</span>' : cq.testcase_set.length;
+                            languages = cq.languages.length == 0 
+                                ? '<span class="badge bg-light-danger">No languages set</span>' 
+                                : cq.languages.slice(0,2).map((language) => `<span class="badge bg-light-secondary" style="margin-right: 2px;">${language.name}</span>`).join("");
+                            if (cq.languages.length > 2) {
+                                languages += `<span class="badge bg-light-secondary">+${cq.languages.length - 2} more</span>`;
+                            }
                             let tags = "";
                             cq.tags.forEach((t) => {
                                 tags += "<span class='badge bg-light-secondary me-1'>" + t.name + "</span>";
                             })
-                            concurrency_value = cq.is_concurrency_question ? '<span class="badge bg-light-success">Y</span>' : '<span class="badge bg-light-danger">N</span>';
-                            newRows += "<tr><td>" + cq.name + "</td><td>" + cq.description + "</td><td>" + concurrency_value + "</td><td>" + tags + "</td><td><button type='button' class='btn btn-success btn-sm' onclick='addCodeQuestion(this)' data-cq-id='" + cq.id + "'>Add</button></td></tr>"
+                            preview_url = "{% url 'preview-question' code_question_id=0 %}".replace("0", cq.id);
+                            newRows += "<tr><td>" + cq.name 
+                                + "</td><td>" + trimmed_description 
+                                + "</td><td>" + test_cases 
+                                + "</td><td>" + languages 
+                                + "</td><td>" + concurrency 
+                                + "</td><td>" + tags 
+                                + "</td><td>" + `<a href=${preview_url} target="_blank" class="btn btn-sm btn-warning ${(cq.languages.length === 0 || cq.testcase_set.length === 0) && "disabled"}">Preview</a>`
+                                + "<button type='button' class='btn btn-success btn-sm' style='margin-left: 3px;' onclick='addCodeQuestion(this)' data-cq-id='" + cq.id + "'>Add</button>"
+                                + "</td></tr>"
                         })
                         codeQuestionTableBody.append(newRows);
                     }
