@@ -69,8 +69,10 @@
             <form method="POST">
               {% csrf_token %}
 
-              <input type="hidden" name="question_bank" value="{{ form.question_bank.value|default_if_none:"" }}">
-              <input type="hidden" name="assessment" value="{{ form.assessment.value|default_if_none:"" }}">
+              <input type="hidden" name="question_bank" value="{{ form.question_bank.value|default_if_none:"" }}"/>
+              <input type="hidden" name="assessment" value="{{ form.assessment.value|default_if_none:"" }}"/>
+              <input type="hidden" name="solution_code" value='{{ form.solution_code.value|default:"" }}'/>
+              <input type="hidden" name="solution_code_language" value='{{ form.solution_code_language.value|default:"" }}'/>
 
               <div class="tab-content" id="pills-tabContent">
 
