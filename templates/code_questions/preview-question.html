@@ -277,7 +277,7 @@
 		const selected = langSelect.find("option:selected")
 
 		// get module header
-		const wavedrom = JSON.parse('{{ sample_tc.stdout|safe }}')
+		const wavedrom = JSON.parse(`{{ sample_tc.stdout|safe }}`)
 
 		// iterate through all signals
 		let module_header = ""
@@ -348,7 +348,7 @@
     })
 
     window.addEventListener("load", function () {
-      let wavedrom = JSON.parse('{{ sample_tc.stdout|safe }}')
+      let wavedrom = JSON.parse(`{{ sample_tc.stdout|safe }}`)
       wavedrom.signal = wavedrom.signal.map((signal) => {
         const nameWithoutPrefix = signal.name.replace(/^in_|^out_/, "")
         signal.name = nameWithoutPrefix
