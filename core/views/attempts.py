@@ -323,7 +323,6 @@ def submit_single_test_case(request, test_case_id, code_question_id):
                 test_case.stdout = expected_output_result['stdout']
 
             params = construct_judge0_params(request, test_case)
-            print(params)
 
             # call judge0
             url = settings.JUDGE0_URL + "/submissions/?base64_encoded=false&wait=false"
