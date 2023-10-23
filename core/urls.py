@@ -80,7 +80,7 @@ urlpatterns = [
     path('detect-faces', attempts.detect_faces_initial, name='detect-faces'),
 
     # code question attempts
-    path('api/submit-single-test-case/<int:test_case_id>/', attempts.submit_single_test_case, name='submit-single-test-case'),  # ajax
+    path('api/submit-single-test-case/<int:test_case_id>/<int:code_question_id>', attempts.submit_single_test_case, name='submit-single-test-case'),  # ajax
     path('api/get-tc-details/', attempts.get_tc_details, name='get-tc-details'),  # ajax
     path('api/code-question-submission/<int:code_question_attempt_id>/', attempts.code_question_submission, name='code-question-submission'),  # ajax
     path('api/get-cq-submission-status/', attempts.get_cq_submission_status, name='get-cq-submission-status'),  # ajax

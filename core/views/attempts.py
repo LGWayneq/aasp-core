@@ -266,7 +266,7 @@ def attempt_question(request, assessment_attempt_id, question_index):
 @renderer_classes([JSONRenderer])
 @login_required()
 @groups_allowed(UserGroup.educator, UserGroup.student)
-def submit_single_test_case(request, test_case_id):
+def submit_single_test_case(request, test_case_id, code_question_id):
     """
     Submits a single test case to judge0 for execution, returns the token.
     This is used for the "Compile and Run" option for users to run the sample test case.
@@ -286,9 +286,7 @@ def submit_single_test_case(request, test_case_id):
             else:
                 # create temporary test_case object
                 test_case = TestCase()
-                dummy_code_question = CodeQuestion()
-                dummy_code_question.name = ""
-                test_case.code_question = dummy_code_question
+                test_case.code_question = CodeQuestion.objects.filter(id=code_question_id).first()
                 test_case.stdin = request.data["run_stdin"]
                 test_case.time_limit = 5
                 test_case.memory_limit = 40960
@@ -325,6 +323,7 @@ def submit_single_test_case(request, test_case_id):
                 test_case.stdout = expected_output_result['stdout']
 
             params = construct_judge0_params(request, test_case)
+            print(params)
 
             # call judge0
             url = settings.JUDGE0_URL + "/submissions/?base64_encoded=false&wait=false"

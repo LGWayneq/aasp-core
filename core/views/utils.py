@@ -193,7 +193,7 @@ def construct_expected_output_judge0_params(test_case):
         "memory_limit": test_case.memory_limit,
     }
     if test_case.code_question.is_concurrency_question:
-        params['compiler_options'] = "-fsanitize=thread"
+        params = append_concurrency_compiler_options(params, code_question.solution_code_language.judge_language_id)
 
     return params
 
@@ -204,16 +204,17 @@ def construct_judge0_params(request, test_case) -> dict:
     """
     if test_case.code_question.is_software_language() == True:
         # judge0 params
+        lang_id = int(request.POST.get('lang-id'))
         params = {
             "source_code": request.POST.get('code'),
-            "language_id": request.POST.get('lang-id'),
+            "language_id": lang_id,
             "stdin": test_case.stdin,
             "expected_output": test_case.stdout,
             "cpu_time_limit": test_case.time_limit,
             "memory_limit": test_case.memory_limit,
         }
         if test_case.code_question.is_concurrency_question:
-            params['compiler_options'] = "-fsanitize=thread"
+            params = append_concurrency_compiler_options(params, lang_id)
     else:
         # check if language is verilog
         language = Language.objects.get(judge_language_id=request.POST.get('lang-id'))
@@ -273,6 +274,15 @@ def construct_judge0_params(request, test_case) -> dict:
             "memory_limit": test_case.memory_limit,
         }
     
+    return params
+
+def append_concurrency_compiler_options(params, lang_id):
+    # C
+    if lang_id == 75:
+        params['compiler_options'] = "-pthread -fsanitize=thread"
+    # C++
+    elif lang_id == 76:
+        params['compiler_options'] = "-fsanitize=thread"
     return params
 
 def embed_inout_module(module_code):

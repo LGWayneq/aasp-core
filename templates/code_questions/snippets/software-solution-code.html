@@ -181,7 +181,7 @@
       // ajax call
       $.ajax({
           type: 'POST',
-          url: '{% url "submit-single-test-case" test_case_id=0 %}',
+          url: '{% url "submit-single-test-case" test_case_id=0 code_question_id=code_question.id %}',
           data: formData,
           processData: false,
           contentType: false,
