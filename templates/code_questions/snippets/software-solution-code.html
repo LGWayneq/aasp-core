@@ -65,7 +65,7 @@
   <input type="hidden" name="description" id="id_description" value="{{ form.description.value|default:'' }}" />
   <input type="hidden" name="assessment" id="id_assessment" value="{{ form.assessment.value|default:'' }}" />
   <input type="hidden" name="question_bank" id="id_question_bank" value="{{ form.question_bank.value|default:'' }}" />
-  <input type="hidden" name="is_concurrency_question" id="id_is_concurrency_question" value="{{ form.is_concurrency_question|default:False }}" />
+  <input type="hidden" name="is_concurrency_question" id="id_is_concurrency_question" value={{ form.is_concurrency_question.value|default:"False" }} />
 </div>
 
 {% block js %}
