@@ -158,7 +158,7 @@
     });
 
       // initialise first code snippets to show
-      $('.code-snippet-row:first').show();
+      $('.code-snippet-row:first:not(#empty-code-snippet-row)').show();
       $('#code-snippets-toggle-container').children().filter('button:not(:hidden):first').addClass('btn-primary fw-bold')
       $('#code-snippets-toggle-container').children().filter('button:not(:hidden):first').removeClass('btn-secondary')
 
