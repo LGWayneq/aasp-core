@@ -67,6 +67,7 @@
                         {% if c.owner == request.user %}
                           <a class="btn btn-secondary" href="{% url 'update-course' course_id=c.id %}?next={{ request.path }}">Edit Details</a>
                         {% endif %}
+                        <a class="btn btn-secondary" href="{% url 'course-report' course_id=c.id %}">Report</a>
                       </td>
                     </tr>
                   {% endfor %}

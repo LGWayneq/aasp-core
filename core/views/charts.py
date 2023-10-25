@@ -3,9 +3,9 @@ import math
 from django.db.models import Avg
 from core.models import CodeQuestionAttempt
 
-def generate_score_distribution_graph(attempts, max_value, title = "Score Distribution", x_title = "Score", y_title = "Number of Students"):
+def generate_score_distribution_graph(scores, max_value, title = "Score Distribution", x_title = "Score", y_title = "Number of Students"):
     buckets = create_buckets(0, max_value)
-    assign_buckets(buckets, [attempt.score for attempt in attempts])
+    assign_buckets(buckets, [score for score in scores])
     y_values, x_values = get_bucket_items(buckets)
 
     return {

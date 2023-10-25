@@ -19,6 +19,56 @@ from core.views.charts import generate_score_distribution_graph, generate_assess
 
 @login_required()
 @groups_allowed(UserGroup.educator)
+def course_report(request, course_id):
+    course = get_object_or_404(Course, id=course_id)
+    assessments = Assessment.objects.filter(course=course)
+
+    # calculate total weightage
+    total_weightage = sum(assessment.weightage for assessment in assessments)
+
+    best_attempts = AssessmentAttempt.objects \
+                    .select_related("assessment") \
+                    .filter(assessment__in=assessments, best_attempt=True)
+
+    # aggregate scores by candidate
+    candidates = {}
+    for attempt in best_attempts:
+        candidate = attempt.candidate
+        weighted_score = attempt.score / attempt.assessment.total_score * attempt.assessment.weightage
+        if candidate not in candidates:
+            candidates[candidate] = weighted_score
+        else:
+            candidates[candidate] += weighted_score
+
+    # calculate mean score
+    num_of_candidates = len(candidates)
+    sum_of_weighted_scores = sum(candidates.values())
+    mean_score = sum_of_weighted_scores / num_of_candidates
+
+    # calculate median score
+    sorted_scores = sorted(candidates.values())
+    if num_of_candidates % 2 == 0:
+        median_score = (sorted_scores[num_of_candidates // 2 - 1] + sorted_scores[num_of_candidates // 2]) / 2
+    else:
+        median_score = sorted_scores[num_of_candidates // 2]
+
+    # # generate graph data
+    score_graph = generate_score_distribution_graph(candidates.values(), total_weightage)
+
+    context = {
+        "course": course,
+        "assessments": assessments,
+        "num_of_candidates": num_of_candidates,
+        "total_weightage": total_weightage,
+        "mean_score": mean_score,
+        "median_score": median_score,
+        "graphs": [score_graph],
+    }
+
+    return render(request, "reports/course-report.html", context)
+
+@login_required()
+@groups_allowed(UserGroup.educator)
 def assessment_report(request, assessment_id):
     assessment = get_object_or_404(Assessment, id=assessment_id)
     code_questions = CodeQuestion.objects.filter(assessment=assessment)
@@ -39,7 +89,7 @@ def assessment_report(request, assessment_id):
         median_score = best_attempts[count // 2].score
 
     # generate graph data
-    score_graph = generate_score_distribution_graph(best_attempts, assessment.total_score)
+    score_graph = generate_score_distribution_graph([attempt.score for attempt in best_attempts], assessment.total_score)
     time_spent_graph = generate_assessment_time_spent_graph(code_questions)
 
     context = {

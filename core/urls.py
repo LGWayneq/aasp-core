@@ -86,6 +86,7 @@ urlpatterns = [
     path('api/get-cq-submission-status/', attempts.get_cq_submission_status, name='get-cq-submission-status'),  # ajax
 
     # reports
+    path('course/report/<int:course_id>/', reports.course_report, name='course-report'),
     path('assessment/report/<int:assessment_id>/', reports.assessment_report, name='assessment-report'),
     path('assessment/report/<int:assessment_id>/question/<int:question_id>', reports.question_report, name='question-report'),
     path('api/get-candidate-attempts/<int:assessment_id>/', reports.get_candidate_attempts, name='get-candidate-attempts'),  # ajax

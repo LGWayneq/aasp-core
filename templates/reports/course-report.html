@@ -1,0 +1,212 @@
+{% extends 'layouts/main-top-side-nav.html' %}
+{% load static %}
+
+{% block title %}Report - {{ course.name }}{% endblock %}
+
+{% block styles %}
+  <link rel="stylesheet" href="https://cdn.datatables.net/1.12.1/css/jquery.dataTables.min.css"/>
+  <link rel="stylesheet" href="{% static 'vendors/toastify/toastify.css' %}"/>
+{% endblock %}
+
+{% block content %}
+
+    <!-- Page Title -->
+    <div class="page-heading">
+        <div class="page-title">
+            <div class="row">
+                <div class="col-12 col-md-12 order-md-1 order-last">
+                    <h5>Course Report</h5>
+                    <h2>{{ course.name }}</h2>
+                    {% if course.active %}
+                        <span class="badge bg-success">Active</span>
+                    {% else %}
+                        <span class="badge bg-secondary">Inactive</span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Submission statistics -->
+    <div class="row">
+        <div class="card">
+            <div class="card-header d-flex align-content-between">
+                <div class="col-11">
+                    <h4>Statistics</h4>
+                    <p>Calculated based on best completed attempts of each candidate.</p>
+                </div>
+            </div>
+            <div class="card-body">
+                <h6>No. of candidates with submissions: {{ num_of_candidates }}</h6>
+                <h6>Mean Score: {{ mean_score }}/{{ total_weightage }}</h6>
+                <h6>Median Score: {{ median_score }}/{{ total_weightage }}</h6>
+                <div class="row">
+                    {% for graph_details in graphs %}
+                        <div class="col-6">
+                            {% include 'reports/snippets/bar-chart.html' %}
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Assessment reports -->
+    <div class="row">
+        <div class="card">
+        <div class="card-header d-flex align-content-between">
+            <h4>Assessments</h4>
+        </div>
+
+        <div class="card-body">
+            <table id="assessments-table" class="table display table-borderless" style="width:100%">
+            <thead>
+            <tr>
+                <th>Name</th>
+                <th>Max Score</th>
+                <th>Start</th>
+                <th>End</th>
+                <th>Duration</th>
+                <th>Max Attempts</th>
+                <th>Require Webcam</th>
+                <td>Limit Tab Switching</td>
+                <th>Actions</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for a in assessments %}
+                <tr>
+                <td>{{ a.name }}</td>
+                <td>{{ a.total_score }}</td>
+                <td>{{ a.time_start }}</td>
+                <td>{{ a.time_end }}</td>
+                <td>{{ a.duration }}</td>
+                <td>{{ a.num_attempts }}</td>
+                <td>
+                    {% if a.require_webcam %}
+                    <span class="badge bg-light-success">Y</span>
+                    {% else %}
+                    <span class="badge bg-light-danger">N</span>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if a.limit_tab_switching %}
+                    <span class="badge bg-light-success">Y</span>
+                    {% else %}
+                    <span class="badge bg-light-danger">N</span>
+                    {% endif %}
+                </td>
+                <td>
+                    <a class="btn btn-success" target="__blank" href="{% url 'assessment-report' assessment_id=a.id %}">View Assessment Report</a>
+                </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+            </table>
+        </div>
+        </div>
+    </div>
+
+    <!-- Best candidate submissions -->
+    {% comment %} <div class="row">
+        <div class="card">
+            <div class="card-header d-flex align-content-between">
+                <div class="col-11">
+                    <h4>Best Attempts</h4>
+                    <p>The best completed attempts of each candidate.</p>
+                </div>
+
+                <!-- Export button -->
+                <div class="col-1">
+                    <a class="btn btn-warning float-end" href="{% url 'export-assessment-results' assessment_id=assessment.id %}">
+                        <i class="fa-solid fa-file-csv"></i> CSV
+                    </a>
+                </div>
+            </div>
+            <div class="card-body">
+                <table id="best-submissions-table" class="table display table-borderless" style="width:100%">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Candidate</th>
+                            <th>Language</th>
+                            <th>Score ({{ assessment.total_score }})</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    {% for cqs in best_submissions %}
+                        <tr>
+                            <td>{{ forloop.counter }}</td>
+                            <td>{{ cqs.cq_attempt.assessment_attempt.candidate }}</td>
+                            <td>{{ cqs.language }}</td>
+                            <td>{{ cqs.score }}</td>
+                            <td>
+                                <a class="text-success" target="_blank" href="{% url 'submission-details' cqs_id=cqs.id %}">View <i class="fa-solid fa-arrow-up-right-from-square"></i></a>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div> {% endcomment %}
+
+    <!-- All submissions -->
+    {% comment %} <div class="row">
+        <div class="card">
+            <div class="card-header d-flex align-content-between">
+                <div class="col-11">
+                    <h4>All Attempts</h4>
+                    <p>All completed attempts.</p>
+                </div>
+
+                <!-- Export button -->
+                <div class="col-1">
+                    <a class="btn btn-warning float-end" href="{% url 'export-assessment-results' assessment_id=assessment.id %}">
+                        <i class="fa-solid fa-file-csv"></i> CSV
+                    </a>
+                </div>
+            </div>
+            <div class="card-body">
+                <table id="all-submissions-table" class="table display table-borderless" style="width:100%">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Candidate</th>
+                            <th>Language</th>
+                            <th>Score ({{ assessment.total_score }})</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for cqs in all_submissions %}
+                            <tr>
+                                <td>{{ forloop.counter }}</td>
+                                <td>{{ cqs.cq_attempt.assessment_attempt.candidate }}</td>
+                                <td>{{ cqs.language }}</td>
+                                <td>{{ cqs.score }}</td>
+                                <td>
+                                    <a class="text-success" target="_blank" href="{% url 'submission-details' cqs_id=cqs.id %}">View <i class="fa-solid fa-arrow-up-right-from-square"></i></a>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div> {% endcomment %}
+{% endblock %}
+
+{% block js %}
+    <script src="{% static 'vendors/jquery/jquery.min.js' %}"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.min.js"></script>
+    <script src="https://cdn.datatables.net/1.12.1/js/jquery.dataTables.min.js"></script>
+    <script type="text/javascript" src="{% static 'vendors/toastify/toastify.js' %}"></script>
+
+    <!-- script for loading attempts modal -->
+    <script>
+        $('#assessments-table').DataTable();
+        $('#all-submissions-table').DataTable();
+    </script>
+{% endblock %}
