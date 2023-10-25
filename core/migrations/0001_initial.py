@@ -68,6 +68,7 @@ class Migration(migrations.Migration):
                 ('show_grade', models.BooleanField(default=False)),
                 ('published', models.BooleanField(default=False)),
                 ('pin', models.PositiveIntegerField(blank=True, null=True)),
+                ('weightage', models.PositiveIntegerField(default=0)),
             ],
         ),
         migrations.CreateModel(

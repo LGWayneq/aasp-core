@@ -10,7 +10,7 @@ class AssessmentForm(models.ModelForm):
     class Meta:
         model = Assessment
         fields = ['course', 'name', 'time_start', 'time_end', 'duration', 'num_attempts', 'instructions', 'show_grade',\
-                'require_webcam', 'limit_tab_switching']
+                'require_webcam', 'limit_tab_switching', 'weightage']
 
     def __init__(self, courses, *args, **kwargs):
         super(AssessmentForm, self).__init__(*args, **kwargs)

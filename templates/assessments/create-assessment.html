@@ -58,27 +58,68 @@
                   </div>
                 </div>
 
-                <!-- Assessment name input -->
-                <div class="col-12">
-                  <div class="form-group has-icon-left">
-                    <label for="id_name">Assessment Name</label>
-                    <div class="position-relative">
-                      <input type="text"
-                            class="form-control {% if form.name.errors %}is-invalid{% endif %}"
-                            name="name" id="id_name" placeholder="e.g. Mid-term Quiz" maxlength="{{ form.fields.name.max_length }}"
-                            value="{{ form.name.value|default:"" }}"
-                            {% if form.fields.name.required %}required{% endif %}
-                      >
-                      <div class="form-control-icon"><i class="bi bi-type"></i></div>
+                <div class="row">
+                  <!-- Assessment name input -->
+                  <div class="col-9">
+                    <div class="form-group has-icon-left">
+                      <label for="id_name">Assessment Name</label>
+                      <div class="position-relative">
+                        <input type="text"
+                              class="form-control {% if form.name.errors %}is-invalid{% endif %}"
+                              name="name" id="id_name" placeholder="e.g. Mid-term Quiz" maxlength="{{ form.fields.name.max_length }}"
+                              value="{{ form.name.value|default:"" }}"
+                              {% if form.fields.name.required %}required{% endif %}
+                        >
+                        <div class="form-control-icon"><i class="bi bi-type"></i></div>
+                      </div>
+                      {# assessment name errors #}
+                      {% if form.name.errors %}
+                        <p class="text-danger">
+                          {% for e in form.name.errors %}
+                            {{ e }}<br>
+                          {% endfor %}
+                        </p>
+                      {% endif %}
                     </div>
-                    {# assessment name errors #}
-                    {% if form.name.errors %}
-                      <p class="text-danger">
-                        {% for e in form.name.errors %}
-                          {{ e }}<br>
-                        {% endfor %}
-                      </p>
-                    {% endif %}
+                  </div>
+
+                  <!-- Assessment weightage input -->
+                  <div class="col-3">
+                    <div class="form-group has-icon-right">
+                      <label for="id_weightage">Weightage</label>
+                      <i class="bi bi-question-circle" data-bs-toggle="modal" data-bs-target="#weightage-modal"></i>
+                      <div class="position-relative">
+                        <input type="number" name="weightage" class="form-control {% if form.weightage.errors %}is-invalid{% endif %}" min="0"
+                              value="{{ form.weightage.value|default:"0" }}" id="id_weightage">
+                        <div class="form-control-icon">%</div>
+                      </div>
+                      {# weightage errors #}
+                      {% if form.weightage.errors %}
+                        <p class="text-danger">
+                          {% for e in form.weightage.errors %}
+                            {{ e }}<br>
+                          {% endfor %}
+                        </p>
+                      {% endif %}
+                    </div>
+                  </div>
+
+                  <!-- Weightage details modal -->
+                  <div class="modal fade" id="weightage-modal" tabindex="-1">
+                    <div class="modal-dialog">
+                      <div class="modal-content">
+                        <div class="modal-header">
+                          <h5 class="modal-title">Assessment Weightage</h5>
+                          <button type="button" class="btn-close" data-bs-dismiss="modal" />
+                        </div>
+                        <div class="modal-body">
+                          <div class="text-start">Represents the percentage of the assessment of the total course score.</div>
+                        </div>
+                        <div class="modal-footer">
+                          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
 

@@ -18,6 +18,7 @@ class Assessment(models.Model):
     pin = models.PositiveIntegerField(null=True, blank=True)
     require_webcam = models.BooleanField(default=False)
     limit_tab_switching = models.BooleanField(default=False)
+    weightage = models.PositiveBigIntegerField(default=0)
 
     def __str__(self):
         return f"{self.name}"

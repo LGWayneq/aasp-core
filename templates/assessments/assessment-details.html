@@ -75,14 +75,18 @@
           </div>
 
           <div class="card-body">
-            <div class="row">
-              <div class="col-6">
-                <h6>Course</h6>
-                <a class="fw-bold" href="{% url 'course-details' course_id=assessment.course.id %}">{{ assessment.course }}</a>
-              </div>
-              <div class="col-6">
+            <div class="col-12">
+              <h6>Course</h6>
+              <a class="fw-bold" href="{% url 'course-details' course_id=assessment.course.id %}">{{ assessment.course }}</a>
+            </div>
+            <div class="row mt-3">
+              <div class="col-7">
                 <h6>Assessment Name</h6>
                 <p>{{ assessment.name }}</p>
+              </div>
+              <div class="col-5">
+                <h6>Weightage</h6>
+                <p>{{ assessment.weightage }}%</p>
               </div>
             </div>
             <div class="row">
