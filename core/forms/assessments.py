@@ -6,6 +6,7 @@ from core.models import Assessment
 
 class AssessmentForm(models.ModelForm):
     require_pin = forms.BooleanField(initial=False, required=False)
+    weightage = forms.IntegerField(initial=0, min_value=0, max_value=100)
 
     class Meta:
         model = Assessment
