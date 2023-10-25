@@ -1,5 +1,6 @@
 from django.contrib.auth.decorators import login_required
 from django.forms import models
+from django.db.models import Sum
 from django import forms
 from core.models import Assessment
 
@@ -17,6 +18,7 @@ class AssessmentForm(models.ModelForm):
         super(AssessmentForm, self).__init__(*args, **kwargs)
         self.fields['course'].queryset = courses
         self.fields['require_pin'].initial = self.instance.pin is not None
+        self.fields['weightage'].initial = self.instance.weightage if self.instance else 0
 
     def clean(self):
         cleaned_data = super().clean()
@@ -24,3 +26,11 @@ class AssessmentForm(models.ModelForm):
         if cleaned_data['time_start'] and cleaned_data['time_end']:
             if cleaned_data['time_start'] > cleaned_data['time_end']:
                 raise forms.ValidationError("Start data/time must be before end date/time.")
+            
+        if cleaned_data['weightage']:
+            prev_weightage = self.initial.get('weightage', 0)
+            total_weightage = Assessment.objects.filter(course=self.cleaned_data['course'], deleted=False).aggregate(Sum('weightage'))['weightage__sum']
+            weightage_without_this = total_weightage - prev_weightage
+
+            if weightage_without_this + self.cleaned_data['weightage'] > 100:
+                raise forms.ValidationError('Total weightage of assessments in the course cannot be more than 100%. Current maximum allowed weightage: ' + str(100 - weightage_without_this) + '%.')

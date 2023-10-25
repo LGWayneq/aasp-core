@@ -268,6 +268,7 @@
                     <tr>
                       <th>Name</th>
                       <th>Status</th>
+                      <th>Weightage</th>
                       <th>Date Start</th>
                       <th>Date End</th>
                       <th>Duration</th>
@@ -276,12 +277,12 @@
                     </tr>
                     </thead>
                     <tbody>
-                    {% if course.assessment_set.all.count == 0 %}
+                    {% if assessments.count == 0 %}
                       <tr>
                         <td colspan="7" class="text-center">No assessments found!</td>
                       </tr>
                     {% else %}
-                      {% for a in course.assessment_set.all %}
+                      {% for a in assessments.all %}
                         <tr>
                           <td>{{ a.name }}</td>
                           <td>
@@ -291,13 +292,14 @@
                               <span class="badge bg-secondary">{{ a.status }}</span>
                             {% endif %}
                           </td>
+                          <td>{{ a.weightage }}%</td>
                           <td>{{ a.time_start|default_if_none:"-" }}</td>
                           <td>{{ a.time_end|default_if_none:"-" }}</td>
                           <td>{% if a.duration %}{{ a.duration }} minutes{% else %}Unlimited{% endif %}</td>
                           <td>{% if a.num_attempts %}{{ a.num_attempts }}{% else %}Unlimited{% endif %}</td>
                           <td>
                             <a class="btn btn-sm btn-secondary" href="{% url 'assessment-details' assessment_id=a.id %}">View</a>
-                            {% if request.user|has_group:'educator' %}
+                            {% if request.user|has_group:'educator' and a.published %}
                               <a class="btn btn-sm btn-success" target="__blank" href="{% url 'assessment-report' assessment_id=a.id %}">Report</a>
                             {% endif %}
                           </td>
@@ -308,6 +310,54 @@
                   </table>
                 </div>
 
+                <div class="d-flex justify-content-between align-items-center mt-5 mb-3">
+                  <h5>Deleted Assessments</h5>
+                </div>
+                <!-- Deleted assessments table -->
+                <div class="table-responsive">
+                  <table class="table table-hover mb-0">
+                    <thead>
+                    <tr>
+                      <th>Name</th>
+                      <th>Status</th>
+                      <th>Weightage</th>
+                      <th>Date Start</th>
+                      <th>Date End</th>
+                      <th>Duration</th>
+                      <th>Attempts Allowed</th>
+                      <th>Actions</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% if deleted_assessments.count == 0 %}
+                      <tr>
+                        <td colspan="7" class="text-center">No deleted assessments</td>
+                      </tr>
+                    {% else %}
+                      {% for a in deleted_assessments.all %}
+                        <tr>
+                          <td>{{ a.name }}</td>
+                          <td>
+                            {% if a.status == "Active" %}
+                              <span class="badge bg-success">{{ a.status }}</span>
+                            {% else %}
+                              <span class="badge bg-secondary">{{ a.status }}</span>
+                            {% endif %}
+                          </td>
+                          <td>{{ a.weightage }}%</td>
+                          <td>{{ a.time_start|default_if_none:"-" }}</td>
+                          <td>{{ a.time_end|default_if_none:"-" }}</td>
+                          <td>{% if a.duration %}{{ a.duration }} minutes{% else %}Unlimited{% endif %}</td>
+                          <td>{% if a.num_attempts %}{{ a.num_attempts }}{% else %}Unlimited{% endif %}</td>
+                          <td>
+                            <a class="btn btn-sm btn-secondary" href="{% url 'assessment-details' assessment_id=a.id %}">View</a>
+                          </td>
+                        </tr>
+                      {% endfor %}
+                    {% endif %}
+                    </tbody>
+                  </table>
+                </div>
               </div>
 
             </div>

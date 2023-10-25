@@ -81,12 +81,11 @@ def create_assessment(request):
             messages.success(request, "The assessment has been successfully created! You can now add questions to it.")
             return redirect('assessment-details', assessment_id=assessment.id)
 
-    elif request.method == "GET":
-        context = {
-            'form': form,
-        }
+    context = {
+        'form': form,
+    }
 
-        return render(request, 'assessments/create-assessment.html', context)
+    return render(request, 'assessments/create-assessment.html', context)
 
 
 @login_required()
@@ -105,14 +104,8 @@ def update_assessment(request, assessment_id):
 
     # form
     form = AssessmentForm(courses=courses, instance=assessment)
-
-    if request.method == "GET":
-        context = {
-            'form': form,
-            'assessment': assessment,
-        }
-        return render(request, 'assessments/update-assessment.html', context)
-    elif request.method == "POST":
+        
+    if request.method == "POST":
         form = AssessmentForm(courses, request.POST, instance=assessment)
         if form.is_valid():
             # get course object
@@ -136,6 +129,12 @@ def update_assessment(request, assessment_id):
             # redirect
             messages.success(request, "The assessment has been successfully updated!")
             return redirect('assessment-details', assessment_id=assessment.id)
+        
+    context = {
+        'form': form,
+        'assessment': assessment,
+    }
+    return render(request, 'assessments/update-assessment.html', context)
 
 @login_required()
 @groups_allowed(UserGroup.educator, UserGroup.lab_assistant)

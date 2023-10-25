@@ -17,7 +17,7 @@ from rest_framework.renderers import JSONRenderer
 from core.decorators import groups_allowed, UserGroup
 from core.filters import CourseStudentFilter
 from core.forms.course_management import CourseForm
-from core.models import Course, User, CourseGroup
+from core.models import Course, User, CourseGroup, Assessment
 from core.tasks import send_password_email
 from core.views.utils import check_permissions_course
 
@@ -137,11 +137,16 @@ def course_details(request, course_id):
     except EmptyPage:
         students = paginator.page(paginator.num_pages)
 
+    assessments = Assessment.objects.filter(course=course, deleted=False).order_by('time_start')
+    deleted_assessments = Assessment.objects.filter(course=course, deleted=True)
+
     context = {
         "course": course,
         "staff": staff,
         "students_filter": students_filter,
         "students": students,
+        "assessments": assessments,
+        "deleted_assessments": deleted_assessments
     }
 
     return render(request, 'course_management/course-details.html', context)
