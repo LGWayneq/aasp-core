@@ -298,7 +298,7 @@
                           <td>
                             <a class="btn btn-sm btn-secondary" href="{% url 'assessment-details' assessment_id=a.id %}">View</a>
                             {% if request.user|has_group:'educator' %}
-                              <a class="btn btn-sm btn-secondary" href="{% url 'assessment-report' assessment_id=a.id %}">Report</a>
+                              <a class="btn btn-sm btn-success" target="__blank" href="{% url 'assessment-report' assessment_id=a.id %}">Report</a>
                             {% endif %}
                           </td>
                         </tr>

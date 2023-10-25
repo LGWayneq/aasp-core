@@ -13,7 +13,7 @@ from rest_framework.decorators import api_view, renderer_classes
 from rest_framework.renderers import JSONRenderer
 
 from core.decorators import UserGroup, groups_allowed
-from core.models import Assessment, AssessmentAttempt, CodeQuestionSubmission, CodeQuestion, TestCaseAttempt, TestCase, CandidateSnapshot
+from core.models import Course, Assessment, AssessmentAttempt, CodeQuestionSubmission, CodeQuestion, TestCaseAttempt, TestCase, CandidateSnapshot
 from core.views.utils import check_permissions_assessment
 from core.views.charts import generate_score_distribution_graph, generate_assessment_time_spent_graph, generate_question_time_spent_graph
 
@@ -77,12 +77,16 @@ def question_report(request, assessment_id, question_id):
 
     # calculate mean and median score
     count = len(best_submissions)
-    mean_score = sum(submission.score for submission in best_submissions) / len(best_submissions)
-    best_submissions.sort(key=lambda x: x.score)
-    if count % 2 == 0:
-        median_score = (best_submissions[count // 2 - 1].score + best_submissions[count // 2].score) / 2
+    if count > 0:
+        mean_score = sum(submission.score for submission in best_submissions) / count 
+        best_submissions.sort(key=lambda x: x.score)
+        if count % 2 == 0:
+            median_score = (best_submissions[count // 2 - 1].score + best_submissions[count // 2].score) / 2
+        else:
+            median_score = best_submissions[count // 2].score
     else:
-        median_score = best_submissions[count // 2].score
+        mean_score = 0
+        median_score = 0
 
     # get all submissions regardless of best attempt
     all_submissions = CodeQuestionSubmission.objects \
