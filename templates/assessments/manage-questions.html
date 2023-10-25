@@ -114,6 +114,9 @@
                                 <button data-code_question_id="{{ q.id }}" type="button" class="btn btn-sm btn-danger"
                                     onclick="deleteCodeQuestion(this);">Delete
                                 </button>
+                                {% else %}
+                                <a class="btn btn-sm btn-success" target="__blank" href="{% url 'question-report' assessment_id=assessment.id question_id=q.id %}">
+                                    Report</a>  
                                 {% endif %}
                             </td>
                         </tr>

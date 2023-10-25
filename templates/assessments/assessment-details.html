@@ -63,8 +63,14 @@
           <div class="card-header d-flex justify-content-between align-items-center">
             <h4 class="card-title">Assessment Information</h4>
             {% if request.user|has_group:'educator' %}
-              <a class="btn btn-sm btn-danger" href="{% url 'update-assessment' assessment_id=assessment.id %}?next={{ request.path }}">
-                Edit Details</a>
+              <div>
+                {% if assessment.published %}
+                  <a class="btn btn-sm btn-success" href="{% url 'assessment-report' assessment_id=assessment.id %}">
+                    View Report</a>  
+                {% endif %}
+                <a class="btn btn-sm btn-danger" href="{% url 'update-assessment' assessment_id=assessment.id %}?next={{ request.path }}">
+                  Edit Details</a>
+              </div>
             {% endif %}
           </div>
 
