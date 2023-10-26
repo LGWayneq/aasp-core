@@ -78,6 +78,7 @@ urlpatterns = [
     path('assessment/submit/<int:assessment_attempt_id>/', attempts.submit_assessment, name='submit-assessment'),
     path('api/upload-snapshot/<int:assessment_attempt_id>/', attempts.upload_snapshot, name='upload-snapshot'), #ajax
     path('detect-faces', attempts.detect_faces_initial, name='detect-faces'),
+    path('assessment/save-code-attempt-snippet/<int:code_question_attempt_id>/', attempts.save_code_attempt_snippet, name='save-code-attempt-snippet'),
 
     # code question attempts
     path('api/submit-single-test-case/<int:test_case_id>/<int:code_question_id>', attempts.submit_single_test_case, name='submit-single-test-case'),  # ajax

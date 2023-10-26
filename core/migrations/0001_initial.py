@@ -117,6 +117,16 @@ class Migration(migrations.Migration):
             ],
         ),
         migrations.CreateModel(
+            name='CodeQuestionAttemptSnippet',
+            fields=[
+                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('code', models.TextField()),
+                ('language', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, to='core.language')),
+                ('cq_attempt', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='core.codequestionattempt')),
+                ('updated_at', models.DateTimeField(auto_now=True))
+            ],
+        ),
+        migrations.CreateModel(
             name='CodeQuestionSubmission',
             fields=[
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),

@@ -20,8 +20,7 @@ from rest_framework.decorators import api_view, renderer_classes
 from rest_framework.renderers import JSONRenderer
 
 from core.decorators import groups_allowed, UserGroup
-from core.models import Assessment, AssessmentAttempt, CodeQuestionAttempt, CodeQuestion, TestCase, CodeSnippet, \
-    CodeQuestionSubmission, TestCaseAttempt, Language, CandidateSnapshot
+from core.models import Assessment, AssessmentAttempt, CodeQuestionAttempt, CodeQuestion, TestCase, CodeSnippet, CodeQuestionAttemptSnippet, CodeQuestionSubmission, TestCaseAttempt, Language, CandidateSnapshot
 from core.tasks import update_test_case_attempt_status, force_submit_assessment, detect_faces
 from core.views.utils import get_assessment_attempt_question, check_permissions_course, user_enrolled_in_course, construct_expected_output_judge0_params, construct_judge0_params, vcd2wavedrom
 
@@ -233,19 +232,24 @@ def attempt_question(request, assessment_attempt_id, question_index):
     if isinstance(question_attempt, CodeQuestionAttempt):
         code_question = question_attempt.code_question
         code_snippets = CodeSnippet.objects.filter(code_question=code_question)
+        for cs in code_snippets:
+            attempt_snippet = CodeQuestionAttemptSnippet.objects.filter(cq_attempt=question_attempt, language=cs.language).first()
+            if attempt_snippet:
+                cs.saved_code = attempt_snippet.code
+            else:
+                cs.saved_code = cs.code
+
+        last_used_language = CodeQuestionAttemptSnippet.objects.filter(cq_attempt=question_attempt).order_by('-updated_at').first()
         sample_tc = TestCase.objects.filter(code_question=code_question, sample=True).first()
         code_question_submissions = CodeQuestionSubmission.objects.filter(cq_attempt=question_attempt).order_by('-id')
-        latest_submission_ascii = [ord(c) for c in code_question_submissions[0].code] if code_question_submissions else None
-        latest_submission_language = code_question_submissions[0].language.name if code_question_submissions else None
 
         # add to base context
         context.update({
             'code_question': code_question,
             'sample_tc': sample_tc,
             'code_snippets': code_snippets,
+            'last_used_language': last_used_language.language if last_used_language else None,
             'code_question_submissions': code_question_submissions,
-            'latest_submission_ascii': latest_submission_ascii,
-            'latest_submission_language': latest_submission_language,
         })
 
         # extract outputs if hardware language
@@ -261,6 +265,49 @@ def attempt_question(request, assessment_attempt_id, question_index):
         # should not reach here
         raise Exception("Unknown question type!")
 
+
+@api_view(["POST"])
+@renderer_classes([JSONRenderer])
+@login_required()
+@groups_allowed(UserGroup.educator, UserGroup.student)
+def save_code_attempt_snippet(request, code_question_attempt_id):
+    try:
+        if request.method == "POST":
+            # get assessment attempt
+            code_question_attempt = get_object_or_404(CodeQuestionAttempt, id=code_question_attempt_id)
+
+            # if no question exist at the index, raise 404
+            if not code_question_attempt:
+                raise Http404()
+
+            # ensure attempt belongs to user
+            if code_question_attempt.assessment_attempt.candidate != request.user:
+                raise PermissionDenied()
+
+            code = request.POST.get('code')
+            judge_id = request.POST.get('lang-id')
+            language = Language.objects.get(judge_language_id=judge_id)
+
+            with transaction.atomic():
+                attempt_snippet = CodeQuestionAttemptSnippet.objects.filter(cq_attempt=code_question_attempt, language=language).first()
+                if attempt_snippet:
+                    attempt_snippet.code = code
+                else:
+                    # create CodeQuestionSubmission
+                    attempt_snippet = CodeQuestionAttemptSnippet.objects.create(cq_attempt=code_question_attempt, code=code, language=language)      
+                attempt_snippet.save()
+
+            context = {
+                "result": "success",
+            }
+            return Response(context, status=status.HTTP_200_OK)
+        
+    except Exception as ex:
+        error_context = {
+            "result": "error",
+            "message": f"{ex}",
+        } 
+        return Response(error_context, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(["POST"])
 @renderer_classes([JSONRenderer])

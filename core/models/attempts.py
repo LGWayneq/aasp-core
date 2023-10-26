@@ -117,6 +117,13 @@ class CodeQuestionAttempt(models.Model):
         return CodeQuestionSubmission.objects.filter(cq_attempt=self).exists()
 
 
+class CodeQuestionAttemptSnippet(models.Model):
+    cq_attempt = models.ForeignKey("CodeQuestionAttempt", null=False, blank=False, on_delete=models.CASCADE)
+    language = models.ForeignKey("Language", null=False, blank=False, on_delete=models.PROTECT)
+    code = models.TextField()
+    updated_at = models.DateTimeField(auto_now=True)
+
+
 class CodeQuestionSubmission(models.Model):
     cq_attempt = models.ForeignKey("CodeQuestionAttempt", null=False, blank=False, on_delete=models.CASCADE)
     time_submitted = models.DateTimeField(auto_now_add=True)
