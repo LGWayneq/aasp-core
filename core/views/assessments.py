@@ -17,7 +17,7 @@ from core.filters import CodeQuestionFilter
 from core.forms.assessments import AssessmentForm
 from core.models import Course, Assessment, CodeQuestion, TestCase, CodeSnippet, Tag, QuestionBank
 from core.serializers import CodeQuestionsSerializer
-from core.views.utils import check_permissions_course, check_permissions_assessment, check_permissions_code_question, \
+from core.views.utils import check_permissions_course, check_permissions_assessment, check_permissions_question, \
     construct_assessment_published_email
 
 
@@ -230,7 +230,7 @@ def add_code_question_to_assessment(request):
             tags = code_question.tags.all()
 
             # check permissions (need at least Read permissions to clone)
-            if check_permissions_code_question(code_question, request.user) == 0:
+            if check_permissions_question(code_question, request.user) == 0:
                 return Response(error_context, status=status.HTTP_401_UNAUTHORIZED)
 
             with transaction.atomic():

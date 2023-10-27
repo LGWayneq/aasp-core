@@ -14,9 +14,9 @@ from rest_framework.renderers import JSONRenderer
 
 from core.decorators import UserGroup, groups_allowed
 from core.forms.question_banks import QuestionBankForm, ImportQuestionBankForm
-from core.models import QuestionBank, User, CodeQuestion
+from core.models import QuestionBank, User, CodeQuestion, McqQuestion
 from core.serializers import QuestionBankSerializer
-from core.views.utils import check_permissions_qb, check_permissions_code_question
+from core.views.utils import check_permissions_qb, check_permissions_question
 
 
 @login_required()
@@ -103,9 +103,7 @@ def update_question_bank(request, question_bank_id):
 @groups_allowed(UserGroup.educator)
 def question_bank_details(request, question_bank_id):
     # get question bank object
-    question_bank = get_object_or_404(QuestionBank.objects.prefetch_related('owner', 'shared_with', 'codequestion_set',
-                                                                            'codequestion_set__testcase_set'),
-                                      id=question_bank_id)
+    question_bank = get_object_or_404(QuestionBank.objects.prefetch_related('owner', 'shared_with', 'codequestion_set', 'codequestion_set__testcase_set', 'mcqquestion_set'), id=question_bank_id)
 
     # if no permissions, redirect back to course page
     if check_permissions_qb(question_bank, request.user) == 0:
@@ -187,9 +185,10 @@ def update_qb_shared_with(request):
 @renderer_classes([JSONRenderer])
 @login_required()
 @groups_allowed(UserGroup.educator)
-def delete_code_question(request):
+def delete_question(request):
     """
-    Deletes a CodeQuestion from either a QuestionBank or an Assessment.
+    Deletes a Question from either a QuestionBank or an Assessment.
+    Question can be CodeQuestion or McqQuestion.
     """
     try:
         if request.method == "POST":
@@ -197,30 +196,34 @@ def delete_code_question(request):
             error_context = { "result": "error", }
 
             # get params
-            code_question_id = request.POST.get("code_question_id")
+            question_id = request.POST.get("question_id")
+            question_type = request.POST.get("question_type")
 
             # missing params
-            if code_question_id is None:
+            if question_id is None:
                 return Response(error_context, status=status.HTTP_400_BAD_REQUEST)
 
             # get CodeQuestion object
-            code_question = CodeQuestion.objects.filter(id=code_question_id).first()
+            if question_type == "code":
+                question = CodeQuestion.objects.filter(id=question_id).first()
+            elif question_type == "mcq":
+                question = McqQuestion.objects.filter(id=question_id).first()
 
             # check permissions
-            if check_permissions_code_question(code_question, request.user) != 2:
+            if check_permissions_question(question, request.user) != 2:
                 return Response(error_context, status=status.HTTP_401_UNAUTHORIZED)
 
             # if it belongs to an assessment, disallow if assessment has already been published
-            if code_question.assessment and code_question.assessment.published:
+            if question.assessment and question.assessment.published:
                 return Response(error_context, status=status.HTTP_403_FORBIDDEN)
 
             with transaction.atomic():
                 # remove past attempts
-                if code_question.assessment:
-                    code_question.assessment.assessmentattempt_set.all().delete()
+                if question.assessment:
+                    question.assessment.assessmentattempt_set.all().delete()
 
                 # delete code question
-                code_question.delete()
+                question.delete()
 
             return Response({ "result": "success" }, status=status.HTTP_200_OK)
 
@@ -230,7 +233,7 @@ def delete_code_question(request):
             "message": f"{ex}"
         }
         return Response(error_context, status=status.HTTP_400_BAD_REQUEST)
-
+    
 
 @login_required()
 @groups_allowed(UserGroup.educator)

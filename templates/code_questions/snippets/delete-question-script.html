@@ -2,7 +2,7 @@
 <script>
     const actionSpinner = $("#actions-loading");
 
-    const deleteCodeQuestion = (btn) => {
+    const deleteQuestion = (btn) => {
         // confirmation before deletion
         if (confirm("Are you sure you wish to remove the question?\nThis action cannot be reversed.") === true) {
             
@@ -10,18 +10,20 @@
             return false;
         }
 
-        const code_question_id = btn.dataset.code_question_id;
+        const question_id = btn.dataset.question_id;
+        const question_type = btn.dataset.question_type;
         actionSpinner.show();
 
         // prepare form data
         let formData = new FormData();
-        formData.append("code_question_id", code_question_id);
+        formData.append("question_id", question_id);
+        formData.append("question_type", question_type);
         formData.append("csrfmiddlewaretoken", "{{ csrf_token }}");
 
         // ajax request
         $.ajax({
             type: 'POST',
-            url: "{% url 'delete-code-question' %}",
+            url: "{% url 'delete-question' %}",
             data: formData,
             processData: false,
             contentType: false,
@@ -30,7 +32,7 @@
                 if (res.result === "success") {
                     // show success toast
                     Toastify({
-                        text: "Code Question successfully deleted!",
+                        text: "Question successfully deleted!",
                         duration: 5000,
                         position: "center",
                         style: {"background": "#77DD77"}

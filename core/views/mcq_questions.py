@@ -15,7 +15,7 @@ from core.decorators import groups_allowed, UserGroup
 from core.forms.question_banks import McqQuestionForm
 from core.models import QuestionBank, Assessment, McqQuestion, McqQuestionOption
 from core.models.questions import Tag
-from core.views.utils import check_permissions_course, check_permissions_code_question, embed_inout_module, embed_inout_testbench, generate_module
+from core.views.utils import check_permissions_course, check_permissions_question
 
 
 @login_required()
@@ -107,12 +107,12 @@ $$x = {-b \pm \sqrt{b^2-4ac} \over 2a}$$
 
 @login_required()
 @groups_allowed(UserGroup.educator)
-def update_mcq_question(request, code_question_id):
-    # get code question object
-    mcq_question = get_object_or_404(McqQuestion, id=code_question_id)
+def update_mcq_question(request, mcq_question_id):
+    # get mcq question object
+    mcq_question = get_object_or_404(McqQuestion, id=mcq_question_id)
 
     # check permissions
-    if check_permissions_code_question(mcq_question, request.user) != 2:
+    if check_permissions_question(mcq_question, request.user) != 2:
         if mcq_question.question_bank:
             return PermissionDenied("You do not have permissions to modify this question bank.")
         else:
@@ -170,4 +170,4 @@ def update_mcq_question(request, code_question_id):
         'mcq_question_options_formset': mcq_question_options_formset,
         'form': form,
     }
-    return render(request, 'mcq_question/update-mcq-question.html', context)
+    return render(request, 'mcq_questions/update-mcq-question.html', context)

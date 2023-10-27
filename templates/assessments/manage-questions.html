@@ -111,8 +111,8 @@
                                 </div>
                                 {% endif %}
                                 {% if not assessment.published %}
-                                <button data-code_question_id="{{ q.id }}" type="button" class="btn btn-sm btn-danger"
-                                    onclick="deleteCodeQuestion(this);">Delete
+                                <button data-question_id="{{ q.id }}" data-question_type="code" type="button" class="btn btn-sm btn-danger"
+                                    onclick="deleteQuestion(this);">Delete
                                 </button>
                                 {% else %}
                                 <a class="btn btn-sm btn-success" target="__blank" href="{% url 'question-report' assessment_id=assessment.id question_id=q.id %}">
@@ -415,7 +415,7 @@
 </script>
 
 <!-- Delete question script -->
-{% include 'code_questions/snippets/delete-code-question-script.html' %}
+{% include 'code_questions/snippets/delete-question-script.html' %}
 
 {% include 'code_questions/snippets/view-modal-script.html' %}
 

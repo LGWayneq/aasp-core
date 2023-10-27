@@ -91,7 +91,7 @@ def check_permissions_qb(question_bank, user):
     return 0
 
 
-def check_permissions_code_question(code_question, user):
+def check_permissions_question(question, user):
     """
     Returns if a user can make changes to a code question.
     True - Has permission (is the owner of the question bank, or course containing the assessment)
@@ -100,10 +100,10 @@ def check_permissions_code_question(code_question, user):
     1 - Read
     0 - No permissions
     """
-    if code_question.question_bank:  # belongs to qb
-        return check_permissions_qb(code_question.question_bank, user)
+    if question.question_bank:  # belongs to qb
+        return check_permissions_qb(question.question_bank, user)
     else:  # belongs to assessment
-        if check_permissions_course(code_question.assessment.course, user) != 0:
+        if check_permissions_course(question.assessment.course, user) != 0:
             return 2
 
 

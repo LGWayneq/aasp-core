@@ -22,7 +22,7 @@ from core.forms.question_banks import CodeQuestionForm, ModuleGenerationForm, Qu
 from core.models import QuestionBank, Assessment, CodeQuestion
 from core.models.questions import HDLQuestionConfig, TestCase, CodeSnippet, Language, Tag
 from core.serializers import CodeQuestionsSerializer
-from core.views.utils import TestbenchGenerator, check_permissions_course, check_permissions_code_question, embed_inout_module, embed_inout_testbench, generate_module
+from core.views.utils import TestbenchGenerator, check_permissions_course, check_permissions_question, embed_inout_module, embed_inout_testbench, generate_module
 
 
 @login_required()
@@ -97,7 +97,7 @@ def update_code_question(request, code_question_id):
     code_question = get_object_or_404(CodeQuestion, id=code_question_id)
 
     # check permissions
-    if check_permissions_code_question(code_question, request.user) != 2:
+    if check_permissions_question(code_question, request.user) != 2:
         if code_question.question_bank:
             return PermissionDenied("You do not have permissions to modify this question bank.")
         else:
@@ -147,7 +147,7 @@ def update_test_cases(request, code_question_id):
     code_snippets = CodeSnippet.objects.filter(code_question=code_question)
 
     # check permissions
-    if check_permissions_code_question(code_question, request.user) != 2:
+    if check_permissions_question(code_question, request.user) != 2:
         return PermissionDenied()
 
     # if belongs to a published assessment, disallow
@@ -262,7 +262,7 @@ def update_languages(request, code_question_id):
     code_question = get_object_or_404(CodeQuestion, id=code_question_id)
 
     # check permissions
-    if check_permissions_code_question(code_question, request.user) != 2:
+    if check_permissions_question(code_question, request.user) != 2:
         return PermissionDenied()
 
     # if belongs to a published assessment, disallow
@@ -340,7 +340,7 @@ def update_question_type(request, code_question_id):
     code_question = get_object_or_404(CodeQuestion, id=code_question_id)
 
     # check permissions
-    if check_permissions_code_question(code_question, request.user) != 2:
+    if check_permissions_question(code_question, request.user) != 2:
         return PermissionDenied()
     
     # if belongs to a published assessment, disallow
@@ -385,7 +385,7 @@ def generate_module_code(request, code_question_id):
     code_question = get_object_or_404(CodeQuestion, id=code_question_id)
 
     # check permissions
-    if check_permissions_code_question(code_question, request.user) != 2:
+    if check_permissions_question(code_question, request.user) != 2:
         return PermissionDenied()
 
     # if belongs to a published assessment, disallow
@@ -464,7 +464,7 @@ def get_cq_details(request):
                 return Response(error_context, status=status.HTTP_404_NOT_FOUND)
 
             # check permissions
-            if check_permissions_code_question(code_question, request.user) == 0:
+            if check_permissions_question(code_question, request.user) == 0:
                 return Response(error_context, status=status.HTTP_401_UNAUTHORIZED)
 
             # prepare context and serialize code question
