@@ -30,7 +30,7 @@ class AssessmentForm(models.ModelForm):
         if cleaned_data['weightage']:
             prev_weightage = self.initial.get('weightage', 0)
             total_weightage = Assessment.objects.filter(course=self.cleaned_data['course'], deleted=False).aggregate(Sum('weightage'))['weightage__sum']
-            weightage_without_this = total_weightage - prev_weightage
+            weightage_without_this = total_weightage - prev_weightage if total_weightage else 0
 
             if weightage_without_this + self.cleaned_data['weightage'] > 100:
                 raise forms.ValidationError('Total weightage of assessments in the course cannot be more than 100%. Current maximum allowed weightage: ' + str(100 - weightage_without_this) + '%.')
