@@ -39,7 +39,6 @@
             data: {mcq_id},
         }).done((res, textStatus, jqXHR) => {
             if (res.result === "success") {
-                console.log(res)
                 let rows = "";
                 res.mcq_question_options.forEach((val, idx) => {
                     rows += `<tr><td>${idx + 1}</td><td>${val.content}</td><td>${val.correct ? '<span class="badge bg-light-success">Y</span>' : '<span class="badge bg-light-danger">N</span>'}</td></tr>`
