@@ -1,0 +1,55 @@
+<!-- Tab monitoring -->
+{% if assessment_attempt.assessment.limit_tab_switching %}
+<script>
+    const tabModal = $("#tab-modal");
+    let leaving_screen_num = 0;
+
+    function handleTabSwitch() {
+        leaving_screen_num++;
+        tabModal.modal("show");
+        if (leaving_screen_num >= 3) {  // force submit test on third tab switch
+            let seconds_allowed = 30 - leaving_screen_num * 5;
+            let seconds_passed = 0;
+            $("#tab-switch-countdown").html('- seconds remaining');
+
+            var tabSwitchTimer = setInterval(() => {
+                let seconds_remaining = seconds_allowed - seconds_passed;
+                $("#tab-switch-countdown").html(`${seconds_remaining} seconds remaining`);
+        
+                if (seconds_remaining <= 0) {
+                    clearInterval(tabSwitchTimer);
+                    submitAssessment(false);
+                    window.onbeforeunload = (e) => {
+                        e.preventDefault();
+                    }
+                    return;
+                }
+                else if (seconds_remaining > 0) {
+                    tabModal.on("hide.bs.modal",
+                        () => {
+                        clearInterval(tabSwitchTimer);
+                    });
+                }
+                seconds_passed++;
+            }, 1000);
+        }
+    }
+
+    window.onfocus = () => {
+        setBinding();
+    }
+
+    const setBinding = () => {
+        window.onblur = (event) => { 
+            // check if switching is due to clicking on modal iframe
+            if (document.activeElement.id === 'modalIframe') {
+                window.onblur = null;
+            } else {
+                handleTabSwitch();
+            }
+        }
+    }
+
+    setBinding();
+</script>
+{% endif %}
