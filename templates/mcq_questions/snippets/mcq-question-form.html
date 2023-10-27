@@ -1,0 +1,221 @@
+{% load static %}
+
+{% block styles %}
+  <link rel="stylesheet" href="{% static 'vendors/choices.js/choices.min.css' %}" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/simplemde/latest/simplemde.min.css" />
+{% endblock %}
+
+<div class="tab-content" id="pills-tabContent">
+  <h5>Question Description</h5>
+  <div class="tab-pane fade show active pt-3" id="pill-description" role="tabpanel" aria-labelledby="pill-description-tab">
+    <div class="row">
+      <!-- Question Name input -->
+      <div class="col-9">
+        <div class="form-group">
+          <label for="id_name" class="mb-2">Question Name</label>
+          <input type="text" name="name" class="form-control form-control-lg {% if form.name.errors %}{% endif %}" id="id_name" placeholder="e.g. Two sum" value="{{ form.name.value|default:'' }}" required />
+          {# name errors #}
+          {% if form.name.errors %}
+            <p class="text-danger">
+              {{ e }}
+              {% for e in form.name.errors %}
+                {{ e }}<br />
+              {% endfor %}
+            </p>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Score input -->
+      <div class="col-3">
+        <div class="form-group">
+          <label for="id_score" class="mb-2">Score</label>
+          <input type="number" min="0" name="score" class="form-control form-control-lg {% if form.score.errors %}{% endif %}" id="id_score" value="{{ form.score.value|default:'0' }}" required />
+          {# name errors #}
+          {% if form.score.errors %}
+            <p class="text-danger">
+              {{ e }}
+              {% for e in form.score.errors %}
+                {{ e }}<br />
+              {% endfor %}
+            </p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Tag selection -->
+    <div>
+      <div class="form-group">
+        <label for="id_tags" class="mb-2">Tags</label>
+        <input type="text" name="tags" id="id_tags" />
+      </div>
+    </div>
+
+    <!-- Show multiple answers checkbox -->
+    <div class="checkbox mt-3">
+      <input type="checkbox" id="id_multiple_answers" name="multiple_answers" class="form-check-input me-2" />
+      <label for="id_multiple_answers">Multiple Answers</label>
+    </div>
+
+    <!-- Description input -->
+    <div class="form-group mt-3 mb-3">
+      <div class="d-flex justify-content-between align-items-center mb-2">
+        <label for="id_description">Question Description</label>
+        <button type="button" class="btn btn-warning btn-sm" id="preview-btn">Show Preview</button>
+      </div>
+      <textarea id="id_description" name="description">{{ description_placeholder|default:'' }}</textarea>
+      {# description errors #}
+      {% if form.description.errors %}
+        <p class="text-danger">
+          {{ e }}
+          {% for e in form.description.errors %}
+            {{ e }}<br />
+          {% endfor %}
+        </p>
+      {% endif %}
+    </div>
+
+    <h5 class="mb-3">Question Options</h5>
+    {{ mcq_question_options_formset.management_form }}
+    <div id="options-container">
+      {% for option in mcq_question_options_formset %}
+        {% include 'mcq_questions/snippets/mcq-option-row.html' %}
+      {% endfor %}
+    </div>
+
+    <!-- Add option button -->
+    <button type="button" class="btn btn-sm btn-warning" onclick="addOption();">Add Option</button>
+
+    <!-- Create button -->
+    <button type="submit" class="btn btn-sm btn-success float-end">Save and Continue</button>
+  </div>
+</div>
+
+{% block js %}
+  <script src="{% static 'vendors/jquery/jquery.min.js' %}"></script>
+  <script src="https://cdn.jsdelivr.net/simplemde/latest/simplemde.min.js"></script>
+  <script src="{% static 'vendors/choices.js/choices.min.js' %}"></script>
+  {% include 'includes/js/mathjax.html' %}
+
+  <!-- Configure and initialize SimpleMDE -->
+  <script>
+    const previewButton = $('#preview-btn')
+    
+    // initialize simpleMDE
+    let simplemde = new SimpleMDE({
+      element: document.getElementById('id_description'),
+      toolbar: false
+    })
+    
+    // toggle preview on button click
+    previewButton.click(function () {
+      simplemde.togglePreview()
+      if (previewButton.text() === 'Show Markdown') previewButton.text('Show Preview')
+      else {
+        previewButton.text('Show Markdown')
+        MathJax.typeset()
+      }
+    })
+  </script>
+
+  <!-- choices.js tags -->
+  <script>
+    // choices.js: mcq questions tag selector
+    const tags = document.getElementById('id_tags')
+    let choice1 = new Choices(tags, {
+      removeItemButton: true
+    })
+  </script>
+
+  <!-- Add option button -->
+  <script>
+    // add option
+    function addOption() {
+      const optionsContainer = document.getElementById('options-container')
+      const optionTemplate = document.getElementById('option-0')
+      const clonedOption = optionTemplate.cloneNode(true)
+
+      // reset input values
+      const inputElements = clonedOption.querySelectorAll('input')
+      inputElements.forEach(input => {
+        if (input.type === 'checkbox') {
+          input.checked = false
+        } else {
+          input.value = ''
+        }
+      })
+
+      // update option index
+      updateOptionIndex(clonedOption, 0, optionsContainer.childElementCount)
+      optionsContainer.appendChild(clonedOption)
+
+      // enable all delete buttons
+      const deleteButtons = optionsContainer.querySelectorAll('button')
+      deleteButtons.forEach(button => {
+        button.disabled = false
+      })
+
+      updateTotalForms()
+    }
+
+    function deleteOption(buttonElement) {
+      const optionContainer = buttonElement.parentElement
+
+      // update option indices
+      const optionsContainer = document.getElementById('options-container')
+      const optionElements = optionsContainer.children
+      let after = false;
+      for (let i = 0; i < optionElements.length; i++) {
+        if (after) updateOptionIndex(optionElements[i], i, i-1)
+        if (optionElements[i] === optionContainer) after = true
+      }
+
+      optionContainer.remove()
+
+      // disable delete button if only 1 option remaining
+      if (optionsContainer.childElementCount === 1) {
+        const deleteButtons = optionsContainer.querySelectorAll('button')
+        deleteButtons.forEach(button => {
+          button.disabled = true
+        })
+      }
+
+      updateTotalForms()
+    }
+
+    function updateOptionIndex(optionElement, originalIndex, updatedIndex) {
+      // reset input values & update input id and name
+      const inputElements = optionElement.querySelectorAll('input')
+      inputElements.forEach(input => {
+        const elementId = input.getAttribute('id')
+        input.setAttribute('id', elementId.replace(originalIndex, updatedIndex))
+
+        const elementName = input.getAttribute('name')
+        input.setAttribute('name', elementName.replace(originalIndex, updatedIndex))
+      })
+
+      // update label id
+      const labelElements = optionElement.querySelectorAll('label')
+      labelElements.forEach(label => {
+        const elementId = label.getAttribute('for')
+        if (elementId) label.setAttribute('for', elementId.replace(originalIndex, updatedIndex))
+      })
+
+      // update option label
+      const labelElement = optionElement.querySelector(`label[id="option-label-${originalIndex}"]`)
+      if (labelElement) {
+        labelElement.setAttribute('id', `option-label-${updatedIndex}`)
+        labelElement.textContent = `Option ${updatedIndex+1}`
+      }
+
+      // update container id
+      optionElement.setAttribute('id', `option-${updatedIndex}`)
+    }
+
+    function updateTotalForms() {
+      const totalForms = document.getElementById('id_mcq-TOTAL_FORMS')
+      totalForms.value = document.getElementById('options-container').childElementCount
+    }
+  </script>
+{% endblock %}

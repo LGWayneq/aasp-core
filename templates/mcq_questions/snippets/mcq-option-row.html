@@ -1,0 +1,24 @@
+<div id="option-{{ forloop.counter0 }}">
+  <label id="option-label-{{ forloop.counter0 }}" class="mb-2">Option {{ forloop.counter }}</label>
+  <button type="button" class="btn btn-danger btn-sm float-end mb-2" onclick="deleteOption(this);" {% if forloop.last and forloop.counter0 == 1 %}disabled{% endif %}>Delete</button>
+  <div class="mb-3">
+    <input 
+        type="text"
+        id="id_mcq-{{ forloop.counter0 }}-description"  
+        name="mcq-{{ forloop.counter0 }}-description" 
+        class="form-control" 
+        placeholder="Enter Option"
+        value="{{ form.description.value|default:"" }}" 
+        required />
+    </input>
+  </div>
+  <div class="checkbox mb-3">
+    <input 
+        type="checkbox" 
+        id="id_mcq-{{ forloop.counter0 }}-correct" 
+        name="mcq-{{ forloop.counter0 }}-correct" 
+        class="form-check-input me-2 mt-0" 
+        {% if form.correct.value %}checked{% endif %}/>
+    <label for="id_mcq-{{ forloop.counter0 }}-correct">Correct Option</label>
+  </div>
+</div>

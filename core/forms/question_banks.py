@@ -2,7 +2,7 @@ from django.core.validators import FileExtensionValidator
 from django import forms
 
 from core.models import QuestionBank
-from core.models.questions import HDLQuestionSolution, TestCase, CodeQuestion, HDLQuestionConfig
+from core.models.questions import HDLQuestionSolution, TestCase, CodeQuestion, McqQuestion, HDLQuestionConfig
 
 
 class QuestionBankForm(forms.ModelForm):
@@ -15,6 +15,12 @@ class CodeQuestionForm(forms.ModelForm):
     class Meta:
         model = CodeQuestion
         fields = ['name', 'description', 'question_bank', 'assessment', 'is_concurrency_question', 'solution_code', 'solution_code_language']
+
+
+class McqQuestionForm(forms.ModelForm):
+    class Meta:
+        model = McqQuestion
+        fields = ['name', 'description', 'question_bank', 'assessment', 'score', 'multiple_answers']
 
 
 class ImportQuestionBankForm(forms.Form):

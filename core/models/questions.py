@@ -96,6 +96,44 @@ class CodeQuestion(models.Model):
         else:
             return True
 
+class McqQuestion(models.Model):
+    class Meta:
+        pass
+
+    name = models.CharField(max_length=50, blank=False, null=False)
+    description = models.TextField(blank=False, null=False)
+    tags = models.ManyToManyField(Tag, blank=True)
+    score = models.PositiveIntegerField(blank=False, null=False)
+    multiple_answers = models.BooleanField(default=False, blank=False, null=False)
+
+    # foreign keys (either linked to a QuestionBank or Assessment instance)
+    question_bank = models.ForeignKey(QuestionBank, null=True, blank=True, on_delete=models.CASCADE)
+    assessment = models.ForeignKey(Assessment, null=True, blank=True, on_delete=models.PROTECT)
+
+    def clean(self):
+        """
+        Custom validation to ensure at least one foreign key is not null, but not both.
+        """
+        if not self.question_bank and not self.assessment:
+            raise ValidationError("The question must be linked to either a Question Bank or an Assessment instance.")
+        elif self.question_bank and self.assessment:
+            raise ValidationError("The question cannot be be linked to both a Question Bank and an Assessment instance.")
+        
+class McqQuestionOption(models.Model):
+    class Meta:
+        pass
+
+    mcq_question = models.ForeignKey(McqQuestion, null=False, blank=False, on_delete=models.CASCADE)
+    description = models.CharField(max_length=100, blank=False, null=False)
+    correct = models.BooleanField(default=False, blank=False, null=False)
+
+    def clean(self):
+        """
+        Custom validation to ensure at least one foreign key is not null, but not both.
+        """
+        if not self.mcq_question:
+            raise ValidationError("The MCQ choice must be linked to a MCQ Question instance.")
+
 class CodeSnippet(models.Model):
     class Meta:
         pass

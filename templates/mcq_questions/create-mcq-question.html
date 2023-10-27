@@ -1,0 +1,64 @@
+{% extends 'layouts/main-top-side-nav.html' %}
+{% load static %}
+
+{% block title %}New MCQ Question{% endblock %}
+
+{% block styles %}
+  <link rel="stylesheet" href="{% static 'vendors/choices.js/choices.min.css' %}"/>
+  <link rel="stylesheet" href="{% static 'vendors/toastify/toastify.css' %}"/>
+  <link rel="stylesheet" href="{% static 'vendors/highlight.js/styles/intellij-light.css' %}">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/simplemde/latest/simplemde.min.css">
+{% endblock %}
+
+{% block content %}
+  <div class="page-heading">
+    <div class="page-title">
+      <div class="row">
+        <div class="col-12 col-md-12 order-md-1 order-last pb-3">
+          {% if question_bank != None %}
+            <a class="d-flex align-content-between mb-3" style="cursor: pointer;" href="{% url 'question-bank-details' question_bank_id=question_bank.id %}">
+              <i class="fa-solid fa-arrow-left-long fa-lg" style="margin-right: 10px;"></i>
+              <h6>Back to {{ question_bank.name }}</h6>
+            </a>
+          {% elif assessment != None %}
+            <a class="d-flex align-content-between mb-3" style="cursor: pointer;" href="{% url 'assessment-details' assessment_id=assessment.id %}">
+              <i class="fa-solid fa-arrow-left-long fa-lg" style="margin-right: 10px;"></i>
+              <h6>Back to {{ assessment.name }}</h6>
+            </a>
+          {% endif %}
+          <h2>New MCQ Question 🆕</h2>
+          {% if question_bank != None %}
+            <h5 class="text-muted">For question bank: {{ question_bank.name }}</h5>
+          {% else %}
+            <h5 class="text-muted">For assessment: {{ assessment.name }}</h5>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab group row -->
+    <div class="row">
+      <div class="col-12 m-2">
+        <div class="card">
+          <div class="card-body">
+
+            <!-- Tab contents -->
+            <form method="POST">
+              {% csrf_token %}
+
+              {% if question_bank %}
+                <input type="hidden" name="question_bank" value="{{ question_bank.id }}">
+              {% endif %}
+              {% if assessment %}
+                <input type="hidden" name="assessment" value="{{ assessment.id }}">
+              {% endif %}
+
+              {% include "mcq_questions/snippets/mcq-question-form.html" %}
+            </form>
+
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}

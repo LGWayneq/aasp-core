@@ -213,6 +213,28 @@ class Migration(migrations.Migration):
                 ('language', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='core.language')),
             ],
         ),
+        migrations.CreateModel(
+            name='McqQuestion',
+            fields=[
+                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('name', models.CharField(max_length=50)),
+                ('description', models.TextField()),
+                ('tags', models.ManyToManyField(blank=True, to='core.tag')),
+                ('score', models.PositiveIntegerField(blank=False, null=False)),
+                ('multiple_answers', models.BooleanField(default=False)),
+                ('assessment', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.PROTECT, to='core.assessment')),
+                ('question_bank', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, to='core.questionbank')),
+            ],
+        ),
+        migrations.CreateModel(
+            name='McqQuestionOption',
+            fields=[
+                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('mcq_question', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='core.mcqquestion')),
+                ('description', models.CharField(max_length=100)),
+                ('correct', models.BooleanField(default=False, blank=False, null=False)),
+            ],
+        ),
         migrations.AddField(
             model_name='codequestionsubmission',
             name='language',

@@ -2,7 +2,7 @@ from django.urls import include, path, re_path
 from django.views.static import serve
 from django.conf import settings
 
-from .views import auth, user_management, dashboards, course_management, question_banks, code_questions, assessments, attempts, reports
+from .views import auth, user_management, dashboards, course_management, question_banks, code_questions, assessments, attempts, reports, mcq_questions
 
 static_urlpatterns = [
     re_path(r"^media/(?P<path>.*)$", serve, {"document_root": settings.MEDIA_ROOT}),
@@ -59,6 +59,10 @@ urlpatterns = [
     path('api/get-code-question-details/', code_questions.get_cq_details, name='get-code-question-details'),  # ajax
     path('api/compile-code/', code_questions.compile_code, name='compile-code'),  # ajax
     path('code-question/preview/<int:code_question_id>/', code_questions.preview_question, name='preview-question'),  # step 1
+
+    # mcq questions
+    path('mcq-question/create/<str:parent>/<int:parent_id>/', mcq_questions.create_mcq_question, name='create-mcq-question'),  
+    path('mcq-question/update/<int:mcq_question_id>/', mcq_questions.update_mcq_question, name='update-mcq-question'),
 
     # assessments
     path('assessments/', assessments.view_assessments, name='view-assessments'),
