@@ -1,0 +1,141 @@
+<!-- momentjs -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/moment-duration-format/1.3.0/moment-duration-format.min.js"></script>
+
+{% if assessment_attempt.assessment.require_webcam %}
+    <!-- Webcam setup script -->
+    <video hidden id="video"></video>
+    <canvas hidden id="canvas"></canvas>
+    <script>
+        const width = 320; let height = 0;
+        let streaming = false;
+        let video = document.getElementById("video");
+        let canvas = document.getElementById("canvas");
+
+        function stopCamera() {
+            const stream = video.srcObject;
+            const tracks = stream.getTracks();
+            tracks[0].stop();
+        }
+    
+        function startup() {
+            navigator.mediaDevices
+                .getUserMedia({ video: true, audio: false })
+                .then((stream) => {
+                    video.srcObject = stream;
+                    video.play();
+                })
+                .catch((err) => {
+                    console.error(`An error occurred: ${err}`);
+                });
+
+            video.addEventListener(
+                "canplay",
+                ($e) => {
+                    if (!streaming) {
+                        height = video.videoHeight / (video.videoWidth / width);
+
+                        if (isNaN(height)) {
+                            height = width / (4 / 3);
+                        }
+
+                        video.setAttribute("width", width);
+                        video.setAttribute("height", height);
+                        canvas.setAttribute("width", width);
+                        canvas.setAttribute("height", height);
+                        streaming = true;
+                    }
+                },
+                false
+            );
+        }
+    </script>
+
+    <!-- Capture and upload candidate snapshot -->
+    <script>
+        function randomMinutes(min, max) {
+            min = min * 10;
+            max = max * 10;
+            return  Math.floor(Math.random() * (max - min) + min) / 10;
+        }
+
+        function captureSnapshot() {
+            // randomise time between 1 min and 10% of assessment duration
+            const a = 1;
+            const b = {{ assessment_attempt.assessment.duration }} * 0.1;
+            const min = Math.min(a, b);
+            const max = Math.max(a, b);
+            let minutes = randomMinutes(min, max);
+
+            snapshotTimer = setTimeout(captureSnapshot, minutes*60000);
+
+            const current = moment();
+            const context = canvas.getContext("2d");
+            if (width && height) {
+                canvas.width = width;
+                canvas.height = height;
+                context.drawImage(video, 0, 0, width, height);
+        
+                let image = null;
+                let filename = current.format("DDMMYYYY_HHmmss");
+                let timestamp = current.format("DD-MM-YYYY HH:mm:ss");
+                let blob = canvas.toBlob(
+                    (blob) => {
+                        image = new File([blob], `${filename}.jpg`, { type: 'image/jpg' });
+                        uploadImage(timestamp, image);
+                    }, 'image/jpg');
+            }
+        }
+
+        // ajax request to save image
+        function uploadImage(timestamp, image) {
+            let formData = new FormData();
+            formData.append("attempt_number", "{{ assessment_attempt.total_attempts }}");
+            formData.append("timestamp", timestamp);
+            formData.append("image", image);
+            formData.append("csrfmiddlewaretoken", "{{ csrf_token }}");
+
+            $.ajax({
+                type: 'POST',
+                url: "{% url 'upload-snapshot' assessment_attempt_id=assessment_attempt.id %}",
+                enctype: 'multipart/form-data',
+                data: formData,
+                processData: false,
+                contentType: false,
+            }).done((res, textStatus, jqXHR) => {
+                // console.log("Snapshot uploaded.");
+            }).fail((jqXHR, textStatus, errorThrown) => {
+                console.error(`An error occurred: ${jqXHR.responseJSON["message"]}`);
+            });
+        }
+    </script>
+{% endif %}
+
+<!-- Timer script -->
+{% if assessment_attempt.assessment.duration != 0 %}
+    <script>
+        const startTime = moment.unix({{ assessment_attempt.time_started|date:"U" }});
+        const endTime = moment(startTime).add({{ assessment_attempt.assessment.duration }}, 'minutes');
+
+        let snapshotTimer;
+        let require_webcam = {{ assessment_attempt.assessment.require_webcam|yesno:"true,false" }};
+        if (require_webcam) {
+            startup();
+            captureSnapshot();
+        }        
+        
+        const assessmentTimer = setInterval(() => {
+            const now = moment();
+            const remaining = moment.duration(endTime.diff(now));
+            const formatted = remaining.format('DD:HH:mm:ss');
+            $("#countdown-timer").html(formatted);
+            
+            // check if time ended
+            if (now >= endTime) {
+                clearInterval(assessmentTimer);
+                clearInterval(snapshotTimer);
+                submitAssessment(false);
+            }
+        }, 1000);
+    </script>
+{% endif %}
