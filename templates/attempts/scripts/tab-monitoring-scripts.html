@@ -53,3 +53,30 @@
     setBinding();
 </script>
 {% endif %}
+
+<!-- Unload warning -->
+<script>
+    window.onbeforeunload = function () {
+        e.preventDefault();
+        if ({{ assessment_attempt.assessment.limit_tab_switching|yesno:"true,false"}}) {
+            window.onblur = () => {};
+        }
+        
+        if (validNavigation) {
+            validNavigation = false;
+            if ({{ assessment_attempt.assessment.limit_tab_switching|yesno:"true,false"}}) {
+                setTimeout(() => {
+                window.onblur = () => { handleTabSwitch(); }
+                }, 1000);
+            }
+            return;
+        }
+
+        if ({{ assessment_attempt.assessment.limit_tab_switching|yesno:"true,false"}}) {
+            setTimeout(() => {
+            window.onblur = () => { handleTabSwitch(); }
+            }, 1000);
+        }
+        return true;
+    };
+</script>
