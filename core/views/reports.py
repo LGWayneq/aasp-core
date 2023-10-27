@@ -144,7 +144,7 @@ def question_report(request, assessment_id, question_id):
         .filter(cq_attempt__code_question_id=question_id)
     
     # generate graph data
-    score_graph = generate_score_distribution_graph(best_submissions, code_question.max_score())
+    score_graph = generate_score_distribution_graph([submission.score for submission in best_submissions], code_question.max_score())
     time_spent_graph = generate_question_time_spent_graph(code_question)
 
     context = {
