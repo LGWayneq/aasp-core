@@ -124,7 +124,7 @@ class McqQuestionOption(models.Model):
         pass
 
     mcq_question = models.ForeignKey(McqQuestion, null=False, blank=False, on_delete=models.CASCADE)
-    description = models.CharField(max_length=100, blank=False, null=False)
+    content = models.CharField(max_length=100, blank=False, null=False)
     correct = models.BooleanField(default=False, blank=False, null=False)
 
     def clean(self):

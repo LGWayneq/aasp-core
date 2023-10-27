@@ -50,7 +50,7 @@ def create_mcq_question(request, parent, parent_id):
     form = McqQuestionForm()
 
     # prepare options formset
-    McqQuestionOptionFormset = inlineformset_factory(McqQuestion, McqQuestionOption, fields=('description', 'correct'), extra=1)
+    McqQuestionOptionFormset = inlineformset_factory(McqQuestion, McqQuestionOption, fields=('content', 'correct'), extra=1)
     mcq_question_options_formset = McqQuestionOptionFormset(prefix="mcq")
         
     if request.method == "POST":
@@ -122,7 +122,7 @@ def update_mcq_question(request, mcq_question_id):
     form = McqQuestionForm(instance=mcq_question)
 
     # prepare options formset
-    McqQuestionOptionFormset = inlineformset_factory(McqQuestion, McqQuestionOption, fields=('description', 'correct'), extra=1)
+    McqQuestionOptionFormset = inlineformset_factory(McqQuestion, McqQuestionOption, fields=('content', 'correct'), extra=0)
     mcq_question_options_formset = McqQuestionOptionFormset(instance=mcq_question, prefix="mcq")
         
     if request.method == "POST":

@@ -231,7 +231,7 @@ class Migration(migrations.Migration):
             fields=[
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('mcq_question', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='core.mcqquestion')),
-                ('description', models.CharField(max_length=100)),
+                ('content', models.CharField(max_length=100)),
                 ('correct', models.BooleanField(default=False, blank=False, null=False)),
             ],
         ),

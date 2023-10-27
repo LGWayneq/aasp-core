@@ -64,7 +64,7 @@
         <label for="id_description">Question Description</label>
         <button type="button" class="btn btn-warning btn-sm" id="preview-btn">Show Preview</button>
       </div>
-      <textarea id="id_description" name="description">{{ description_placeholder|default:'' }}</textarea>
+      <textarea id="id_description" name="description">{% if description_placeholder %}{{ description_placeholder|default:'' }}{% else %}{{ form.description.value|default:'' }}{% endif %}</textarea>
       {# description errors #}
       {% if form.description.errors %}
         <p class="text-danger">
