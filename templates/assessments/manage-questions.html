@@ -87,7 +87,7 @@
                                 <a href="{% url 'preview-question' code_question_id=q.id %}" target="_blank"
                                     class="btn btn-sm btn-warning {% if q.languages.count == 0 or q.testcase_set.count == 0 %}disabled{% endif %}">Preview</a>
                                 <button type="button" id="more-details" class="btn btn-sm btn-primary view-modal"
-                                    data-cq-id="{{ q.id }}" onclick="viewModal(this)">
+                                    data-cq-id="{{ q.id }}" onclick="viewCodeModal(this)">
                                     View
                                 </button>
                                 {% if request.user|has_group:'educator' %}
@@ -182,8 +182,8 @@
                             <td>
                                 <a href="{% url 'preview-question' code_question_id=q.id %}" target="_blank"
                                     class="btn btn-sm btn-warning disabled">Preview</a>
-                                <button type="button" id="more-details" class="btn btn-sm btn-primary view-modal disabled"
-                                    data-cq-id="{{ q.id }}" onclick="viewModal(this)">
+                                <button type="button" id="more-details" class="btn btn-sm btn-primary view-modal"
+                                    data-mcq-id="{{ q.id }}" onclick="viewMcqModal(this)">
                                     View
                                 </button>
                                 {% if request.user|has_group:'educator' %}
@@ -306,8 +306,9 @@
 
 </div>
 
-<!-- Modal: View code questions -->
-{% include 'code_questions/snippets/view-modal.html' %}
+<!-- Modal: View questions -->
+{% include 'code_questions/snippets/view-code-modal.html' %}
+{% include 'mcq_questions/snippets/view-mcq-modal.html' %}
 
 {% block js %}
 <script src="{% static 'vendors/jquery/jquery.min.js' %}"></script>
@@ -500,6 +501,8 @@
 <!-- Delete question script -->
 {% include 'code_questions/snippets/delete-question-script.html' %}
 
-{% include 'code_questions/snippets/view-modal-script.html' %}
+<!-- View modal script -->
+{% include 'code_questions/snippets/view-code-modal-script.html' %}
+{% include 'mcq_questions/snippets/view-mcq-modal-script.html' %}
 
 {% endblock %}

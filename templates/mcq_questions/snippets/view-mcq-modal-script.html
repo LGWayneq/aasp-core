@@ -1,0 +1,76 @@
+{% load static %}
+<!-- View question script -->
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script type="text/javascript" src="{% static 'vendors/highlight.js/highlight.min.js' %}"></script>
+{% include 'includes/js/mathjax.html' %}
+
+
+<script>
+    marked.setOptions({
+        breaks: true
+    })
+
+    const mcqModalLoading = $("#mcq-modal-loading");
+    const mcqModalBody = $("#mcq-modal-body");
+
+    const mcqName = $("#mcq-name");
+    const mcqDescription = $("#mcq-description");
+    const mcqMultipleAnswers = $("#mcq-mutiple-answers");
+    const mcqOptions = $("#mcq-options");
+
+    const viewMcqModal = (btn) => {
+        // clear old data
+        mcqOptions.empty();
+        mcqName.html("");
+        mcqDescription.html("");
+        mcqMultipleAnswers.html("");
+
+        // get code question id
+        const mcq_id = $(btn).data('mcq-id');
+
+        // show mcq-modal-loading, hide mcq-modal-body
+        mcqModalBody.hide();
+        mcqModalLoading.show();
+
+        // ajax request
+        $.ajax({
+            type: 'GET',
+            url: "{% url 'get-mcq-question-details' %}",
+            data: {mcq_id},
+        }).done((res, textStatus, jqXHR) => {
+            if (res.result === "success") {
+                console.log(res)
+                let rows = "";
+                res.mcq_question_options.forEach((val, idx) => {
+                    rows += `<tr><td>${idx + 1}</td><td>${val.content}</td><td>${val.correct ? '<span class="badge bg-light-success">Y</span>' : '<span class="badge bg-light-danger">N</span>'}</td></tr>`
+                })
+
+                // set values
+                mcqName.html(res.mcq_question.name)
+                mcqDescription.html(marked.parse(res.mcq_question.description));
+                mcqOptions.append(rows);
+                mcqMultipleAnswers.html(res.mcq_question.multiple_answers ? "True" : "False");
+                hljs.highlightAll();
+
+                // render math
+                MathJax.typeset();
+
+                setTimeout(() => {
+                    mcqModalLoading.hide();
+                    mcqModalBody.show();
+                }, 500);
+            }
+        }).fail((jqXHR, textStatus, errorThrown) => {
+            // 4xx status codes
+            if (Math.floor(jqXHR.status / 100) == 4) {
+                console.error("Internal Error!");
+            }
+            else {
+                console.error("External API Error!");
+            }
+        });
+
+        // show modal
+        $('#mcqDetailsModal').modal('show');
+    };
+</script>

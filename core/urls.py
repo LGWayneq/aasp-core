@@ -63,6 +63,7 @@ urlpatterns = [
     # mcq questions
     path('mcq-question/create/<str:parent>/<int:parent_id>/', mcq_questions.create_mcq_question, name='create-mcq-question'),  
     path('mcq-question/update/<int:mcq_question_id>/', mcq_questions.update_mcq_question, name='update-mcq-question'),
+    path('api/get-mcq-question-details/', mcq_questions.get_mcq_details, name='get-mcq-question-details'),  # ajax
 
     # assessments
     path('assessments/', assessments.view_assessments, name='view-assessments'),

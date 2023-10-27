@@ -1,7 +1,7 @@
 from django.db import transaction
 from rest_framework import serializers
 
-from core.models import CodeQuestion, Tag, TestCase, Language, QuestionBank, CodeSnippet
+from core.models import CodeQuestion, Tag, TestCase, Language, QuestionBank, CodeSnippet, McqQuestion, McqQuestionOption
 
 
 class TagSerializer(serializers.ModelSerializer):
@@ -33,6 +33,21 @@ class CodeQuestionsSerializer(serializers.ModelSerializer):
     class Meta:
         model = CodeQuestion
         fields = ['id', 'name', 'description', 'tags', 'question_bank', 'assessment', 'testcase_set', 'languages', 'is_concurrency_question', 'solution_code', 'solution_code_language']
+
+
+class McqQuestionOptionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = McqQuestionOption
+        fields = ['id', 'content', 'correct']
+
+
+class McqQuestionSerializer(serializers.ModelSerializer):
+    tags = TagSerializer(read_only=True, many=True)
+    options_set = McqQuestionOptionSerializer(read_only=True, many=True)
+
+    class Meta:
+        model = McqQuestion
+        fields = ['id', 'name', 'score', 'description', 'tags', 'question_bank', 'assessment', 'options_set', 'multiple_answers']
 
 
 class TestCaseSerializerLite(serializers.ModelSerializer):

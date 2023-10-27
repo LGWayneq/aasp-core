@@ -15,6 +15,7 @@ from core.decorators import groups_allowed, UserGroup
 from core.forms.question_banks import McqQuestionForm
 from core.models import QuestionBank, Assessment, McqQuestion, McqQuestionOption
 from core.models.questions import Tag
+from core.serializers import McqQuestionSerializer, McqQuestionOptionSerializer
 from core.views.utils import check_permissions_course, check_permissions_question
 
 
@@ -171,3 +172,44 @@ def update_mcq_question(request, mcq_question_id):
         'form': form,
     }
     return render(request, 'mcq_questions/update-mcq-question.html', context)
+
+@api_view(["GET"])
+@renderer_classes([JSONRenderer])
+@login_required()
+@groups_allowed(UserGroup.educator, UserGroup.lab_assistant)
+def get_mcq_details(request):
+    try:
+        error_context = {"result": "error", }
+
+        if request.method == "GET":
+            # get mcq_id from request
+            mcq_id = request.GET.get("mcq_id")
+
+            # get mcq question object
+            mcq_question = McqQuestion.objects.filter(id=mcq_id).first()
+
+            # mcq question not found
+            if not mcq_question:
+                return Response(error_context, status=status.HTTP_404_NOT_FOUND)
+
+            # check permissions
+            if check_permissions_question(mcq_question, request.user) == 0:
+                return Response(error_context, status=status.HTTP_401_UNAUTHORIZED)
+
+            mcq_question_options = McqQuestionOption.objects.filter(mcq_question=mcq_question).order_by('id')
+
+            # prepare context and serialize mcq question
+            context = {
+                "result": "success",
+                "mcq_question": McqQuestionSerializer(mcq_question, many=False).data,
+                "mcq_question_options": McqQuestionOptionSerializer(mcq_question_options, many=True).data
+            }
+
+            return Response(context, status=status.HTTP_200_OK)
+
+    except Exception as ex:
+        context = { 
+            "result": "error",
+            "message": f"{ex}"
+            }
+        return Response(context, status=status.HTTP_400_BAD_REQUEST)

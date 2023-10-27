@@ -1,0 +1,62 @@
+<!-- MCQ Question Details Modal -->
+<div class="modal fade" id="mcqDetailsModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">MCQ Question Details</h5>
+          <button type="button" class="close" data-bs-dismiss="modal">
+            <span>&times;</span>
+          </button>
+        </div>
+  
+        <div class="modal-body">
+          <!-- modal loading -->
+          <div id="mcq-modal-loading">
+            <div class="p-3 d-flex justify-content-center">
+              <div class='spinner-border spinner-border-sm me-1'></div>
+              Loading ...
+            </div>
+          </div>
+  
+          <!-- modal body details -->
+          <div id="mcq-modal-body" style="display:none;">
+            <!-- name -->
+            <h6>Name</h6>
+            <div id="mcq-name">-</div>
+            <hr>
+  
+            <!-- description -->
+            <h6>Description</h6>
+            <div id="mcq-description">-</div>
+            <hr>
+  
+            <!-- languages -->
+            <h6>Multiple Answers</h6>
+            <div id="mcq-mutiple-answers"></div>
+            <hr>
+
+            <!-- test cases -->
+            <h6>Options</h6>
+            <table class="table">
+              <thead>
+              <tr>
+                <th>#</th>
+                <th>Content</th>
+                <th>Correct Answer</th>
+              </tr>
+              </thead>
+              <tbody id="mcq-options">
+              </tbody>
+            </table>
+  
+            <hr>
+          </div>
+        </div>
+  
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        </div>
+  
+      </div>
+    </div>
+  </div>

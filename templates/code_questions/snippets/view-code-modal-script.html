@@ -10,8 +10,8 @@
         breaks: true
     })
 
-    const modalLoading = $("#m-loading");
-    const modalBody = $("#m-body");
+    const codeModalLoading = $("#code-modal-loading");
+    const codeModalBody = $("#code-modal-body");
 
     const cqName = $("#cq-name");
     const cqDescription = $("#cq-description");
@@ -20,7 +20,7 @@
     const cqConcurrency = $("#cq-concurrency");
     const cqSolutionCode = $("#cq-solution-code");
 
-    const viewModal = (btn) => {
+    const viewCodeModal = (btn) => {
         // clear old data
         cqTestCases.empty();
         cqName.html("");
@@ -32,9 +32,9 @@
         // get code question id
         const cq_id = $(btn).data('cq-id');
 
-        // show m-loading, hide m-body
-        modalBody.hide();
-        modalLoading.show();
+        // show code-modal-loading, hide code-modal-body
+        codeModalBody.hide();
+        codeModalLoading.show();
 
         // ajax request
         $.ajax({
@@ -66,8 +66,8 @@
                 MathJax.typeset();
 
                 setTimeout(() => {
-                    modalLoading.hide();
-                    modalBody.show();
+                    codeModalLoading.hide();
+                    codeModalBody.show();
                 }, 500);
             }
         }).fail((jqXHR, textStatus, errorThrown) => {
@@ -81,6 +81,6 @@
         });
 
         // show modal
-        $('#detailsModal').modal('show');
+        $('#codeDetailsModal').modal('show');
     };
 </script>
