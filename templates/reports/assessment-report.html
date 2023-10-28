@@ -63,29 +63,21 @@
         <table id="questions-table" class="table display table-borderless" style="width:100%">
           <thead>
           <tr>
-            <th>Question No.</th>
+            <th width="100px">Question No.</th>
             <th>Name</th>
-            <th>Max Score</th>
-            <td>Concurrency</td>
+            <th width="100px">Max Score</th>
             <td>Tags</td>
-            <th>Actions</th>
+            <th width="150px">Actions</th>
           </tr>
           </thead>
           <tbody>
-          {% for cq in code_questions %}
+          {% for q in questions %}
             <tr>
               <td>{{ forloop.counter }}</td>
-              <td>{{ cq.name }}</td>
-              <td>{{ cq.max_score }}</td>
+              <td>{{ q.name }}</td>
+              <td>{{ q.max_score }}</td>
               <td>
-                {% if cq.is_concurrency_question %}
-                  <span class="badge bg-light-success">Y</span>
-                {% else %}
-                  <span class="badge bg-light-danger">N</span>
-                {% endif %}
-              </td>
-              <td>
-                {% if cq.tags.all.count == 0 %}
+                {% if q.tags.all.count == 0 %}
                 -
                 {% else %}
                 {% for tag in cq.tags.all %}
@@ -94,7 +86,7 @@
                 {% endif %}
               </td>
               <td>
-                <a class="btn btn-success" target="__blank" href="{% url 'question-report' assessment_id=assessment.id question_id=cq.id %}">View Question Report</a>
+                <a class="btn btn-success" target="__blank" href="{% url 'question-report' assessment_id=assessment.id question_id=q.id %}">View Question Report</a>
               </td>
             </tr>
           {% endfor %}
@@ -127,7 +119,7 @@
           <tr>
             <th>#</th>
             <th>Candidate</th>
-            <th>Score ({{ assessment.total_score }})</th>
+            <th>Max Score ({{ assessment.total_score }})</th>
             <th>Duration</th>
             <th>Total Attempts</th>
             {% if assessment.require_webcam %}

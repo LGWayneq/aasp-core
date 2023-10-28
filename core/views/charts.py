@@ -1,7 +1,7 @@
 import json
 import math
 from django.db.models import Avg
-from core.models import CodeQuestionAttempt
+from core.models import CodeQuestionAttempt, McqQuestionAttempt, CodeQuestion, McqQuestion
 
 def generate_score_distribution_graph(scores, max_value, title = "Score Distribution", x_title = "Score", y_title = "Number of Students"):
     buckets = create_buckets(0, max_value)
@@ -16,14 +16,11 @@ def generate_score_distribution_graph(scores, max_value, title = "Score Distribu
         "y_values": y_values,
     }
 
-def generate_assessment_time_spent_graph(code_questions):
-    x_values = [i+1 for i in range(len(code_questions))]
-    y_values = [delta.total_seconds()/60 for delta in CodeQuestionAttempt.objects \
-        .filter(code_question__in=code_questions) \
-        .values('code_question') \
-        .annotate(avg_time_spent=Avg('time_spent')) \
-        .order_by('code_question__id')
-        .values_list('avg_time_spent', flat=True)]
+def generate_assessment_time_spent_graph(questions):
+    num_of_questions = len(questions)
+    x_values = [i+1 for i in range(num_of_questions)]
+    y_values = [calculate_average_question_delta(question).total_seconds() for question in questions]
+    print(y_values)
     
     return {
         "title": "Average Time Spent per Question",
@@ -32,6 +29,16 @@ def generate_assessment_time_spent_graph(code_questions):
         "y_title": "Avg Time Spent (mins)",
         "y_values": y_values,
     }
+
+def calculate_average_question_delta(question):
+    if isinstance(question, CodeQuestion):
+        return CodeQuestionAttempt.objects \
+            .filter(code_question=question) \
+            .aggregate(Avg('time_spent'))['time_spent__avg']
+    elif isinstance(question, McqQuestion):
+        return McqQuestionAttempt.objects \
+            .filter(mcq_question=question) \
+            .aggregate(Avg('time_spent'))['time_spent__avg']
 
 def generate_question_time_spent_graph(code_question):
     all_time_spent = [delta.total_seconds()/60 for delta in CodeQuestionAttempt.objects \

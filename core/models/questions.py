@@ -119,6 +119,9 @@ class McqQuestion(models.Model):
         elif self.question_bank and self.assessment:
             raise ValidationError("The question cannot be be linked to both a Question Bank and an Assessment instance.")
         
+    def max_score(self):
+        return self.score
+        
 class McqQuestionOption(models.Model):
     class Meta:
         pass

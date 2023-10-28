@@ -13,7 +13,7 @@ from rest_framework.decorators import api_view, renderer_classes
 from rest_framework.renderers import JSONRenderer
 
 from core.decorators import UserGroup, groups_allowed
-from core.models import Course, Assessment, AssessmentAttempt, CodeQuestionSubmission, CodeQuestion, TestCaseAttempt, TestCase, CandidateSnapshot
+from core.models import Course, Assessment, AssessmentAttempt, CodeQuestionSubmission, CodeQuestion, McqQuestion, TestCaseAttempt, TestCase, CandidateSnapshot
 from core.views.utils import check_permissions_assessment
 from core.views.charts import generate_score_distribution_graph, generate_assessment_time_spent_graph, generate_question_time_spent_graph
 
@@ -71,7 +71,9 @@ def course_report(request, course_id):
 @groups_allowed(UserGroup.educator)
 def assessment_report(request, assessment_id):
     assessment = get_object_or_404(Assessment, id=assessment_id)
-    code_questions = CodeQuestion.objects.filter(assessment=assessment)
+    code_questions = list(CodeQuestion.objects.filter(assessment=assessment))
+    mcq_questions = list(McqQuestion.objects.filter(assessment=assessment))
+    questions = mcq_questions + code_questions
 
     best_attempts = AssessmentAttempt.objects \
                     .select_related("assessment") \
@@ -90,11 +92,11 @@ def assessment_report(request, assessment_id):
 
     # generate graph data
     score_graph = generate_score_distribution_graph([attempt.score for attempt in best_attempts], assessment.total_score)
-    time_spent_graph = generate_assessment_time_spent_graph(code_questions)
+    time_spent_graph = generate_assessment_time_spent_graph(questions)
 
     context = {
         "assessment": assessment,
-        "code_questions": code_questions,
+        "questions": questions,
         "best_attempts": best_attempts,
         "ongoing_ungraded_attempts": ongoing_ungraded_attempts,
         "mean_score": mean_score,
