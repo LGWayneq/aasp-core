@@ -42,7 +42,6 @@
 {% endblock %}
 
 {% block content %}
-<body onload="WaveDrom.ProcessAll()">
   <!-- Page Title -->
   <div class="page-heading">
     <div class="page-title">
@@ -165,9 +164,6 @@
 
           <!-- Submit button -->
           <div class="float-end p-4">
-            <button class="btn btn-warning btn-md validNavigation" type="button" onclick="save();">
-              Save
-            </button>
             <button class="btn btn-success btn-md validNavigation" type="button" onclick="saveAndNext();">
               Save & Next
             </button>
@@ -217,13 +213,16 @@
       });
   </script>
 
-  <!-- Logic to save selection every minute -->
+  <!-- Logic to save selection after selection -->
   <script>
       const save = async () => {
         let formData = new FormData();
         const selected_option_ids = $("input[name='option']:checked").map(function () {
           return this.value;
         }).get();
+
+        if (selected_option_ids.length === 0) return;
+
         formData.append("selected_option_ids", selected_option_ids);
         formData.append("csrfmiddlewaretoken", "{{ csrf_token }}");
 
@@ -253,15 +252,17 @@
         }
       };
 
-      window.setInterval(() => {
+      // add listener when input selected
+      $("input[name='option']").change(function () {
         save();
-      }, 30000);
+      });
   </script>
 
   <!-- Logic to save selection -->
   <script>
     function saveAndNext() {
       save();
+      window.location.href = "{% url 'attempt-question' assessment_attempt_id=assessment_attempt.id question_index=question_index|add:'1' %}";
     }
   </script>
 
