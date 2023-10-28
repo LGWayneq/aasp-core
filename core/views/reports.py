@@ -25,7 +25,7 @@ def course_report(request, course_id):
 
     # calculate attempts for each assessment
     for assessment in assessments:
-        assessment.submission_count = AssessmentAttempt.objects.filter(assessment=assessment, time_submitted__isnull=False).count()
+        assessment.num_of_candidates_attempted = AssessmentAttempt.objects.filter(assessment=assessment, time_submitted__isnull=False).values('candidate').distinct().count()
 
     # calculate total weightage
     total_weightage = sum(assessment.weightage for assessment in assessments)
