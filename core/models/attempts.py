@@ -27,7 +27,7 @@ class AssessmentAttempt(models.Model):
     def compute_score(self):
         TestCase = apps.get_model(app_label="core", model_name="TestCase")
 
-        # compute the total score of all CodeQuestionAttempts (i.e. total score of this AssessmentAttempt)
+        # compute the total score of all CodeQuestionAttempts
         total_score = 0
         for cqa in self.codequestionattempt_set.all():
             # find the max CodeQuestionSubmission for this CodeQuestionAttempt
@@ -41,6 +41,10 @@ class AssessmentAttempt(models.Model):
 
             # add to total
             total_score += max_score
+
+        # compute the total score of all McqQuestionAttempts
+        for mqa in self.mcqquestionattempt_set.all():
+            total_score += mqa.score
 
         self.score = total_score
 
@@ -183,9 +187,22 @@ class McqQuestionAttempt(models.Model):
     @property
     def attempted(self):
         """
-        Checks if this MQA has been attempted (has at least one submission)
+        Checks if this MQA has been attempted (has at least one option selected)
         """
         return McqQuestionAttemptOption.objects.filter(mcq_attempt=self).exists()
+    
+    @property
+    def score(self):
+        McqQuestionOption = apps.get_model(app_label="core", model_name="McqQuestionOption")
+        correct_option_ids = McqQuestionOption.objects.filter(mcq_question=self.mcq_question, correct=True).values_list('id', flat=True)
+
+        selected_option_ids = McqQuestionAttemptOption.objects.filter(mcq_attempt=self).values_list('selected_option__id', flat=True)
+
+        # if all options in selected_options match correct_options, then return score
+        score = 0
+        if set(correct_option_ids) == set(selected_option_ids):
+            score = self.mcq_question.score
+        return score
 
 
 class McqQuestionAttemptOption(models.Model):

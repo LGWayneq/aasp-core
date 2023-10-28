@@ -48,8 +48,11 @@ class Assessment(models.Model):
         CodeQuestion = apps.get_model(app_label="core", model_name="CodeQuestion")
         code_questions = CodeQuestion.objects.filter(assessment=self)
 
+        McqQuestion = apps.get_model(app_label="core", model_name="McqQuestion")
+        mcq_questions = McqQuestion.objects.filter(assessment=self)
+
         # ensure assessment has at least one question
-        if not code_questions:
+        if not code_questions and not mcq_questions:
             return False, "There are no questions in the assessment."
 
         # ensure all code questions has at least one test case and one code snippet (language)
@@ -63,5 +66,8 @@ class Assessment(models.Model):
     def total_score(self):
         TestCase = apps.get_model(app_label="core", model_name="TestCase")
         total_score = TestCase.objects.filter(code_question__assessment=self).aggregate(Sum('score')).get("score__sum", 0)
+
+        McqQuestion = apps.get_model(app_label="core", model_name="McqQuestion")
+        total_score += McqQuestion.objects.filter(assessment=self).aggregate(Sum('score')).get("score__sum", 0)
         return total_score
  
