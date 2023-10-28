@@ -88,25 +88,70 @@
     <div class="col-12">
       <div class="card">
         <div class="card-header">
-          <h4>Code Questions ({{ assessment_attempt.assessment.codequestion_set.count }})</h4>
+          <h4>Questions ({{ assessment_attempt.assessment.mcqquestion_set.count|add:assessment_attempt.assessment.codequestion_set.count }})</h4>
         </div>
 
         <div class="card-body">
           <div class="accordion" id="questionsAccordion">
-            {% for cqa in assessment_attempt.codequestionattempt_set.all %}
+            {% for mqa in assessment_attempt.mcqquestionattempt_set.all %}
               <div class="accordion-item">
                 <h2 class="accordion-header">
-                  <button class="accordion-button {% if forloop.counter != 1 %}collapsed{% endif %}" type="button" data-bs-toggle="collapse"
+                  <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
                           data-bs-target="#collapse{{ forloop.counter }}">
-                    <strong>Question {{ forloop.counter }} - {{ cqa.code_question.name }}</strong>
+                    <strong>Question {{ forloop.counter }} (MCQ) - {{ mqa.mcq_question.name }}</strong>
                   </button>
                 </h2>
-                <div id="collapse{{ forloop.counter }}" class="accordion-collapse collapse {% if forloop.counter == 1 %}show{% endif %}"
+                <div id="collapse{{ forloop.counter }}" class="accordion-collapse collapse"
                      data-bs-parent="#questionsAccordion">
                   <div class="accordion-body">
 
                     <h6>Description</h6>
-                    <p class="cq-desc">{{ cqa.code_question.description }}</p>
+                    <p class="q-desc">{{ mqa.mcq_question.description }}</p>
+
+                    <table class="table">
+                      <thead>
+                      <tr>
+                        <th>Submission #</th>
+                        <th>Score ({{ mqa.mcq_question.max_score }})</th>
+                        <th>Submitted on</th>
+                        <th>Details</th>
+                      </tr>
+                      </thead>
+                      <tbody>
+                      {% if not mqa.attempted %}
+                        <tr>
+                          <td colspan="4" class="text-center">No submissions found for this question.</td>
+                        </tr>
+                      {% else %}
+                          <tr>
+                            <td>1</td>
+                            <td>{{ mqa.score }}</td>
+                            <td>{{ mqa.mcqquestionattemptoption_set.first.time_submitted }}</td>
+                            <td><a href="{% url 'submission-details' cqs_id=mqa.id %}" target="_blank">View <i
+                                    class="fa-solid fa-arrow-up-right-from-square ms-1"></i></a></td>
+                          </tr>
+                      {% endif %}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            {% endfor %}
+
+            {% for cqa in assessment_attempt.codequestionattempt_set.all %}
+              <div class="accordion-item">
+                <h2 class="accordion-header">
+                  <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                          data-bs-target="#collapse{{ assessment_attempt.mcqquestionattempt_set.count|add:forloop.counter }}">
+                    <strong>Question {{ assessment_attempt.mcqquestionattempt_set.count|add:forloop.counter }} (Code) - {{ cqa.code_question.name }}</strong>
+                  </button>
+                </h2>
+                <div id="collapse{{ assessment_attempt.mcqquestionattempt_set.count|add:forloop.counter }}" class="accordion-collapse collapse"
+                     data-bs-parent="#questionsAccordion">
+                  <div class="accordion-body">
+
+                    <h6>Description</h6>
+                    <p class="q-desc">{{ cqa.code_question.description }}</p>
 
                     <table class="table">
                       <thead>
@@ -141,15 +186,11 @@
                 </div>
               </div>
             {% endfor %}
-
           </div>
-
         </div>
       </div>
     </div>
-
   </div>
-
 {% endblock %}
 
 {% block js %}
@@ -162,7 +203,7 @@
           breaks: true
       });
 
-      $(".cq-desc").each((idx, x) => {
+      $(".q-desc").each((idx, x) => {
           $(x).html(marked.parse($(x).html()));
       })
   </script>
