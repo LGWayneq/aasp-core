@@ -20,7 +20,10 @@ from rest_framework.decorators import api_view, renderer_classes
 from rest_framework.renderers import JSONRenderer
 
 from core.decorators import groups_allowed, UserGroup
-from core.models import Assessment, AssessmentAttempt, CodeQuestionAttempt, CodeQuestion, TestCase, CodeSnippet, CodeQuestionAttemptSnippet, CodeQuestionSubmission, TestCaseAttempt, Language, CandidateSnapshot
+from core.models import Assessment, AssessmentAttempt, \
+    CodeQuestionAttempt, CodeQuestion, TestCase, CodeSnippet, CodeQuestionAttemptSnippet, CodeQuestionSubmission, TestCaseAttempt, Language, \
+    McqQuestion, McqQuestionOption, McqQuestionAttempt, McqQuestionAttemptOption, \
+    CandidateSnapshot
 from core.tasks import update_test_case_attempt_status, force_submit_assessment, detect_faces
 from core.views.utils import get_assessment_attempt_question, check_permissions_course, user_enrolled_in_course, construct_expected_output_judge0_params, construct_judge0_params, vcd2wavedrom
 
@@ -176,10 +179,14 @@ def generate_assessment_attempt(user, assessment):
         # create assessment attempt object
         assessment_attempt = AssessmentAttempt.objects.create(candidate=user, assessment=assessment)
 
+        # generate a mcq_attempt for each mcq question in the assessment
+        mcq_questions = McqQuestion.objects.filter(assessment=assessment).order_by('id')
+        mcq_attempts = [McqQuestionAttempt(assessment_attempt=assessment_attempt, mcq_question=mcq) for mcq in mcq_questions]
+        McqQuestionAttempt.objects.bulk_create(mcq_attempts)
+
         # generate a cq_attempt for each code question in the assessment
         code_questions = CodeQuestion.objects.filter(assessment=assessment).order_by('id')
-        cq_attempts = [CodeQuestionAttempt(assessment_attempt=assessment_attempt, code_question=cq) for cq in
-                       code_questions]
+        cq_attempts = [CodeQuestionAttempt(assessment_attempt=assessment_attempt, code_question=cq) for cq in code_questions]
         CodeQuestionAttempt.objects.bulk_create(cq_attempts)
 
     # queue celery task to automatically submit the attempt when duration has lapsed (30 seconds grace period)
@@ -224,11 +231,10 @@ def attempt_question(request, assessment_attempt_id, question_index):
         'assessment_attempt': assessment_attempt,
         'question_attempt': question_attempt,
         'question_statuses': question_statuses,
-        'is_software_language': question_attempt.code_question.is_software_language(),
         'start_time': start_time,
     }
 
-    # render different template depending on question type (currently only CodeQuestion)
+    # render different template depending on question type
     if isinstance(question_attempt, CodeQuestionAttempt):
         code_question = question_attempt.code_question
         code_snippets = CodeSnippet.objects.filter(code_question=code_question)
@@ -250,6 +256,7 @@ def attempt_question(request, assessment_attempt_id, question_index):
             'code_snippets': code_snippets,
             'last_used_language': last_used_language.language if last_used_language else None,
             'code_question_submissions': code_question_submissions,
+            'is_software_language': question_attempt.code_question.is_software_language(),
         })
 
         # extract outputs if hardware language
@@ -260,7 +267,19 @@ def attempt_question(request, assessment_attempt_id, question_index):
             })
 
         return render(request, "attempts/code-question-attempt.html", context)
+    elif isinstance(question_attempt, McqQuestionAttempt):
+        mcq_question = question_attempt.mcq_question
+        mcq_question_options = McqQuestionOption.objects.filter(mcq_question=mcq_question).order_by('id')
+        mcq_question_attempt_options = McqQuestionAttemptOption.objects.filter(mcq_attempt=question_attempt).values_list('selected_option', flat=True)
 
+        # add to base context
+        context.update({
+            'mcq_question': mcq_question,
+            'mcq_question_options': mcq_question_options,
+            'mcq_question_attempt_options': mcq_question_attempt_options
+        })
+
+        return render(request, "attempts/mcq-question-attempt.html", context)
     else:
         # should not reach here
         raise Exception("Unknown question type!")
@@ -296,6 +315,46 @@ def save_code_attempt_snippet(request, code_question_attempt_id):
                     # create CodeQuestionSubmission
                     attempt_snippet = CodeQuestionAttemptSnippet.objects.create(cq_attempt=code_question_attempt, code=code, language=language)      
                 attempt_snippet.save()
+
+            context = {
+                "result": "success",
+            }
+            return Response(context, status=status.HTTP_200_OK)
+        
+    except Exception as ex:
+        error_context = {
+            "result": "error",
+            "message": f"{ex}",
+        } 
+        return Response(error_context, status=status.HTTP_400_BAD_REQUEST)
+    
+@api_view(["POST"])
+@renderer_classes([JSONRenderer])
+@login_required()
+@groups_allowed(UserGroup.educator, UserGroup.student)
+def save_mcq_attempt_options(request, mcq_question_attempt_id):
+    try:
+        if request.method == "POST":
+            # get assessment attempt
+            mcq_question_attempt = get_object_or_404(McqQuestionAttempt, id=mcq_question_attempt_id)
+
+            # if no question exist at the index, raise 404
+            if not mcq_question_attempt:
+                raise Http404()
+
+            # ensure attempt belongs to user
+            if mcq_question_attempt.assessment_attempt.candidate != request.user:
+                raise PermissionDenied()
+
+            selected_option_ids = request.POST.get('selected_option_ids').split(",")
+
+            with transaction.atomic():
+                for selected_option_id in selected_option_ids:
+                    attempt_option = McqQuestionAttemptOption.objects.filter(mcq_attempt=mcq_question_attempt, selected_option_id=selected_option_id).first()
+                    if not attempt_option:
+                        # create McqQuestionAttemptOption
+                        attempt_option = McqQuestionAttemptOption.objects.create(mcq_attempt=mcq_question_attempt, selected_option_id=selected_option_id)      
+                    attempt_option.save()
 
             context = {
                 "result": "success",

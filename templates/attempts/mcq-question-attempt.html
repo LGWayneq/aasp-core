@@ -1,0 +1,273 @@
+{% extends 'layouts/main-no-nav.html' %}
+{% load static %}
+
+{% block title %}{{ assessment.name }}{% endblock %}
+
+{% block styles %}
+  <!-- Split.js, ace editor css -->
+  <style>
+      .split {
+          display: flex;
+          flex-direction: row;
+      }
+
+      .gutter {
+          background-color: #eee;
+          background-repeat: no-repeat;
+          background-position: 50%;
+      }
+
+      .gutter.gutter-horizontal {
+          background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAUAAAAeCAYAAADkftS9AAAAIklEQVQoU2M4c+bMfxAGAgYYmwGrIIiDjrELjpo5aiZeMwF+yNnOs5KSvgAAAABJRU5ErkJggg==');
+          cursor: col-resize;
+      }
+
+      @font-face {
+          font-family: 'JetBrains Mono';
+          src: url('{% static 'fonts/JetBrainsMono-Regular.ttf' %}') format('truetype');
+          font-weight: normal;
+          font-style: normal;
+      }
+
+      /* for ace editor */
+      .readonly-highlight {
+          position: absolute;
+          background-color: red;
+          opacity: 0.1;
+      }
+  </style>
+  <link rel="stylesheet" href="{% static 'vendors/highlight.js/styles/night-owl.min.css' %}">
+  <link rel="stylesheet" href="{% static 'vendors/toastify/toastify.css' %}"/>
+
+{% endblock %}
+
+{% block content %}
+<body onload="WaveDrom.ProcessAll()">
+  <!-- Page Title -->
+  <div class="page-heading">
+    <div class="page-title">
+      <div class="row d-flex align-content-between">
+        <div class="col-9">
+          <div style="display:flex; flex-direction: row; align-items: center;">
+            {% if not assessment.require_webcam and not assessment.limit_tab_switching %}
+            <i class="fa-solid fa-arrow-left-long fa-xl" style="margin-right: 20px; cursor: pointer;" onclick='javascript:history.go(-1);'></i>
+            {% endif %}
+            <div>
+              <h5>Assessment</h5>
+              <h2>{{ question_attempt.assessment_attempt.assessment }}</h2>
+            </div>
+          </div>
+        </div>
+        <div class="col-3">
+          <form id="end-assessment-form" method="post"
+                action="{% url 'submit-assessment' assessment_attempt_id=assessment_attempt.id %}">
+            {% csrf_token %}
+            <button class="btn btn-success btn-lg float-end validNavigation" type="button" onclick="submitAssessment(true);">
+              End Assessment
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Assessment information row -->
+  <div class="row">
+    <div class="col-9">
+      <div class="card">
+        <div class="card-body">
+          <div class="row">
+
+            <!-- Question number buttons -->
+            <div class="col-9">
+              {% for status in question_statuses %}
+                  <a class="btn btn-sm {% if status == True %}btn-success{% else %}btn-secondary{% endif %} validNavigation"
+                     href="{% url 'attempt-question' assessment_attempt_id=assessment_attempt.id question_index=forloop.counter0 %}">
+                    {{ forloop.counter }} {% if forloop.counter0 == question_index|add:"0" %} (current) {% endif %}
+                  </a>
+              {% endfor %}
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Instructions card -->
+    <div class="col-3">
+      <div class="card">
+        <div class="card-content">
+          <div class="card-body">
+            <div class="row">
+              <div class="col-7">
+                <h5 class="card-text">Time Remaining</h5>
+              </div>
+              <div class="col-5">
+                <h4 class="card-text" id="countdown-timer">{% if assessment_attempt.assessment.duration == 0 %}
+                  Unlimited{% else %}-{% endif %}</h4>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Question & Answer row -->
+  <div class="row">
+    <div class="card" style="margin-bottom: 0px;">
+      <!-- split panes -->
+      <div class="split">
+        <!-- Left pane -->
+        <div id="split-0">
+          <div class="p-4">
+            <h4>{{ mcq_question.name }}</h4>
+
+            <div class="user-select-none" id="question-desc">
+              {{ mcq_question.description }}
+            </div>
+
+            <hr>
+            <!-- tags -->
+            <div id="tags-div">
+              <h6>Tags</h6>
+              {% for tag in mcq_question.tags.all %}
+                <span class="badge bg-light-secondary">{{ tag.name }}</span>
+              {% endfor %}
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Right pane -->
+        <div id="split-1">
+          {% for option in mcq_question_options %}
+              <div class="d-flex flex-row align-items-center p-4">
+                  {% if mcq_question.multiple_answers %}
+                    <input 
+                      type="checkbox" 
+                      id="id_option-{{ option.id }}" 
+                      name="option" 
+                      value="{{ option.id }}" 
+                      {% if option.id in mcq_question_attempt_options %}checked{% endif %}>
+                  {% else %}
+                    <input 
+                      type="radio" 
+                      id="id_option-{{ option.id }}" 
+                      name="option" 
+                      value="{{ option.id }}" 
+                      {% if option.id == mcq_question_attempt_options %}checked{% endif %}>
+                  {% endif %}
+
+                  <label class="ms-3 text-wrap" for="id_option-{{ option.id }}">{{ option.content }}</h4>
+              </div>
+          {% endfor %}
+
+          <!-- Submit button -->
+          <div class="float-end p-4">
+            <button class="btn btn-warning btn-md validNavigation" type="button" onclick="save();">
+              Save
+            </button>
+            <button class="btn btn-success btn-md validNavigation" type="button" onclick="saveAndNext();">
+              Save & Next
+            </button>
+          <div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tab switching warning modal -->
+  {% include 'attempts/snippets/tab-switching-modal.html' %}
+{% endblock %}
+
+{% block js %}
+  <script src="{% static 'vendors/jquery/jquery.min.js' %}"></script>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/split.js/1.6.0/split.min.js"></script>
+  <script type="text/javascript" src="{% static 'vendors/highlight.js/highlight.min.js' %}"></script>
+  <script type="text/javascript" src="{% static 'vendors/toastify/toastify.js' %}"></script>
+  {% include "includes/js/mathjax.html" %}
+  <!-- momentjs -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/moment-duration-format/1.3.0/moment-duration-format.min.js"></script>
+
+  <!-- General script -->
+  <script>
+      Split(['#split-0', '#split-1'], {
+          sizes: [50, 50],
+          minSize: 400,
+          onDrag: () => {
+              editor.resize() // resize code editor when panes are resized
+          }
+      })
+
+      // hljs
+      hljs.highlightAll();
+
+      // marked
+      marked.setOptions({
+          breaks: true
+      })
+      $("#question-desc").html(marked.parse("{{ mcq_question.description|escapejs }}"));
+
+      let validNavigation = false;
+      $(document).on('click', '.validNavigation', function () {
+          validNavigation = true;
+      });
+  </script>
+
+  <!-- Logic to save selection every minute -->
+  <script>
+      const save = async () => {
+        let formData = new FormData();
+        const selected_option_ids = $("input[name='option']:checked").map(function () {
+          return this.value;
+        }).get();
+        formData.append("selected_option_ids", selected_option_ids);
+        formData.append("csrfmiddlewaretoken", "{{ csrf_token }}");
+
+        // ajax call
+        const res = await $.ajax({
+            type: 'POST',
+            url: '{% url "save-mcq-attempt-options" mcq_question_attempt_id=question_attempt.id %}',
+            data: formData,
+            processData: false,
+            contentType: false,
+        });
+
+        if (res.result === "success") {
+          Toastify({
+            text: "Progress saved",
+            duration: 3000,
+            position: "center",
+            style: {"background": "#158754"}
+          }).showToast();
+        } else {
+          Toastify({
+            text: "Error saving progress",
+            duration: 3000,
+            position: "center",
+            style: {"background": "#ff6961"}
+          }).showToast();
+        }
+      };
+
+      window.setInterval(() => {
+        save();
+      }, 30000);
+  </script>
+
+  <!-- Logic to save selection -->
+  <script>
+    function saveAndNext() {
+      save();
+    }
+  </script>
+
+  <!-- Submit assessment -->
+  {% include "attempts/scripts/submit-assessment-scripts.html" %}
+
+  <!-- Candidate snapshot script -->
+  {% include "attempts/scripts/candidate-snapshot-scripts.html" %}
+{% endblock %}

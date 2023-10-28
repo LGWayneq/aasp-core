@@ -175,6 +175,25 @@ class TestCaseAttempt(models.Model):
     memory = models.FloatField(blank=True, null=True)
 
 
+class McqQuestionAttempt(models.Model):
+    assessment_attempt = models.ForeignKey("AssessmentAttempt", null=False, blank=False, on_delete=models.CASCADE)
+    mcq_question = models.ForeignKey("McqQuestion", null=False, blank=False, on_delete=models.PROTECT)
+    time_spent = models.DurationField(default=timedelta(seconds=0), null=False, blank=False)
+
+    @property
+    def attempted(self):
+        """
+        Checks if this MQA has been attempted (has at least one submission)
+        """
+        return McqQuestionAttemptOption.objects.filter(mcq_attempt=self).exists()
+
+
+class McqQuestionAttemptOption(models.Model):
+    mcq_attempt = models.ForeignKey("McqQuestionAttempt", null=False, blank=False, on_delete=models.CASCADE)
+    selected_option = models.ForeignKey("McqQuestionOption", null=False, blank=False, on_delete=models.PROTECT)
+    time_submitted = models.DateTimeField(auto_now_add=True)
+
+
 def snapshots_directory_path(instance, filename):
     attempt_number = instance.attempt_number
     attempt = instance.assessment_attempt

@@ -84,6 +84,7 @@ urlpatterns = [
     path('api/upload-snapshot/<int:assessment_attempt_id>/', attempts.upload_snapshot, name='upload-snapshot'), #ajax
     path('detect-faces', attempts.detect_faces_initial, name='detect-faces'),
     path('assessment/save-code-attempt-snippet/<int:code_question_attempt_id>/', attempts.save_code_attempt_snippet, name='save-code-attempt-snippet'),
+    path('assessment/save-mcq-attempt-options/<int:mcq_question_attempt_id>/', attempts.save_mcq_attempt_options, name='save-mcq-attempt-options'),
 
     # code question attempts
     path('api/submit-single-test-case/<int:test_case_id>/<int:code_question_id>', attempts.submit_single_test_case, name='submit-single-test-case'),  # ajax

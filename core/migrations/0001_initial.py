@@ -235,6 +235,24 @@ class Migration(migrations.Migration):
                 ('correct', models.BooleanField(default=False, blank=False, null=False)),
             ],
         ),
+        migrations.CreateModel(
+            name='McqQuestionAttempt',
+            fields=[
+                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('assessment_attempt', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='core.assessmentattempt')),
+                ('mcq_question', models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, to='core.mcqquestion')),
+                ('time_spent', models.DurationField(default=timedelta(seconds=0))),
+            ],
+        ),
+        migrations.CreateModel(
+            name='McqQuestionAttemptOption',
+            fields=[
+                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('time_submitted', models.DateTimeField(auto_now_add=True)),
+                ('mcq_attempt', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='core.mcqquestionattempt')),
+                ('selected_option', models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, to='core.mcqquestionoption')),
+            ],
+        ),
         migrations.AddField(
             model_name='codequestionsubmission',
             name='language',

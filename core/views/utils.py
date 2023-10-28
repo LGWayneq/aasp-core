@@ -5,7 +5,7 @@ import re
 from vcdvcd.vcdvcd import VCDVCD
 from math import floor, ceil
 
-from core.models import CodeQuestion, CodeQuestionAttempt, CourseGroup, User
+from core.models import CodeQuestion, CodeQuestionAttempt, McqQuestionAttempt, CourseGroup, User
 from core.models.questions import Language
 from core.tasks import send_assessment_published_email
 
@@ -127,18 +127,20 @@ def get_assessment_attempt_question(assessment_attempt, question_index=None):
     If question_index is specified and within bounds, return only the question object.
     Else, return the entire list.
     """
-    questions = []
-    cq_attempts = list(
-        CodeQuestionAttempt.objects.filter(assessment_attempt=assessment_attempt).order_by('id').prefetch_related(
-            'code_question'))
-    statuses = [cqa.attempted for cqa in cq_attempts]
+    mcq_attempts = list(McqQuestionAttempt.objects.filter(assessment_attempt=assessment_attempt).order_by('id').prefetch_related('mcq_question'))
+    statuses = [mqa.attempted for mqa in mcq_attempts]
 
+    cq_attempts = list(CodeQuestionAttempt.objects.filter(assessment_attempt=assessment_attempt).order_by('id').prefetch_related('code_question'))
+    statuses += [cqa.attempted for cqa in cq_attempts]
+
+    attempts = mcq_attempts + cq_attempts
+    
     if question_index is None:  # return all questions
-        return statuses, cq_attempts
-    elif question_index > len(cq_attempts) - 1:  # return None
+        return statuses, attempts
+    elif question_index > len(attempts) - 1:  # return None
         return [], None
     else:  # return specific question
-        return statuses, cq_attempts[question_index]
+        return statuses, attempts[question_index]
 
 
 def user_enrolled_in_course(course, user) -> bool:
