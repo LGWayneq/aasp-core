@@ -118,12 +118,21 @@ def get_bucket_items(buckets):
             labels.append("{} - {}".format(bucket["min"], bucket["max"]))
     return items, labels
 
-def calculate_median_score(values):
+def calculate_median(values, key = lambda x: x):
     if values is None or len(values) == 0:
         return 0
     
-    values = sorted(values, key=lambda x: x.score)
+    values = sorted([key(value) for value in values])
     if len(values) % 2 == 1:
-        return values[len(values)//2].score
+        median = values[len(values)//2]
     else:
-        return (values[len(values)//2].score + values[len(values)//2 - 1].score)/2
+        median = (values[len(values)//2] + values[len(values)//2 - 1])/2
+
+    return round(median, 2)
+
+def calculate_mean(values, key = lambda x: x):
+    if values is None or len(values) == 0:
+        return 0
+    total = sum([key(value) for value in values])
+    mean = total / len(values)
+    return round(mean, 2)

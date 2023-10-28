@@ -68,6 +68,9 @@ class Assessment(models.Model):
         total_score = TestCase.objects.filter(code_question__assessment=self).aggregate(Sum('score')).get("score__sum", 0)
 
         McqQuestion = apps.get_model(app_label="core", model_name="McqQuestion")
-        total_score += McqQuestion.objects.filter(assessment=self).aggregate(Sum('score')).get("score__sum", 0)
+        mcq_questions = McqQuestion.objects.filter(assessment=self)
+        for mcq in mcq_questions:
+            total_score += mcq.score
+            
         return total_score
  

@@ -15,7 +15,7 @@ from rest_framework.renderers import JSONRenderer
 from core.decorators import UserGroup, groups_allowed
 from core.models import Course, Assessment, AssessmentAttempt, CodeQuestionSubmission, CodeQuestion, McqQuestion, McqQuestionAttempt, TestCaseAttempt, TestCase, CandidateSnapshot
 from core.views.utils import check_permissions_assessment, get_question_instance
-from core.views.charts import generate_score_distribution_graph, generate_assessment_time_spent_graph, generate_question_time_spent_graph, calculate_median_score
+from core.views.charts import generate_score_distribution_graph, generate_assessment_time_spent_graph, generate_question_time_spent_graph, calculate_median, calculate_mean
 
 @login_required()
 @groups_allowed(UserGroup.educator)
@@ -42,15 +42,10 @@ def course_report(request, course_id):
 
     # calculate mean score
     num_of_candidates = len(candidates)
-    sum_of_weighted_scores = sum(candidates.values())
-    mean_score = sum_of_weighted_scores / num_of_candidates
+    mean_score = calculate_mean(candidates.values())
 
     # calculate median score
-    sorted_scores = sorted(candidates.values())
-    if num_of_candidates % 2 == 0:
-        median_score = (sorted_scores[num_of_candidates // 2 - 1] + sorted_scores[num_of_candidates // 2]) / 2
-    else:
-        median_score = sorted_scores[num_of_candidates // 2]
+    median_score = calculate_median(candidates.values())
 
     # # generate graph data
     score_graph = generate_score_distribution_graph(candidates.values(), total_weightage)
@@ -139,13 +134,8 @@ def code_question_report(request, assessment, question):
     best_submissions = list(user_submissions.values())
 
     # calculate mean and median score
-    count = len(best_submissions)
-    if count > 0:
-        mean_score = sum(submission.score for submission in best_submissions) / count 
-    else:
-        mean_score = 0
-        
-    median_score = calculate_median_score(best_submissions)
+    mean_score = calculate_mean(best_submissions, key = lambda x : x.score)
+    median_score = calculate_median(best_submissions, key = lambda x : x.score)
 
     # get all submissions regardless of best attempt
     all_submissions = CodeQuestionSubmission.objects \
@@ -180,13 +170,8 @@ def mcq_question_report(request, assessment, question):
         ))
 
     # calculate mean and median score
-    count = len(best_attempts)
-    if count > 0:
-        mean_score = sum(submission.score for submission in best_attempts) / count 
-    else:
-        mean_score = 0
-    
-    median_score = calculate_median_score(best_attempts)
+    mean_score = calculate_mean(best_attempts, key = lambda x : x.score)
+    median_score = calculate_median(best_attempts, key = lambda x : x.score)
 
     # get all attempts regardless of best attempt
     all_attempts = McqQuestionAttempt.objects \
