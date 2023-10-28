@@ -146,9 +146,15 @@
         }
       })
 
+      // unhide the option
+      clonedOption.style.display = 'block'
+
       // update option index
       updateOptionIndex(clonedOption, 0, optionsContainer.childElementCount)
       optionsContainer.appendChild(clonedOption)
+
+      // update option labels
+      updateOptionLabels()
 
       // enable all delete buttons
       const deleteButtons = optionsContainer.querySelectorAll('button')
@@ -161,20 +167,32 @@
 
     function deleteOption(buttonElement) {
       const optionContainer = buttonElement.parentElement
-
-      // update option indices
       const optionsContainer = document.getElementById('options-container')
-      const optionElements = optionsContainer.children
-      let after = false;
-      for (let i = 0; i < optionElements.length; i++) {
-        if (after) updateOptionIndex(optionElements[i], i, i-1)
-        if (optionElements[i] === optionContainer) after = true
+
+      // remove option if new
+      const idElement = optionContainer.querySelector('input[id$="-id"]')
+      if (idElement.value === '') {
+        // update option indices
+        const optionElements = optionsContainer.children
+        let after = false;
+        for (let i = 0; i < optionElements.length; i++) {
+          if (after) updateOptionIndex(optionElements[i], i, i-1)
+          if (optionElements[i] === optionContainer) after = true
+        }
+        optionContainer.remove()
+      } else {
+        // check hidden delete checkbox if existing
+        const deleteCheckbox = optionContainer.querySelector('input[id$="-DELETE"]')
+        if (deleteCheckbox) deleteCheckbox.checked = true
+        optionContainer.style.display = 'none'
       }
 
-      optionContainer.remove()
+      // update option labels
+      updateOptionLabels()
 
       // disable delete button if only 1 option remaining
-      if (optionsContainer.childElementCount === 1) {
+      const visibleOptionCount = Array.from(optionsContainer.children).filter(child => child.style.display !== 'none').length
+      if (visibleOptionCount === 1) {
         const deleteButtons = optionsContainer.querySelectorAll('button')
         deleteButtons.forEach(button => {
           button.disabled = true
@@ -202,15 +220,20 @@
         if (elementId) label.setAttribute('for', elementId.replace(originalIndex, updatedIndex))
       })
 
-      // update option label
-      const labelElement = optionElement.querySelector(`label[id="option-label-${originalIndex}"]`)
-      if (labelElement) {
-        labelElement.setAttribute('id', `option-label-${updatedIndex}`)
-        labelElement.textContent = `Option ${updatedIndex+1}`
-      }
-
       // update container id
       optionElement.setAttribute('id', `option-${updatedIndex}`)
+    }
+
+    function updateOptionLabels() {
+      const optionsContainer = document.getElementById('options-container')
+      const optionElements = optionsContainer.children
+      let currentOption = 1;
+      for (let i = 0; i < optionElements.length; i++) {
+        if (optionElements[i].hidden || optionElements[i].style.display === 'none') continue;
+        const labelElement = optionElements[i].querySelector(`label[id*=\'option-label\']`)
+        labelElement.textContent = `Option ${currentOption}`
+        currentOption += 1;
+      }  
     }
 
     function updateTotalForms() {

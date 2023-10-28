@@ -148,18 +148,16 @@ def update_mcq_question(request, mcq_question_id):
                         Tag.objects.bulk_create([Tag(name=t) for t in tags], ignore_conflicts=True)
 
                     mcq_question = form.save()
-                    messages.success(request, "MCQ Question successfully updated!")
 
                     # clear old tags and add tags to code question
                     mcq_question.tags.clear()
                     tags = Tag.objects.filter(name__in=tags).values_list('id', flat=True)
                     mcq_question.tags.add(*tags)
 
-                    # delete previous options
-                    McqQuestionOption.objects.filter(mcq_question=mcq_question).delete()
-
                     # save mcq question options
                     mcq_question_options_formset.save()
+
+                    messages.success(request, "MCQ Question successfully updated!")
 
                     if mcq_question.question_bank:
                         return redirect('question-bank-details', question_bank_id=mcq_question.question_bank.id)
