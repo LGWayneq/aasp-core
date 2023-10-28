@@ -23,6 +23,10 @@ def course_report(request, course_id):
     course = get_object_or_404(Course, id=course_id)
     assessments = Assessment.objects.filter(course=course)
 
+    # calculate attempts for each assessment
+    for assessment in assessments:
+        assessment.submission_count = AssessmentAttempt.objects.filter(assessment=assessment, time_submitted__isnull=False).count()
+
     # calculate total weightage
     total_weightage = sum(assessment.weightage for assessment in assessments)
 
