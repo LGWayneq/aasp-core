@@ -16,7 +16,7 @@
             <div class="row">
                 <div class="col-12 col-md-12 order-md-1 order-last">
                     <h5>Question Report - {{ assessment }}</h5>
-                    <h2>{{ code_question.name }}</h2>
+                    <h2>{{ question.name }}</h2>
                     {% if assessment.status == "Active" %}
                         <span class="badge bg-success">{{ assessment.status }}</span>
                     {% else %}
@@ -37,8 +37,8 @@
                 </div>
             </div>
             <div class="card-body">
-                <h6>Total Submissions: {{ all_submissions.count }}</h6>
-                <h6>Unique Submissions: {{ best_submissions|length }}</h6>
+                <h6>Total Submissions: {{ all_attempts.count }}</h6>
+                <h6>Unique Submissions: {{ best_attempts|length }}</h6>
                 <h6>Mean Score: {{ mean_score }}/{{ assessment.total_score }}</h6>
                 <h6>Median Score: {{ median_score }}/{{ assessment.total_score }}</h6>
                 <div class="row">
@@ -74,20 +74,18 @@
                         <tr>
                             <th>#</th>
                             <th>Candidate</th>
-                            <th>Language</th>
                             <th>Score ({{ assessment.total_score }})</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody>
-                    {% for cqs in best_submissions %}
+                    {% for attempt in best_attempts %}
                         <tr>
                             <td>{{ forloop.counter }}</td>
-                            <td>{{ cqs.cq_attempt.assessment_attempt.candidate }}</td>
-                            <td>{{ cqs.language }}</td>
-                            <td>{{ cqs.score }}</td>
+                            <td>{{ attempt.assessment_attempt.candidate }}</td>
+                            <td>{{ attempt.score }}</td>
                             <td>
-                                <a class="text-success" target="_blank" href="{% url 'submission-details' cqs_id=cqs.id %}">View <i class="fa-solid fa-arrow-up-right-from-square"></i></a>
+                                <button class="btn btn-success disabled" href="{% url 'submission-details' cqs_id=attempt.id %}">View</button>
                             </td>
                         </tr>
                     {% endfor %}
@@ -119,20 +117,18 @@
                         <tr>
                             <th>#</th>
                             <th>Candidate</th>
-                            <th>Language</th>
                             <th>Score ({{ assessment.total_score }})</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody>
-                        {% for cqs in all_submissions %}
+                        {% for attempt in all_attempts %}
                             <tr>
                                 <td>{{ forloop.counter }}</td>
-                                <td>{{ cqs.cq_attempt.assessment_attempt.candidate }}</td>
-                                <td>{{ cqs.language }}</td>
-                                <td>{{ cqs.score }}</td>
+                                <td>{{ attempt.assessment_attempt.candidate }}</td>
+                                <td>{{ attempt.score }}</td>
                                 <td>
-                                    <a class="text-success" target="_blank" href="{% url 'submission-details' cqs_id=cqs.id %}">View <i class="fa-solid fa-arrow-up-right-from-square"></i></a>
+                                    <button class="btn btn-success disabled" href="{% url 'submission-details' cqs_id=attempt.id %}">View</button>
                                 </td>
                             </tr>
                         {% endfor %}

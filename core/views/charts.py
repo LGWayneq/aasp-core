@@ -40,10 +40,15 @@ def calculate_average_question_delta(question):
             .filter(mcq_question=question) \
             .aggregate(Avg('time_spent'))['time_spent__avg']
 
-def generate_question_time_spent_graph(code_question):
-    all_time_spent = [delta.total_seconds()/60 for delta in CodeQuestionAttempt.objects \
-        .filter(code_question=code_question) \
-        .values_list('time_spent', flat=True)]
+def generate_question_time_spent_graph(question):
+    if isinstance(question, CodeQuestion):
+        all_time_spent = [delta.total_seconds()/60 for delta in CodeQuestionAttempt.objects \
+            .filter(code_question=question, assessment_attempt__best_attempt=True) \
+            .values_list('time_spent', flat=True)]
+    elif isinstance(question, McqQuestion):
+        all_time_spent = [delta.total_seconds()/60 for delta in McqQuestionAttempt.objects \
+            .filter(mcq_question=question, assessment_attempt__best_attempt=True) \
+            .values_list('time_spent', flat=True)]
     buckets = create_buckets(0, math.ceil(max(all_time_spent)))
     assign_buckets(buckets, all_time_spent)
     y_values, x_values = get_bucket_items(buckets)
@@ -112,3 +117,13 @@ def get_bucket_items(buckets):
         else:
             labels.append("{} - {}".format(bucket["min"], bucket["max"]))
     return items, labels
+
+def calculate_median_score(values):
+    if values is None or len(values) == 0:
+        return 0
+    
+    values = sorted(values, key=lambda x: x.score)
+    if len(values) % 2 == 1:
+        return values[len(values)//2].score
+    else:
+        return (values[len(values)//2].score + values[len(values)//2 - 1].score)/2

@@ -13,9 +13,9 @@ from rest_framework.decorators import api_view, renderer_classes
 from rest_framework.renderers import JSONRenderer
 
 from core.decorators import UserGroup, groups_allowed
-from core.models import Course, Assessment, AssessmentAttempt, CodeQuestionSubmission, CodeQuestion, McqQuestion, TestCaseAttempt, TestCase, CandidateSnapshot
-from core.views.utils import check_permissions_assessment
-from core.views.charts import generate_score_distribution_graph, generate_assessment_time_spent_graph, generate_question_time_spent_graph
+from core.models import Course, Assessment, AssessmentAttempt, CodeQuestionSubmission, CodeQuestion, McqQuestion, McqQuestionAttempt, TestCaseAttempt, TestCase, CandidateSnapshot
+from core.views.utils import check_permissions_assessment, get_question_instance
+from core.views.charts import generate_score_distribution_graph, generate_assessment_time_spent_graph, generate_question_time_spent_graph, calculate_median_score
 
 @login_required()
 @groups_allowed(UserGroup.educator)
@@ -110,13 +110,24 @@ def assessment_report(request, assessment_id):
 @groups_allowed(UserGroup.educator)
 def question_report(request, assessment_id, question_id):
     assessment = get_object_or_404(Assessment, id=assessment_id)
-    code_question = get_object_or_404(CodeQuestion, id=question_id)
+    question = get_question_instance(question_id)
+    if not question:
+        raise Http404()
+    
+    if isinstance(question, CodeQuestion):
+        return code_question_report(request, assessment, question)
+    elif isinstance(question, McqQuestion):
+        return mcq_question_report(request, assessment, question)
 
+
+@login_required()
+@groups_allowed(UserGroup.educator)
+def code_question_report(request, assessment, question):
     # get best submission for each student
     submissions_from_best_attempts = CodeQuestionSubmission.objects \
         .select_related('cq_attempt', 'cq_attempt__assessment_attempt') \
         .filter(
-            Q(cq_attempt__code_question_id=question_id) &
+            Q(cq_attempt__code_question=question) &
             Q(cq_attempt__assessment_attempt__best_attempt=True)
         )
     
@@ -131,27 +142,23 @@ def question_report(request, assessment_id, question_id):
     count = len(best_submissions)
     if count > 0:
         mean_score = sum(submission.score for submission in best_submissions) / count 
-        best_submissions.sort(key=lambda x: x.score)
-        if count % 2 == 0:
-            median_score = (best_submissions[count // 2 - 1].score + best_submissions[count // 2].score) / 2
-        else:
-            median_score = best_submissions[count // 2].score
     else:
         mean_score = 0
-        median_score = 0
+        
+    median_score = calculate_median_score(best_submissions)
 
     # get all submissions regardless of best attempt
     all_submissions = CodeQuestionSubmission.objects \
         .select_related('cq_attempt', 'cq_attempt__assessment_attempt') \
-        .filter(cq_attempt__code_question_id=question_id)
+        .filter(cq_attempt__code_question=question)
     
     # generate graph data
-    score_graph = generate_score_distribution_graph([submission.score for submission in best_submissions], code_question.max_score())
-    time_spent_graph = generate_question_time_spent_graph(code_question)
+    score_graph = generate_score_distribution_graph([submission.score for submission in best_submissions], question.max_score())
+    time_spent_graph = generate_question_time_spent_graph(question)
 
     context = {
         "assessment": assessment,
-        "code_question": code_question,
+        "question": question,
         "best_submissions": best_submissions,
         "mean_score": mean_score,
         "median_score": median_score,
@@ -159,7 +166,48 @@ def question_report(request, assessment_id, question_id):
         "graphs": [score_graph, time_spent_graph],
     }
 
-    return render(request, "reports/question-report.html", context)
+    return render(request, "reports/code-question-report.html", context)
+
+@login_required()
+@groups_allowed(UserGroup.educator)
+def mcq_question_report(request, assessment, question):
+    # get best submission for each student
+    best_attempts = list(McqQuestionAttempt.objects \
+        .select_related('assessment_attempt') \
+        .filter(
+            Q(mcq_question=question) &
+            Q(assessment_attempt__best_attempt=True)
+        ))
+
+    # calculate mean and median score
+    count = len(best_attempts)
+    if count > 0:
+        mean_score = sum(submission.score for submission in best_attempts) / count 
+    else:
+        mean_score = 0
+    
+    median_score = calculate_median_score(best_attempts)
+
+    # get all attempts regardless of best attempt
+    all_attempts = McqQuestionAttempt.objects \
+        .select_related('assessment_attempt') \
+        .filter(mcq_question=question)
+    
+    # generate graph data
+    score_graph = generate_score_distribution_graph([attempt.score for attempt in best_attempts], question.max_score())
+    time_spent_graph = generate_question_time_spent_graph(question)
+
+    context = {
+        "assessment": assessment,
+        "question": question,
+        "best_attempts": best_attempts,
+        "mean_score": mean_score,
+        "median_score": median_score,
+        "all_attempts": all_attempts,
+        "graphs": [score_graph, time_spent_graph],
+    }
+
+    return render(request, "reports/mcq-question-report.html", context)
 
 @api_view(["GET"])
 @renderer_classes([JSONRenderer])

@@ -349,6 +349,9 @@ def save_mcq_attempt_options(request, mcq_question_attempt_id):
             selected_option_ids = request.POST.get('selected_option_ids').split(",")
 
             with transaction.atomic():
+                # delete all existing McqQuestionAttemptOption
+                McqQuestionAttemptOption.objects.filter(mcq_attempt=mcq_question_attempt).delete()
+
                 for selected_option_id in selected_option_ids:
                     attempt_option = McqQuestionAttemptOption.objects.filter(mcq_attempt=mcq_question_attempt, selected_option_id=selected_option_id).first()
                     if not attempt_option:

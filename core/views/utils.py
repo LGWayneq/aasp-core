@@ -5,7 +5,7 @@ import re
 from vcdvcd.vcdvcd import VCDVCD
 from math import floor, ceil
 
-from core.models import CodeQuestion, CodeQuestionAttempt, McqQuestionAttempt, CourseGroup, User
+from core.models import CodeQuestion, CodeQuestionAttempt, McqQuestion, McqQuestionAttempt, CourseGroup, User
 from core.models.questions import Language
 from core.tasks import send_assessment_published_email
 
@@ -119,6 +119,21 @@ def check_permissions_assessment(assessment, user):
     if user in assessment.course.maintainers.all():
         return 1
     return 0
+
+
+def get_question_instance(question_id):
+    """
+    Returns the question instance, and the type of question.
+    """
+    code_question = CodeQuestion.objects.filter(id=question_id).first()
+    if code_question:
+        return code_question
+    
+    mcq_question = McqQuestion.objects.filter(id=question_id).first()
+    if mcq_question:
+        return mcq_question
+    
+    return None
 
 
 def get_assessment_attempt_question(assessment_attempt, question_index=None):
