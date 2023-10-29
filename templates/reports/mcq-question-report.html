@@ -85,7 +85,7 @@
                             <td>{{ attempt.assessment_attempt.candidate }}</td>
                             <td>{{ attempt.score }}</td>
                             <td>
-                                <button class="btn btn-success disabled" href="{% url 'submission-details' cqs_id=attempt.id %}">View</button>
+                                <button class="btn btn-primary" onclick="viewMcqModal(this)" data-mcq-attempt-id="{{ attempt.id }}">View</button>
                             </td>
                         </tr>
                     {% endfor %}
@@ -128,7 +128,7 @@
                                 <td>{{ attempt.assessment_attempt.candidate }}</td>
                                 <td>{{ attempt.score }}</td>
                                 <td>
-                                    <button class="btn btn-success disabled" href="{% url 'code-submission-details' cqs_id=attempt.id %}">View</button>
+                                    <button class="btn btn-primary" onclick="viewMcqModal(this)" data-mcq-attempt-id="{{ attempt.id }}">View</button>
                                 </td>
                             </tr>
                         {% endfor %}
@@ -137,6 +137,9 @@
             </div>
         </div>
     </div>
+
+    <!-- View MCQ details modal script -->
+    {% include "reports/snippets/mcq-attempt-details-modal.html" %}
 {% endblock %}
 
 {% block js %}
@@ -150,4 +153,7 @@
         $('#best-submissions-table').DataTable();
         $('#all-submissions-table').DataTable();
     </script>
+
+    <!-- View MCQ details modal script -->
+    {% include "reports/scripts/mcq-attempt-details-modal-script.html" %}
 {% endblock %}
