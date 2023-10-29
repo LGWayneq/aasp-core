@@ -1,0 +1,60 @@
+  <!-- Question & Answer row -->
+  <div class="row">
+    <div class="card" style="margin-bottom: 0px;">
+      <!-- split panes -->
+      <div class="split">
+        <!-- Left pane -->
+        <div id="split-0">
+          <div class="p-4">
+            <h4>{{ mcq_question.name }}</h4>
+
+            <div class="user-select-none" id="question-desc">
+              {{ mcq_question.description }}
+            </div>
+
+            <hr>
+            <!-- tags -->
+            <div id="tags-div">
+              <h6>Tags</h6>
+              {% for tag in mcq_question.tags.all %}
+                <span class="badge bg-light-secondary">{{ tag.name }}</span>
+              {% endfor %}
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Right pane -->
+        <div id="split-1">
+          {% for option in mcq_question_options %}
+              <div class="d-flex flex-row align-items-center p-4">
+                  {% if mcq_question.multiple_answers %}
+                    <input 
+                      type="checkbox" 
+                      id="id_option-{{ option.id }}" 
+                      name="option" 
+                      value="{{ option.id }}" 
+                      {% if option.id in mcq_question_attempt_options %}checked{% endif %}>
+                  {% else %}
+                    <input 
+                      type="radio" 
+                      id="id_option-{{ option.id }}" 
+                      name="option" 
+                      value="{{ option.id }}" 
+                      {% if option.id == mcq_question_attempt_options %}checked{% endif %}>
+                  {% endif %}
+
+                  <label class="ms-3 text-wrap" for="id_option-{{ option.id }}">{{ option.content }}</h4>
+              </div>
+          {% endfor %}
+
+          <!-- Submit button -->
+          <div class="float-end p-4">
+            <button class="btn btn-success btn-md validNavigation" type="button" onclick="saveAndNext();">
+              Save & Next
+            </button>
+          <div>
+        </div>
+      </div>
+    </div>
+</div>

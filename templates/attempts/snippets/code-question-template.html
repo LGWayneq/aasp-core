@@ -1,0 +1,153 @@
+<!-- Question & Answer row -->
+<div class="row">
+    <div class="card" style="margin-bottom: 0px;">
+      <!-- split panes -->
+      <div class="split">
+        <!-- Question pane -->
+        <div id="split-0">
+          <div class="p-4">
+            <h4>{{ code_question.name }}</h4>
+
+            <div class="user-select-none" id="question-desc">
+              {{ code_question.description }}
+            </div>
+
+            <hr>
+
+            <!-- sample test case -->
+            <h5>Sample Input</h5>
+            <pre><code class="language-plaintext rounded">{{ sample_tc.stdin }}</code></pre>
+
+            <!-- wavedrom -->
+            {% if is_software_language %}
+              <h5>Sample Output</h5>
+              <pre><code class="language-plaintext rounded">{{ sample_tc.stdout }}</code></pre>
+            {% else %}
+              <h5>Sample Waveform</h5>
+              <div id="wavedrom" class="nowrap" style="overflow-x: auto">
+                <script type="WaveDrom">
+                  {{ sample_tc.stdout|safe }}
+                </script>
+              </div>
+            {% endif %}
+
+            <hr>
+
+            <!-- tags -->
+            <div id="tags-div">
+              <h6>Tags</h6>
+              {% for tag in code_question.tags.all %}
+                <span class="badge bg-light-secondary">{{ tag.name }}</span>
+              {% endfor %}
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Answer pane -->
+        <div id="split-1">
+          <div class="p-4">
+            <h4>Your answer</h4>
+
+            <div class="row">
+              <!-- Language selection -->
+              <div class="col-6">
+                <label for="lang-select">Language</label>
+                <select class="form-select" id="lang-select">
+                  {% for cs in code_snippets %}
+                    <option data-code="{{ cs.saved_code }}" data-initial-code="{{ cs.code }}" data-judgeid="{{ cs.language.judge_language_id }}"
+                            data-ace-mode="{{ cs.language.ace_mode }}">{{ cs.language.name }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+
+              <!-- theme selection -->
+              <div class="col-4">
+                <label for="theme-select">Theme</label>
+                <select class="form-select" id="theme-select">
+                  <option value="cloud9_day">Light (Cloud9 Day)</option>
+                  <option value="one_dark">Dark (One Dark)</option>
+                </select>
+              </div>
+
+              <div class="col-2">
+                <label></label><br>
+                <button class="btn btn-warning btn-block" type="button" onclick="resetCode()">Reset</button>
+              </div>
+
+            </div>
+
+            <!-- Ace Code Editor -->
+            <div class="row p-2">
+              <pre id="editor" class="inner rounded" style="height: 500px;"></pre>
+            </div>
+
+            {% include 'attempts/snippets/code-results.html' %}
+
+            <hr>
+
+            <div class="row p-4">
+              <h4>Submission History</h4>
+              <div class="accordion" id="submissions-accordion">
+
+                {# generate one accordion-item for each submission #}
+                {% for cqs in code_question_submissions %}
+                  <div class="accordion-item">
+
+                    <h2 class="accordion-header">
+                      <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                              data-bs-target="#submission-{{ cqs.id }}">
+                        {{ cqs.time_submitted }}
+                        {% if cqs.outcome == "Failed" %}
+                          <span class="badge bg-light-danger ms-3" id="cqs-status-{{ cqs.id }}">{{ cqs.outcome }}</span>
+                        {% elif cqs.outcome == "Passed" %}
+                          <span class="badge bg-light-success ms-3"
+                                id="cqs-status-{{ cqs.id }}">{{ cqs.outcome }}</span>
+                        {% else %}
+                          <span class="badge bg-light-warning ms-3"
+                                id="cqs-status-{{ cqs.id }}">{{ cqs.outcome }}</span>
+                        {% endif %}
+                      </button>
+                    </h2>
+
+                    <div id="submission-{{ cqs.id }}" class="accordion-collapse collapse"
+                         data-bs-parent="#submissions-accordion">
+                      <div class="accordion-body">
+                        <div class="row">
+                          {% for tca in cqs.testcaseattempt_set.all %}
+                            <div class="col-4">
+                              {# disable button if TCA is still in queue or processing #}
+                              <button id="tca-{{ tca.id }}"
+                                      class="btn btn-link p-0 {% if tca.status == 1 or tca.status == 2 %}disabled{% endif %}"
+                                      data-token="{{ tca.token }}" onclick="viewModal(this);">
+                                Test Case {{ forloop.counter }}
+                              </button>
+                              <div class="spinner-border spinner-border-sm ms-2" id="tca-loading-{{ tca.id }}"
+                                   style="
+                                       {% if tca.status == 1 or tca.status == 2 %}{% else %}display: none;{% endif %}"></div>
+                              <i class="fa-solid fa-check text-success" id="tca-accepted-{{ tca.id }}"
+                                 style="{% if tca.status == 3 %}{% else %}display: none;{% endif %}"></i>
+                              <i class="fa-solid fa-xmark text-danger" id="tca-failed-{{ tca.id }}"
+                                 style="
+                                     {% if tca.status >= 4 and tca.status <= 14 %}{% else %}display: none;{% endif %}"></i>
+                            </div>
+                          {% endfor %}
+                        </div>
+                      </div>
+                    </div>
+
+                  </div>
+                {% endfor %}
+
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+</div>
+
+{% include 'attempts/snippets/accordion-item-template.html' %}
+{% include 'attempts/modals/test-case-details-modal.html' %}
+{% include 'attempts/modals/vcd-viewer-modal.html' %}

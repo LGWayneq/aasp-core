@@ -1,215 +1,40 @@
-{% extends 'layouts/main-no-nav.html' %}
-{% load static %}
-
-{% block title %}{{ assessment.name }}{% endblock %}
-
-{% block styles %}
-  <!-- Split.js, ace editor css -->
-  <style>
-      .split {
-          display: flex;
-          flex-direction: row;
-      }
-
-      .gutter {
-          background-color: #eee;
-          background-repeat: no-repeat;
-          background-position: 50%;
-      }
-
-      .gutter.gutter-horizontal {
-          background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAUAAAAeCAYAAADkftS9AAAAIklEQVQoU2M4c+bMfxAGAgYYmwGrIIiDjrELjpo5aiZeMwF+yNnOs5KSvgAAAABJRU5ErkJggg==');
-          cursor: col-resize;
-      }
-
-      @font-face {
-          font-family: 'JetBrains Mono';
-          src: url('{% static 'fonts/JetBrainsMono-Regular.ttf' %}') format('truetype');
-          font-weight: normal;
-          font-style: normal;
-      }
-
-      /* for ace editor */
-      .readonly-highlight {
-          position: absolute;
-          background-color: red;
-          opacity: 0.1;
-      }
-  </style>
-  <link rel="stylesheet" href="{% static 'vendors/highlight.js/styles/night-owl.min.css' %}">
-  <link rel="stylesheet" href="{% static 'vendors/toastify/toastify.css' %}"/>
-
-{% endblock %}
-
-{% block content %}
-<body onload="WaveDrom.ProcessAll()">
-  <!-- Page Title -->
-  <div class="page-heading">
-    <div class="page-title">
-      <div class="row d-flex align-content-between">
-        <div class="col-9">
-          <div style="display:flex; flex-direction: row; align-items: center;">
-            <div>
-              <h5>Question Preview: </h5>
-              <h2>{{ code_question.name }}</h2>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div class="alert alert-secondary">
-    <h4 class="alert-heading">This is a question preview</h4>
-    <div class="d-flex justify-content-between px-2">
-        <h6 class="text-danger">Submissions for question previews are not saved.</h6>
-    </div>
-  </div>
-
-  <!-- Question & Answer row -->
-  <div class="row">
-    <div class="card" style="margin-bottom: 0px;">
-      <!-- split panes -->
-      <div class="split">
-        <!-- Question pane -->
-        <div id="split-0">
-          <div class="p-4">
-            <h4>{{ code_question.name }}</h4>
-
-            <div id="question-desc">
-              {{ code_question.description }}
-            </div>
-
-            <hr>
-
-            <!-- sample test case -->
-            <h5>Sample Input</h5>
-            <pre><code class="language-plaintext rounded">{{ sample_tc.stdin }}</code></pre>
-
-            <!-- wavedrom -->
-            {% if is_software_language %}
-              <h5>Sample Output</h5>
-              <pre><code class="language-plaintext rounded">{{ sample_tc.stdout }}</code></pre>
-            {% else %}
-              <h5>Sample Waveform</h5>
-              <div id="wavedrom" class="nowrap" style="overflow-x: auto">
-                <script type="WaveDrom">
-                  {{ sample_tc.stdout|safe }}
-                </script>
-              </div>
-            {% endif %}
-
-            <hr>
-
-            <!-- tags -->
-            <div id="tags-div">
-              <h6>Tags</h6>
-              {% for tag in code_question.tags.all %}
-                <span class="badge bg-light-secondary">{{ tag.name }}</span>
-              {% endfor %}
-            </div>
-
-          </div>
-        </div>
-
-        <!-- Answer pane -->
-        <div id="split-1">
-          <div class="p-4">
-            <h4>Your answer</h4>
-
-            <div class="row">
-              <!-- Language selection -->
-              <div class="col-6">
-                <label for="lang-select">Language</label>
-                <select class="form-select" id="lang-select">
-                  {% for cs in code_snippets %}
-                    <option data-code="{{ cs.code }}" data-initial-code="{{ cs.code }}" data-judgeid="{{ cs.language.judge_language_id }}"
-                            data-ace-mode="{{ cs.language.ace_mode }}">{{ cs.language.name }}</option>
-                  {% endfor %}
-                </select>
-              </div>
-
-              <!-- theme selection -->
-              <div class="col-4">
-                <label for="theme-select">Theme</label>
-                <select class="form-select" id="theme-select">
-                  <option value="cloud9_day">Light (Cloud9 Day)</option>
-                  <option value="one_dark">Dark (One Dark)</option>
-                </select>
-              </div>
-
-              <div class="col-2">
-                <label></label><br>
-                <button class="btn btn-warning btn-block" type="button" onclick="resetCode()">Reset</button>
-              </div>
-
-            </div>
-
-            <!-- Ace Code Editor -->
-            <div class="row p-2">
-              <pre id="editor" class="inner rounded" style="height: 500px;"></pre>
-            </div>
-
-            {% include 'attempts/snippets/code-results.html' %}
-
-            <hr>
-
-            <div class="row p-4">
-              <h4>Submission History</h4>
-              <div class="accordion" id="submissions-accordion">
-                <!-- New submissions will appear here -->
-              </div>
-            </div>
-
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  {% include 'attempts/snippets/accordion-item-template.html' %}
-  {% include 'attempts/modals/test-case-details-modal.html' %}
-  {% include 'attempts/modals/vcd-viewer-modal.html' %}
-{% endblock %}
-
-{% block js %}
-  <script src="{% static 'vendors/jquery/jquery.min.js' %}"></script>
-  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/split.js/1.6.0/split.min.js"></script>
-  <script src="{% static 'vendors/ace/src-noconflict/ace.js' %}" type="text/javascript" charset="utf-8"></script>
-  <script type="text/javascript" src="{% static 'vendors/highlight.js/highlight.min.js' %}"></script>
-  <script type="text/javascript" src="{% static 'vendors/toastify/toastify.js' %}"></script>
-  {% include "includes/js/mathjax.html" %}
-  <!-- momentjs -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/moment-duration-format/1.3.0/moment-duration-format.min.js"></script>
-  <!-- wavedrom -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/wavedrom/3.1.0/skins/default.js" type="text/javascript"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/wavedrom/3.1.0/wavedrom.min.js" type="text/javascript"></script>
-
-  <!-- General script -->
+  <!-- Logic to save code snippet every minute -->
   <script>
-      Split(['#split-0', '#split-1'], {
-          sizes: [40, 60],
-          minSize: 400,
-          onDrag: () => {
-              editor.resize() // resize code editor when panes are resized
-          }
-      })
+      const saveCodeSnippet = async () => {
+        let formData = new FormData();
+        formData.append("code", editor.getValue());
+        formData.append("lang-id", langSelect.find("option:selected").data('judgeid'));
+        formData.append("csrfmiddlewaretoken", "{{ csrf_token }}");
 
-      // hljs
-      hljs.highlightAll();
+        // ajax call
+        const res = await $.ajax({
+            type: 'POST',
+            url: '{% url "save-code-attempt-snippet" code_question_attempt_id=question_attempt.id %}',
+            data: formData,
+            processData: false,
+            contentType: false,
+        });
 
-      // marked
-      marked.setOptions({
-          breaks: true
-      })
-      $("#question-desc").html(marked.parse("{{ code_question.description|escapejs }}"));
+        if (res.result === "success") {
+          Toastify({
+            text: "Code autosaved",
+            duration: 3000,
+            position: "center",
+            style: {"background": "#158754"}
+          }).showToast();
+        } else {
+          Toastify({
+            text: "Error autosaving code",
+            duration: 3000,
+            position: "center",
+            style: {"background": "#ff6961"}
+          }).showToast();
+        }
+      };
 
-      let validNavigation = false;
-      $(document).on('click', '.validNavigation', function () {
-          validNavigation = true;
-      });
+      window.setInterval(() => {
+          saveCodeSnippet();
+      }, 60000);
   </script>
 
   <!-- Ace code editor config -->
@@ -314,17 +139,25 @@
 		}
 	}
 
+    // set initial code snippet and language based on latest saved code
+    let lastUsedLanguage = '{{ last_used_language|safe }}'
+    if (lastUsedLanguage !== "None") {
+      const submittedCodeLanguageOption = $("#lang-select option").filter(function () { return $(this).val() === lastUsedLanguage; });
+      submittedCodeLanguageOption.prop("selected", true);
+      editor.session.setValue(submittedCodeLanguageOption.data("code"));
+    } else {
+      const selected = langSelect.find("option:selected")
+      editor.session.setValue(selected.data("code"))
+    }
     let prevLanguage = langSelect.val();
 
     // function that sets the language and code snippet
     const setLanguage = () => {
       // save code before changing language
       const code = editor.getValue();
-      if (code !== "") {
-        const prevOption = $("#lang-select option").filter(function () { return $(this).val() === prevLanguage; });
-        prevOption.data("code", code);
-        prevLanguage = langSelect.val();
-      }
+      const prevOption = $("#lang-select option").filter(function () { return $(this).val() === prevLanguage; });
+      prevOption.data("code", code);
+      prevLanguage = langSelect.val();
 
       // get the selected option
       const selected = langSelect.find("option:selected")
@@ -390,25 +223,13 @@
     updateReadonlyRanges();
   </script>
 
-  <!-- Unload warning -->
+  <!-- Reset code editor -->
   <script>
-    window.onbeforeunload = function () {
-      e.preventDefault();
+    const resetCode = () => {
       if ({{ assessment_attempt.assessment.limit_tab_switching|yesno:"true,false"}}) {
         window.onblur = () => {};
       }
       
-      if (validNavigation) {
-          validNavigation = false;
-          return;
-      }
-      return true;
-    };
-  </script>
-
-  <!-- Reset code editor -->
-  <script>
-    const resetCode = () => {
       if (confirm("Are you sure you wish to reset?")) {
         // get the selected option
         const selected = langSelect.find("option:selected")
@@ -418,6 +239,12 @@
         // set ace mode
         editor.session.setMode("ace/mode/" + selected.data("ace-mode"))
         updateReadonlyRanges()
+      }
+
+      if ({{ assessment_attempt.assessment.limit_tab_switching|yesno:"true,false"}}) {
+        setTimeout(() => {
+          window.onblur = () => { handleTabSwitch(); }
+        }, 1000);
       }
     }
   </script>
@@ -486,45 +313,9 @@
               style: {"background": "#ff6961"}
           }).showToast();
       };
-      
-      const evaluate = async (stdin) => {
-        // prepare form data
-        let formData = new FormData();
-        formData.append("code", editor.getValue());
-        formData.append("lang-id", langSelect.find("option:selected").data('judgeid'));
-        formData.append("csrfmiddlewaretoken", "{{ csrf_token }}");
-        formData.append("run_stdin", stdin);
-
-        // ajax call
-        try {
-          const res = await $.ajax({
-            type: 'POST',
-            url: "{% url 'submit-single-test-case' test_case_id=sample_tc.id code_question_id=code_question.id %}",
-            data: formData,
-            processData: false,
-            contentType: false,
-          });
-          if (res.result === "success") {
-            const token = res.token;
-            return token;
-          }
-        } catch (err) {
-          window.setTimeout(() => {
-            // 4xx status codes
-            if (Math.floor(err.status / 100) == 4) {
-                console.error('Internal API error!');
-                showError("Internal API Error &#x274C;");
-            }
-            else {
-                console.error('External API error!');
-                showError("External API Error &#x274C;");
-            }
-          }, 1000);
-        }
-      }
 
       // "compile and run" clicked
-      const compileAndRun = async () => {
+      const compileAndRun = () => {
           // disable buttons
           sampleBtn.prop("disabled", true);
           submitBtn.prop("disabled", true);
@@ -534,8 +325,38 @@
           resultsBody.hide();
           runStatus.html('Submitting');
 
-          const token = await evaluate($("#run-stdin").val());
-          updateSampleStatus(token)
+          // prepare form data
+          let formData = new FormData();
+          formData.append("code", editor.getValue());
+          formData.append("lang-id", langSelect.find("option:selected").data('judgeid'));
+          formData.append("csrfmiddlewaretoken", "{{ csrf_token }}");
+          formData.append("run_stdin", $("#run-stdin").val());
+
+          // ajax call
+          $.ajax({
+              type: 'POST',
+              url: '{% url "submit-single-test-case" test_case_id=sample_tc.id code_question_id=code_question.id %}',
+              data: formData,
+              processData: false,
+              contentType: false,
+          }).done((res, textStatus, jqXHR) => {
+              if (res.result === "success") {
+                  const token = res.token;
+                  updateSampleStatus(token);
+              }
+          }).fail((jqXHR, textStatus, errorThrown) => {
+              window.setTimeout(() => {
+                  // 4xx status codes
+                  if (Math.floor(jqXHR.status / 100) == 4) {
+                      console.error('Internal API error!');
+                      showError("Internal API Error &#x274C;");
+                  }
+                  else {
+                      console.error('External API error!');
+                      showError("External API Error &#x274C;");
+                  }
+              }, 1000);
+          });
       };
 
       // updates sample status by polling
@@ -880,91 +701,113 @@
           $('#detailsModal').modal('show');
       };
 
-      let submissionCount = 0;
-      
       // submit code, create new submission
-      const submit = async () => {
-        // disable buttons
-        sampleBtn.prop("disabled", true);
-        submitBtn.prop("disabled", true);
+      const submit = () => {
+          // disable buttons
+          sampleBtn.prop("disabled", true);
+          submitBtn.prop("disabled", true);
 
-        // hide more details link
-        mainLoading.show();
-        moreDetails.hide();
-        runStatus.html('Submitting');
-        
-        const promises = []
-        const hidden_tc_stdin = JSON.parse(`{{ hidden_tc_stdin|safe }}`.replaceAll(`'`,  `"`))
-        hidden_tc_stdin.forEach((stdin) => promises.push(evaluate(stdin)))
-        try {
-          const tokens = await Promise.all(promises);
-          setTimeout(() => {
-            // update status
-            runStatus.html('Processing');
+          // hide more details link
+          mainLoading.show();
+          moreDetails.hide();
+          runStatus.html('Submitting');
 
-            // add accordion
-            const clonedAccordionItem = $("#accordion-item-template").clone();
-            clonedAccordionItem.removeAttr('id style');
-            clonedAccordionItem.html(
-                $(clonedAccordionItem).html().replaceAll('__cqs_id__', submissionCount).replaceAll('__time_submitted__', new Date().toLocaleString())
-            );
+          // prepare form data
+          let formData = new FormData();
+          formData.append("code", editor.getValue());
+          formData.append("lang-id", langSelect.find("option:selected").data('judgeid'));
+          formData.append("csrfmiddlewaretoken", "{{ csrf_token }}");
+          formData.append("start_time", "{{ start_time }}");
 
-            tokens.forEach((token, idx) => {
-                const clonedTestCase = $("#test-case-template").clone();
-                clonedTestCase.removeAttr('id style');
-                clonedTestCase.html(
-                    $(clonedTestCase).html().replaceAll('__tca_id__', `${submissionCount}-${idx}`).replaceAll('__idx__', idx + 1).replaceAll('__token__', token)
-                );
-                clonedAccordionItem.find(`#submission-${submissionCount} > div > div`).append(clonedTestCase);
-            });
-            $("#submissions-accordion").prepend(clonedAccordionItem);
-            $("#submission-" + submissionCount).collapse('show');
-            // call updator function
-            updateSubmissionStatus(submissionCount, tokens, 0);
-            submissionCount += 1;
-          }, 500);
-        } catch (error) {
-          console.log(error)
-        }
+          // ajax call
+          $.ajax({
+              type: 'POST',
+              url: "{% url 'code-question-submission' code_question_attempt_id=question_attempt.id %}",
+              data: formData,
+              processData: false,
+              contentType: false,
+          }).done((res, textStatus, jqXHR) => {
+              if (res.result === "success") {
+                  setTimeout(() => {
+                      // update status
+                      runStatus.html('Processing');
+
+                      // add accordion
+                      const clonedAccordionItem = $("#accordion-item-template").clone();
+                      clonedAccordionItem.removeAttr('id style');
+                      clonedAccordionItem.html(
+                          $(clonedAccordionItem).html().replaceAll('__cqs_id__', res.cqs_id).replaceAll('__time_submitted__', res.time_submitted)
+                      );
+
+                      res.statuses.forEach((value, idx) => {
+                          const clonedTestCase = $("#test-case-template").clone();
+                          clonedTestCase.removeAttr('id style');
+                          clonedTestCase.html(
+                              $(clonedTestCase).html().replaceAll('__tca_id__', value[0]).replaceAll('__idx__', idx + 1).replaceAll('__token__', value[2])
+                          );
+                          clonedAccordionItem.find(`#submission-${res.cqs_id} > div > div`).append(clonedTestCase);
+                      });
+                      $("#submissions-accordion").prepend(clonedAccordionItem);
+                      $("#submission-" + res.cqs_id).collapse('show');
+                      // call updator function
+                      updateSubmissionStatus(res.cqs_id, 0);
+                  }, 500);
+              }
+          }).fail((jqXHR, textStatus, errorThrown) => {
+              // 4xx status codes
+              if (Math.floor(jqXHR.status / 100) == 4) {
+                  console.error("Internal API Error!");
+                  showError("Internal API Error &#x274C;");
+              }
+          })
       };
 
       // polls and updates the status of a submission and its testcases
-      const updateSubmissionStatus = async (submissionId, tokens, attempts) => {
-          const promises = tokens.map((token) => {
-            return $.ajax({
+      const updateSubmissionStatus = (cqs_id, attempts) => {
+          // ajax request
+          $.ajax({
               type: 'GET',
-              url: "{% url 'get-tc-details' %}",
-              data: {token, status_only: false, vcd: '{{ is_software_language }}' === 'False'},
-            })
-          })
+              url: "{% url 'get-cq-submission-status' %}",
+              data: {cqs_id},
+          }).done((res, textStatus, jqXHR) => {
+              if (res.result === "success") {
+                  // set submission status (passed/failed/processing)
+                  setSubmissionStatus(res.cqs_id, res.outcome);
 
-          const statuses = await Promise.all(promises);
-          const finished = statuses.every((status) => status.data.status_id !== 1 && status.data.status_id !== 2)
+                  // set testcase statuses
+                  res.statuses.forEach((value) => {
+                      setTestCaseStatus(value[0], value[1]);
+                  });
 
-          // set testcase statuses
-          statuses.forEach((status, idx) => {
-            setTestCaseStatus(submissionId + "-" + idx, status.data.status_id);
+                  // if submission is still processing, poll again in 1s
+                  if (res.outcome === "Processing") {
+                      if (attempts >= 8) {
+                        setSubmissionStatus(cqs_id, "Timed Out");
+                        res.statuses.forEach((value) => {
+                          setTestCaseStatus(value[0], 5);
+                        });
+                      } else {
+                        window.setTimeout(() => {
+                          updateSubmissionStatus(cqs_id, attempts + 1);
+                      }, 1000);
+                      }
+                  }
+              }
+          }).fail((jqXHR, textStatus, errorThrown) => {
+              // 4xx status codes
+              if (Math.floor(jqXHR.status / 100) == 4) {
+                  console.error("Internal API Error!");
+                  showError("Internal API Error &#x274C;");
+              }
+              else {
+                  error("External API Error!");
+                  showError("External API Error &#x274C;");
+              }
           });
-
-          if (finished) {
-            // set submission status (passed/failed/processing)
-            setSubmissionStatus(submissionId, statuses.every((status) => status.data.status_id === 3) ? "Passed" : "Failed");
-          } else {
-            if (attempts >= 8) {
-              setSubmissionStatus(submissionId, "Timed Out");
-              statuses.forEach((status, idx) => {
-                setTestCaseStatus(submissionId + "-" + idx, 5);
-              });
-            } else {
-              window.setTimeout(() => {
-                updateSubmissionStatus(submissionId, tokens, attempts + 1);
-              }, 1000);
-            }
-          }
       };
 
-      const setSubmissionStatus = (submissionId, outcome) => {
-          const cqsStatus = $("#cqs-status-" + submissionId);
+      const setSubmissionStatus = (cqs_id, outcome) => {
+          const cqsStatus = $("#cqs-status-" + cqs_id);
 
           cqsStatus.html(outcome);
           cqsStatus.removeClass("bg-light-danger bg-light-success bg-light-warning");
@@ -984,25 +827,35 @@
       };
 
       const setTestCaseStatus = (tca_id, status_id) => {
-        const loading = $("#tca-loading-" + tca_id);
-        const failed = $("#tca-failed-" + tca_id);
-        const accepted = $("#tca-accepted-" + tca_id);
+          const loading = $("#tca-loading-" + tca_id);
+          const failed = $("#tca-failed-" + tca_id);
+          const accepted = $("#tca-accepted-" + tca_id);
 
-        if (status_id === 1 || status_id === 2) { // loading
-            loading.show();
-            failed.hide();
-            accepted.hide();
-        } else if (status_id === 3) { // accepted
-            loading.hide();
-            failed.hide();
-            accepted.show();
-            $("#tca-" + tca_id).removeClass("disabled");
-        } else {  // failed
-            loading.hide();
-            failed.show();
-            accepted.hide();
-            $("#tca-" + tca_id).removeClass("disabled");
-        }
+          if (status_id === 1 || status_id === 2) { // loading
+              loading.show();
+              failed.hide();
+              accepted.hide();
+          } else if (status_id === 3) { // accepted
+              loading.hide();
+              failed.hide();
+              accepted.show();
+              $("#tca-" + tca_id).removeClass("disabled");
+          } else {  // failed
+              loading.hide();
+              failed.show();
+              accepted.hide();
+              $("#tca-" + tca_id).removeClass("disabled");
+          }
       };
-  </script>
-{% endblock %}
+
+      // handle ongoing submissions upon page load
+      {% for cqs in code_question_submissions %}
+          {% if cqs.outcome == "Processing" %}
+              updateSubmissionStatus({{cqs.id}}, 0);
+              // disable buttons and set status
+              sampleBtn.prop("disabled", true);
+              submitBtn.prop("disabled", true);
+              runStatus.html('Processing');
+          {% endif %}
+      {% endfor %}
+</script>

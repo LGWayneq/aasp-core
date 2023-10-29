@@ -1,0 +1,52 @@
+  <!-- Logic to save selection after selection -->
+  <script>
+    const save = async () => {
+      let formData = new FormData();
+      const selected_option_ids = $("input[name='option']:checked").map(function () {
+        return this.value;
+      }).get();
+
+      if (selected_option_ids.length === 0) return;
+
+      formData.append("selected_option_ids", selected_option_ids);
+      formData.append("csrfmiddlewaretoken", "{{ csrf_token }}");
+
+      // ajax call
+      const res = await $.ajax({
+          type: 'POST',
+          url: '{% url "save-mcq-attempt-options" mcq_question_attempt_id=question_attempt.id %}',
+          data: formData,
+          processData: false,
+          contentType: false,
+      });
+
+      if (res.result === "success") {
+        Toastify({
+          text: "Progress saved",
+          duration: 3000,
+          position: "center",
+          style: {"background": "#158754"}
+        }).showToast();
+      } else {
+        Toastify({
+          text: "Error saving progress",
+          duration: 3000,
+          position: "center",
+          style: {"background": "#ff6961"}
+        }).showToast();
+      }
+    };
+
+    // add listener when input selected
+    $("input[name='option']").change(function () {
+      save();
+    });
+</script>
+
+<!-- Logic to save selection -->
+<script>
+  function saveAndNext() {
+    save();
+    window.location.href = "{% url 'attempt-question' assessment_attempt_id=assessment_attempt.id question_index=question_index|add:'1' %}";
+  }
+</script>
