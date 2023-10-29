@@ -58,7 +58,7 @@ urlpatterns = [
     path('code-question/update/<int:code_question_id>/', code_questions.update_code_question, name='update-code-question'),
     path('api/get-code-question-details/', code_questions.get_cq_details, name='get-code-question-details'),  # ajax
     path('api/compile-code/', code_questions.compile_code, name='compile-code'),  # ajax
-    path('code-question/preview/<int:code_question_id>/', code_questions.preview_question, name='preview-question'),  # step 1
+    path('code-question/preview/<int:question_id>/', code_questions.preview_question, name='preview-question'),  # step 1
 
     # mcq questions
     path('mcq-question/create/<str:parent>/<int:parent_id>/', mcq_questions.create_mcq_question, name='create-mcq-question'),  
@@ -70,8 +70,10 @@ urlpatterns = [
     path('assessment/create/', assessments.create_assessment, name='create-assessment'),
     path('assessment/update/<int:assessment_id>/', assessments.update_assessment, name='update-assessment'),
     path('assessment/details/<int:assessment_id>/', assessments.assessment_details, name='assessment-details'),
-    path('api/add-code-question-to-assessment/', assessments.add_code_question_to_assessment, name='add-code-question-to-assessment'),
+    path('api/add-code-question-to-assessment/', assessments.add_code_question_to_assessment, name='add-code-question-to-assessment'), # ajax
     path('api/get-code-questions-questions/', assessments.get_code_questions, name='get-code-questions'),  # ajax
+    path('api/add-mcq-question-to-assessment/', assessments.add_mcq_question_to_assessment, name='add-mcq-question-to-assessment'), # ajax
+    path('api/get-mcq-questions-questions/', assessments.get_mcq_questions, name='get-mcq-questions'),  # ajax
     path('assessment/publish/<int:assessment_id>/', assessments.publish_assessment, name='publish-assessment'),
     path('assessment/delete/<int:assessment_id>/', assessments.delete_assessment, name='delete-assessment'),
     path('assessment/undo-delete/<int:assessment_id>/', assessments.undo_delete_assessment, name='undo-delete-assessment'),

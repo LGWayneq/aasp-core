@@ -603,9 +603,9 @@ def compile_code(request):
 @api_view(["GET"])
 @login_required()
 @groups_allowed(UserGroup.educator)
-def preview_question(request, code_question_id):
+def preview_question(request, question_id):
     # get code question
-    code_question = get_object_or_404(CodeQuestion, id=code_question_id)
+    code_question = get_object_or_404(CodeQuestion, id=question_id)
 
     # if no question exist at the index, raise 404
     if not code_question:

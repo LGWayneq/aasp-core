@@ -32,7 +32,7 @@
                             <th>Languages</th>
                             <th>Concurrency</th>
                             <th>Tags</th>
-                            <th>Actions
+                            <th width="250px">Actions
                                 <div class="spinner-border spinner-border-sm" id="actions-loading" style="display:none">
                                 </div>
                             </th>
@@ -84,7 +84,7 @@
                                 {% endif %}
                             </td>
                             <td>
-                                <a href="{% url 'preview-question' code_question_id=q.id %}" target="_blank"
+                                <a href="{% url 'preview-question' question_id=q.id %}" target="_blank"
                                     class="btn btn-sm btn-warning {% if q.languages.count == 0 or q.testcase_set.count == 0 %}disabled{% endif %}">Preview</a>
                                 <button type="button" id="more-details" class="btn btn-sm btn-primary view-modal"
                                     data-cq-id="{{ q.id }}" onclick="viewCodeModal(this)">
@@ -147,7 +147,7 @@
                             <th>Score</th>
                             <th>Multiple Answers</th>
                             <th>Tags</th>
-                            <th>Actions
+                            <th width="250px">Actions
                                 <div class="spinner-border spinner-border-sm" id="actions-loading" style="display:none">
                                 </div>
                             </th>
@@ -180,7 +180,7 @@
                                 {% endif %}
                             </td>
                             <td>
-                                <a href="{% url 'preview-question' code_question_id=q.id %}" target="_blank"
+                                <a href="{% url 'preview-question' question_id=q.id %}" target="_blank"
                                     class="btn btn-sm btn-warning disabled">Preview</a>
                                 <button type="button" id="more-details" class="btn btn-sm btn-primary view-modal"
                                     data-mcq-id="{{ q.id }}" onclick="viewMcqModal(this)">
@@ -194,7 +194,7 @@
                                 </div>
                                 {% endif %}
                                 {% if not assessment.published %}
-                                <button data-question_id="{{ q.id }}" data-question_type="code" type="button" class="btn btn-sm btn-danger"
+                                <button data-question_id="{{ q.id }}" data-question_type="mcq" type="button" class="btn btn-sm btn-danger"
                                     onclick="deleteQuestion(this);">Delete
                                 </button>
                                 {% else %}
@@ -212,99 +212,9 @@
     </div>
 </div>
 
-<!-- Modal: Add code questions -->
-<div class="modal fade" id="code-questions-modal" tabindex="-1" role="dialog">
-    <div class="modal-dialog modal-dialog-centered modal-xl modal-dialog-scrollable" role="document">
-        <div class="modal-content">
-            <!-- Modal Header -->
-            <div class="modal-header">
-                <h5 class="modal-title">Add Code Question from Question Bank</h5>
-                <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-
-            <!-- Modal Body -->
-            <div class="modal-body">
-                <!-- Filter form -->
-                <div id="filter-form-div">
-                    <h5>Filters</h5>
-                    <p>Filter for the code question that you would like to copy into the assessment.</p>
-
-                    <form id="code-questions-filter-form">
-                        <div class="row">
-                            <!-- Question bank input -->
-                            <div class="col-4">
-                                <div class="form-group">
-                                    <label for="cq_id_question_bank">Question Bank</label>
-                                    <select class="form-select form-select-lg" name="question_bank" onchange="filterCodeQuestion();" id="cq_id_question_bank">
-                                        <option value="" selected="">---------</option>
-                                        {% for qb in all_question_banks %}
-                                        <option value="{{ qb.id }}">{{ qb.name }}</option>
-                                        {% endfor %}
-                                    </select>
-                                </div>
-                            </div>
-
-                            <!-- Name -->
-                            <div class="col-4">
-                                <div class="form-group">
-                                    <label for="cq_id_name">Question Name</label>
-                                    <input type="text" class="form-control form-control-lg" name="name" oninput="filterCodeQuestion();" id="cq_id_name">
-                                </div>
-                            </div>
-
-                            <!-- Tags -->
-                            <div class="col-4">
-                                <div class="form-group">
-                                    <label for="cq_id_tags">Tags</label>
-                                    <select name="tags" onchange="filterCodeQuestion();" id="cq_id_tags" multiple>
-                                        {% for tag in tags %}
-                                        <option value="{{ tag.id }}">{{ tag.name }}</option>
-                                        {% endfor %}
-                                    </select>
-                                </div>
-                            </div>
-                        </div>
-                    </form>
-                </div>
-
-                <!-- Results tables -->
-                <div id="questions-results-div">
-                    <!-- Code questions table -->
-                    <table class="table-responsive table table-hover mb-0" id="code-question-table">
-                        <thead>
-                            <tr>
-                                <th>Name</th>
-                                <th style="width: 30%">Description</th>
-                                <th>Test Cases</th>
-                                <th>Languages</th>
-                                <th>Concurrency</th>
-                                <th>Tags</th>
-                                <th style="width: 115px;">Actions
-                                    <div class="spinner-border spinner-border-sm" id="actions-loading"
-                                        style="display:none"></div>
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                        </tbody>
-                    </table>
-
-                    <!-- MCQ table, etc -->
-                </div>
-            </div>
-
-            <!-- Modal Footer -->
-            <div class="modal-footer d-flex justify-content-between align-items-center">
-                <p id="add-cq-result"></p>
-                <button type="button" class="btn btn-light-secondary" data-bs-dismiss="modal">Done</button>
-            </div>
-        </div>
-    </div>
-
-
-</div>
+<!-- Modal: Add from question bank -->
+{% include 'assessments/snippets/code-question-bank-modal.html' %}
+{% include 'assessments/snippets/mcq-question-bank-modal.html' %}
 
 <!-- Modal: View questions -->
 {% include 'code_questions/snippets/view-code-modal.html' %}
@@ -314,189 +224,10 @@
 <script src="{% static 'vendors/jquery/jquery.min.js' %}"></script>
 <script src="{% static 'vendors/choices.js/choices.min.js' %}"></script>
 <script src="{% static 'vendors/toastify/toastify.js' %}"></script>
-<!-- global variables -->
-<script>
-    let refreshNeeded = false;
-</script>
 
-<!-- code questions modal script -->
-<script>
-    let cqFirstLaunch = true;
-    const codeQuestionTableBody = $("#code-question-table > tbody");
-    const codeQuestionModal = $('#code-questions-modal');
-
-    // choices.js: code questions tag selector
-    const cq_tags = document.getElementById("cq_id_tags");
-    let choice1 = new Choices(cq_tags, {
-        removeItemButton: true,
-        renderChoiceLimit: 5,
-    });
-
-    // filter button clicked
-    const filterCodeQuestion = () => {
-        const form = document.getElementById("code-questions-filter-form");
-        const formData = new FormData(form);
-        const data = [...formData.entries()];
-        const asString = data.map(x => `${encodeURIComponent(x[0])}=${encodeURIComponent(x[1])}`).join('&');
-
-        // show loading
-        codeQuestionLoading(true);
-
-        $.ajax({
-            type: 'GET',
-            url: "{% url 'get-code-questions' %}?" + asString,
-            data: formData,
-            processData: false,
-            contentType: false,
-        }).done((res, textStatus, jqXHR) => {
-            setTimeout(() => {
-                // hide loading
-                codeQuestionLoading(false);
-
-                // update table based on response
-                if (res.result === "success") {
-                    if (res.code_questions.length === 0) {
-                        codeQuestionTableBody.html("<tr><td colspan='4' class='text-center p-5'>No code questions found! &#x1F622;</td></tr>");
-                    }
-                    else {
-                        let newRows = "";
-                        res.code_questions.forEach((cq) => {
-                            trimmed_description = cq.description.length > 100 ? cq.description.substring(0, 100) + " <b>...</b>" : cq.description;
-                            concurrency = cq.is_concurrency_question ? '<span class="badge bg-light-success">Y</span>' : '<span class="badge bg-light-danger">N</span>';
-                            test_cases = cq.testcase_set.length == 0 ? '<span class="badge bg-light-danger">No test cases set</span>' : cq.testcase_set.length;
-                            languages = cq.languages.length == 0 
-                                ? '<span class="badge bg-light-danger">No languages set</span>' 
-                                : cq.languages.slice(0,2).map((language) => `<span class="badge bg-light-secondary" style="margin-right: 2px;">${language.name}</span>`).join("");
-                            if (cq.languages.length > 2) {
-                                languages += `<span class="badge bg-light-secondary">+${cq.languages.length - 2} more</span>`;
-                            }
-                            let tags = "";
-                            cq.tags.forEach((t) => {
-                                tags += "<span class='badge bg-light-secondary me-1'>" + t.name + "</span>";
-                            })
-                            preview_url = "{% url 'preview-question' code_question_id=0 %}".replace("0", cq.id);
-                            disabled_buttons = cq.languages.length === 0 || cq.testcase_set.length === 0
-                            newRows += "<tr><td>" + cq.name 
-                                + "</td><td>" + trimmed_description 
-                                + "</td><td>" + test_cases 
-                                + "</td><td>" + languages 
-                                + "</td><td>" + concurrency 
-                                + "</td><td>" + tags 
-                                + "</td><td>" + `<a href=${preview_url} target="_blank" class="btn btn-sm btn-warning ${disabled_buttons && "disabled"}">Preview</a>`
-                                + `<button type='button' class='btn btn-success btn-sm ${disabled_buttons && "disabled"}' style='margin-left: 3px;' onclick='addCodeQuestion(this)' data-cq-id='` + cq.id + "'>Add</button>"
-                                + "</td></tr>"
-                        })
-                        codeQuestionTableBody.append(newRows);
-                    }
-                }
-            }, 300);
-        }).fail((jqXHR, textStatus, errorThrown) => {
-            // hide loading
-            codeQuestionLoading(false);
-
-            // 4xx status codes
-            if (Math.floor(jqXHR.status / 100) == 4) {
-                codeQuestionTableBody.html("<tr><td colspan='4' class='text-center p-5'>Something went wrong with your request! &#x1F622;</td></tr>");
-                console.error("Result returned not successful.");
-            }
-            else {
-                codeQuestionTableBody.html("<tr><td colspan='4' class='text-center p-5'>Something went wrong with your request! &#x1F622;</td></tr>");
-                console.error("Failed to contact API.");
-            }
-        })
-    }
-
-    // show and hide loading statuses
-    const codeQuestionLoading = (enabled) => {
-        const filterCodeQuestionButton = $("#filter-cq-btn");
-        if (enabled) {
-            // filter button
-            filterCodeQuestionButton.prop("disabled", true);
-            filterCodeQuestionButton.html("<div class='spinner-border spinner-border-sm'></div>");
-
-            // loading in table
-            codeQuestionTableBody.html("<tr><td colspan='4' class='text-center p-5'><div class='spinner-border spinner-border-sm me-1'></div> Loading ...</td></tr>");
-        } else {
-            // filter button
-            filterCodeQuestionButton.prop("disabled", false);
-            filterCodeQuestionButton.html("Filter");
-            codeQuestionTableBody.empty();
-        }
-    }
-
-    // add code question clicked
-    const addCodeQuestion = (btn) => {
-        const code_question_id = $(btn).data('cq-id');
-        const addCqResult = $("#add-cq-result");
-
-        // set button state
-        $(btn).prop("disabled", true);
-        $(btn).html("<div class='spinner-border spinner-border-sm'></div>");
-
-        // clear result message
-        addCqResult.removeClass("text-success text-danger");
-        addCqResult.empty();
-
-        // set refresh flag
-        refreshNeeded = true;
-
-        // prepare form data
-        let formData = new FormData();
-        formData.append("code_question_id", code_question_id);
-        formData.append("assessment_id", "{{ assessment.id }}");
-        formData.append("csrfmiddlewaretoken", "{{ csrf_token }}");
-
-        // ajax request
-        $.ajax({
-            type: 'POST',
-            url: "{% url 'add-code-question-to-assessment' %}",
-            data: formData,
-            processData: false,
-            contentType: false,
-        }).done((res, textStatus, jqXHR) => {
-            setTimeout(() => {
-                // set message
-                if (res.result === "success") {
-                    addCqResult.html("The question has been added to the assessment! &#x2705;")
-                    addCqResult.addClass("text-success");
-                }
-
-                // reset button state
-                $(btn).prop("disabled", false);
-                $(btn).html("Add");
-            }, 300);
-        }).fail((jqXHR, textStatus, errorThrown) => {
-            // 4xx status codes
-            if (Math.floor(jqXHR.status / 100) == 4) {
-                addCqResult.html("Something went wrong with your request! &#x1F622;")
-                addCqResult.addClass("text-danger");
-                console.error("Result returned not successful.");
-            }
-            else {
-                addCqResult.html("Something went wrong with your request! &#x1F622;")
-                addCqResult.addClass("text-danger");
-                console.error("Failed to contact API.");
-            }
-
-            // reset button state
-            $(btn).prop("disabled", false);
-            $(btn).html("Add");
-        });
-    };
-
-    // refresh page when modal is closed, if needed
-    codeQuestionModal.on('hide.bs.modal', function (e) {
-        if (refreshNeeded) location.reload();
-    });
-
-    // load table when modal is opened, if needed
-    codeQuestionModal.on('show.bs.modal', function (e) {
-        if (cqFirstLaunch) {
-            filterCodeQuestion();
-            cqFirstLaunch = false;
-        }
-    });
-</script>
+<!-- Add from question bank modal script -->
+{% include 'assessments/scripts/code-question-bank-modal-script.html' %}
+{% include 'assessments/scripts/mcq-question-bank-modal-script.html' %}
 
 <!-- Delete question script -->
 {% include 'code_questions/snippets/delete-question-script.html' %}

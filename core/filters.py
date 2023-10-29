@@ -25,7 +25,7 @@ class CourseStudentFilter(django_filters.FilterSet):
         return queryset.filter(enrolled_groups=value)
 
 
-class CodeQuestionFilter(django_filters.FilterSet):
+class QuestionBankFilter(django_filters.FilterSet):
     question_bank = django_filters.ModelChoiceFilter(queryset=QuestionBank.objects.none(), label="Question Bank", method="filter_qb")
 
     class Meta:
@@ -33,7 +33,7 @@ class CodeQuestionFilter(django_filters.FilterSet):
         fields = ['question_bank', 'name', 'tags']
 
     def __init__(self, question_banks, *args, **kwargs):
-        super(CodeQuestionFilter, self).__init__(*args, **kwargs)
+        super(QuestionBankFilter, self).__init__(*args, **kwargs)
         self.filters['question_bank'].queryset = question_banks
         self.filters['name'].lookup_expr = "icontains"
 

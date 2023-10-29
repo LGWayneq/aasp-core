@@ -1,0 +1,181 @@
+<script>
+    let refreshNeeded = false;
+</script>
+
+<script>
+    let cqFirstLaunch = true;
+    const codeQuestionTableBody = $("#code-question-table > tbody");
+    const codeQuestionModal = $('#code-questions-modal');
+
+    // choices.js: code questions tag selector
+    const cq_tags = document.getElementById("cq_id_tags");
+    let codeChoice = new Choices(cq_tags, {
+        removeItemButton: true,
+        renderChoiceLimit: 5,
+    });
+
+    // filter button clicked
+    const filterCodeQuestion = () => {
+        const form = document.getElementById("code-questions-filter-form");
+        const formData = new FormData(form);
+        const data = [...formData.entries()];
+        const asString = data.map(x => `${encodeURIComponent(x[0])}=${encodeURIComponent(x[1])}`).join('&');
+
+        // show loading
+        codeQuestionLoading(true);
+
+        $.ajax({
+            type: 'GET',
+            url: "{% url 'get-code-questions' %}?" + asString,
+            data: formData,
+            processData: false,
+            contentType: false,
+        }).done((res, textStatus, jqXHR) => {
+            setTimeout(() => {
+                // hide loading
+                codeQuestionLoading(false);
+
+                // update table based on response
+                if (res.result === "success") {
+                    if (res.code_questions.length === 0) {
+                        codeQuestionTableBody.html("<tr><td colspan='7' class='text-center p-5'>No code questions found! &#x1F622;</td></tr>");
+                    }
+                    else {
+                        let newRows = "";
+                        res.code_questions.forEach((cq) => {
+                            trimmed_description = cq.description.length > 100 ? cq.description.substring(0, 100) + " <b>...</b>" : cq.description;
+                            concurrency = cq.is_concurrency_question ? '<span class="badge bg-light-success">Y</span>' : '<span class="badge bg-light-danger">N</span>';
+                            test_cases = cq.testcase_set.length == 0 ? '<span class="badge bg-light-danger">No test cases set</span>' : cq.testcase_set.length;
+                            languages = cq.languages.length == 0 
+                                ? '<span class="badge bg-light-danger">No languages set</span>' 
+                                : cq.languages.slice(0,2).map((language) => `<span class="badge bg-light-secondary" style="margin-right: 2px;">${language.name}</span>`).join("");
+                            if (cq.languages.length > 2) {
+                                languages += `<span class="badge bg-light-secondary">+${cq.languages.length - 2} more</span>`;
+                            }
+                            let tags = "";
+                            cq.tags.forEach((t) => {
+                                tags += "<span class='badge bg-light-secondary me-1'>" + t.name + "</span>";
+                            })
+                            preview_url = "{% url 'preview-question' question_id=0 %}".replace("0", cq.id);
+                            disabled_buttons = cq.languages.length === 0 || cq.testcase_set.length === 0
+                            newRows += "<tr><td>" + cq.name 
+                                + "</td><td>" + trimmed_description 
+                                + "</td><td>" + test_cases 
+                                + "</td><td>" + languages 
+                                + "</td><td>" + concurrency 
+                                + "</td><td>" + tags 
+                                + "</td><td>" + `<a href=${preview_url} target="_blank" class="btn btn-sm btn-warning ${disabled_buttons && "disabled"}">Preview</a>`
+                                + `<button type='button' class='btn btn-success btn-sm ${disabled_buttons && "disabled"}' style='margin-left: 3px;' onclick='addCodeQuestion(this)' data-cq-id='` + cq.id + "'>Add</button>"
+                                + "</td></tr>"
+                        })
+                        codeQuestionTableBody.append(newRows);
+                    }
+                }
+            }, 300);
+        }).fail((jqXHR, textStatus, errorThrown) => {
+            // hide loading
+            codeQuestionLoading(false);
+
+            // 4xx status codes
+            if (Math.floor(jqXHR.status / 100) == 4) {
+                codeQuestionTableBody.html("<tr><td colspan='7' class='text-center p-5'>Something went wrong with your request! &#x1F622;</td></tr>");
+                console.error("Result returned not successful.");
+            }
+            else {
+                codeQuestionTableBody.html("<tr><td colspan='7' class='text-center p-5'>Something went wrong with your request! &#x1F622;</td></tr>");
+                console.error("Failed to contact API.");
+            }
+        })
+    }
+
+    // show and hide loading statuses
+    const codeQuestionLoading = (enabled) => {
+        const filterCodeQuestionButton = $("#filter-cq-btn");
+        if (enabled) {
+            // filter button
+            filterCodeQuestionButton.prop("disabled", true);
+            filterCodeQuestionButton.html("<div class='spinner-border spinner-border-sm'></div>");
+
+            // loading in table
+            codeQuestionTableBody.html("<tr><td colspan='7' class='text-center p-5'><div class='spinner-border spinner-border-sm me-1'></div> Loading ...</td></tr>");
+        } else {
+            // filter button
+            filterCodeQuestionButton.prop("disabled", false);
+            filterCodeQuestionButton.html("Filter");
+            codeQuestionTableBody.empty();
+        }
+    }
+
+    // add code question clicked
+    const addCodeQuestion = (btn) => {
+        const code_question_id = $(btn).data('cq-id');
+        const addCqResult = $("#add-cq-result");
+
+        // set button state
+        $(btn).prop("disabled", true);
+        $(btn).html("<div class='spinner-border spinner-border-sm'></div>");
+
+        // clear result message
+        addCqResult.removeClass("text-success text-danger");
+        addCqResult.empty();
+
+        // set refresh flag
+        refreshNeeded = true;
+
+        // prepare form data
+        let formData = new FormData();
+        formData.append("code_question_id", code_question_id);
+        formData.append("assessment_id", "{{ assessment.id }}");
+        formData.append("csrfmiddlewaretoken", "{{ csrf_token }}");
+
+        // ajax request
+        $.ajax({
+            type: 'POST',
+            url: "{% url 'add-code-question-to-assessment' %}",
+            data: formData,
+            processData: false,
+            contentType: false,
+        }).done((res, textStatus, jqXHR) => {
+            setTimeout(() => {
+                // set message
+                if (res.result === "success") {
+                    addCqResult.html("The question has been added to the assessment! &#x2705;")
+                    addCqResult.addClass("text-success");
+                }
+
+                // reset button state
+                $(btn).prop("disabled", false);
+                $(btn).html("Add");
+            }, 300);
+        }).fail((jqXHR, textStatus, errorThrown) => {
+            // 4xx status codes
+            if (Math.floor(jqXHR.status / 100) == 4) {
+                addCqResult.html("Something went wrong with your request! &#x1F622;")
+                addCqResult.addClass("text-danger");
+                console.error("Result returned not successful.");
+            }
+            else {
+                addCqResult.html("Something went wrong with your request! &#x1F622;")
+                addCqResult.addClass("text-danger");
+                console.error("Failed to contact API.");
+            }
+
+            // reset button state
+            $(btn).prop("disabled", false);
+            $(btn).html("Add");
+        });
+    };
+
+    // refresh page when modal is closed, if needed
+    codeQuestionModal.on('hide.bs.modal', function (e) {
+        if (refreshNeeded) location.reload();
+    });
+
+    // load table when modal is opened, if needed
+    codeQuestionModal.on('show.bs.modal', function (e) {
+        if (cqFirstLaunch) {
+            filterCodeQuestion();
+            cqFirstLaunch = false;
+        }
+    });
+</script>

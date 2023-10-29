@@ -1,0 +1,172 @@
+<script>
+    let mcqRefreshNeeded = false;
+</script>
+
+<script>
+    let mcqFirstLaunch = true;
+    const mcqQuestionTableBody = $("#mcq-question-table > tbody");
+    const mcqQuestionModal = $('#mcq-questions-modal');
+
+    // choices.js: mcq questions tag selector
+    const mcq_tags = document.getElementById("mcq_id_tags");
+    let mcqChoice = new Choices(mcq_tags, {
+        removeItemButton: true,
+        renderChoiceLimit: 5,
+    });
+
+    // filter button clicked
+    const filterMcqQuestion = () => {
+        const form = document.getElementById("mcq-questions-filter-form");
+        const formData = new FormData(form);
+        const data = [...formData.entries()];
+        const asString = data.map(x => `${encodeURIComponent(x[0])}=${encodeURIComponent(x[1])}`).join('&');
+
+        // show loading
+        mcqQuestionLoading(true);
+
+        $.ajax({
+            type: 'GET',
+            url: "{% url 'get-mcq-questions' %}?" + asString,
+            data: formData,
+            processData: false,
+            contentType: false,
+        }).done((res, textStatus, jqXHR) => {
+            setTimeout(() => {
+                // hide loading
+                mcqQuestionLoading(false);
+
+                // update table based on response
+                if (res.result === "success") {
+                    if (res.mcq_questions.length === 0) {
+                        mcqQuestionTableBody.html("<tr><td colspan='5' class='text-center p-5'>No mcq questions found! &#x1F622;</td></tr>");
+                    }
+                    else {
+                        let newRows = "";
+                        res.mcq_questions.forEach((mcq) => {
+                            trimmed_description = mcq.description.length > 130 ? mcq.description.substring(0, 130) + " <b>...</b>" : mcq.description;
+                            concurrency = mcq.is_concurrency_question ? '<span class="badge bg-light-success">Y</span>' : '<span class="badge bg-light-danger">N</span>';
+
+                            let tags = "";
+                            mcq.tags.forEach((t) => {
+                                tags += "<span class='badge bg-light-secondary me-1'>" + t.name + "</span>";
+                            })
+                            preview_url = "{% url 'preview-question' question_id=0 %}".replace("0", mcq.id);
+                            newRows += "<tr><td>" + mcq.name 
+                                + "</td><td>" + trimmed_description 
+                                + "</td><td>" + concurrency 
+                                + "</td><td>" + tags 
+                                + "</td><td>" + `<a href=${preview_url} target="_blank" class="btn btn-sm btn-warning">Preview</a>`
+                                + `<button type='button' class='btn btn-success btn-sm' style='margin-left: 3px;' onclick='addMcqQuestion(this)' data-cq-id='` + mcq.id + "'>Add</button>"
+                                + "</td></tr>"
+                        })
+                        mcqQuestionTableBody.append(newRows);
+                    }
+                }
+            }, 300);
+        }).fail((jqXHR, textStatus, errorThrown) => {
+            // hide loading
+            mcqQuestionLoading(false);
+
+            // 4xx status codes
+            if (Math.floor(jqXHR.status / 100) == 4) {
+                mcqQuestionTableBody.html("<tr><td colspan='5' class='text-center p-5'>Something went wrong with your request! &#x1F622;</td></tr>");
+                console.error("Result returned not successful.");
+            }
+            else {
+                mcqQuestionTableBody.html("<tr><td colspan='5' class='text-center p-5'>Something went wrong with your request! &#x1F622;</td></tr>");
+                console.error("Failed to contact API.");
+            }
+        })
+    }
+
+    // show and hide loading statuses
+    const mcqQuestionLoading = (enabled) => {
+        const filterMcqQuestionButton = $("#filter-cq-btn");
+        if (enabled) {
+            // filter button
+            filterMcqQuestionButton.prop("disabled", true);
+            filterMcqQuestionButton.html("<div class='spinner-border spinner-border-sm'></div>");
+
+            // loading in table
+            mcqQuestionTableBody.html("<tr><td colspan='5' class='text-center p-5'><div class='spinner-border spinner-border-sm me-1'></div> Loading ...</td></tr>");
+        } else {
+            // filter button
+            filterMcqQuestionButton.prop("disabled", false);
+            filterMcqQuestionButton.html("Filter");
+            mcqQuestionTableBody.empty();
+        }
+    }
+
+    // add mcq question clicked
+    const addMcqQuestion = (btn) => {
+        const mcq_question_id = $(btn).data('cq-id');
+        const addMcqResult = $("#add-mcq-result");
+
+        // set button state
+        $(btn).prop("disabled", true);
+        $(btn).html("<div class='spinner-border spinner-border-sm'></div>");
+
+        // clear result message
+        addMcqResult.removeClass("text-success text-danger");
+        addMcqResult.empty();
+
+        // set refresh flag
+        mcqRefreshNeeded = true;
+
+        // prepare form data
+        let formData = new FormData();
+        formData.append("mcq_question_id", mcq_question_id);
+        formData.append("assessment_id", "{{ assessment.id }}");
+        formData.append("csrfmiddlewaretoken", "{{ csrf_token }}");
+
+        // ajax request
+        $.ajax({
+            type: 'POST',
+            url: "{% url 'add-mcq-question-to-assessment' %}",
+            data: formData,
+            processData: false,
+            contentType: false,
+        }).done((res, textStatus, jqXHR) => {
+            setTimeout(() => {
+                // set message
+                if (res.result === "success") {
+                    addMcqResult.html("The question has been added to the assessment! &#x2705;")
+                    addMcqResult.addClass("text-success");
+                }
+
+                // reset button state
+                $(btn).prop("disabled", false);
+                $(btn).html("Add");
+            }, 300);
+        }).fail((jqXHR, textStatus, errorThrown) => {
+            // 4xx status codes
+            if (Math.floor(jqXHR.status / 100) == 4) {
+                addMcqResult.html("Something went wrong with your request! &#x1F622;")
+                addMcqResult.addClass("text-danger");
+                console.error("Result returned not successful.");
+            }
+            else {
+                addMcqResult.html("Something went wrong with your request! &#x1F622;")
+                addMcqResult.addClass("text-danger");
+                console.error("Failed to contact API.");
+            }
+
+            // reset button state
+            $(btn).prop("disabled", false);
+            $(btn).html("Add");
+        });
+    };
+
+    // refresh page when modal is closed, if needed
+    mcqQuestionModal.on('hide.bs.modal', function (e) {
+        if (mcqRefreshNeeded) location.reload();
+    });
+
+    // load table when modal is opened, if needed
+    mcqQuestionModal.on('show.bs.modal', function (e) {
+        if (mcqFirstLaunch) {
+            filterMcqQuestion();
+            mcqFirstLaunch = false;
+        }
+    });
+</script>

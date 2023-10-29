@@ -13,10 +13,10 @@ from rest_framework.decorators import api_view, renderer_classes
 from rest_framework.renderers import JSONRenderer
 
 from core.decorators import groups_allowed, UserGroup
-from core.filters import CodeQuestionFilter
+from core.filters import QuestionBankFilter
 from core.forms.assessments import AssessmentForm
-from core.models import Course, Assessment, CodeQuestion, TestCase, CodeSnippet, Tag, QuestionBank
-from core.serializers import CodeQuestionsSerializer
+from core.models import Course, Assessment, CodeQuestion, McqQuestion, McqQuestionOption, TestCase, CodeSnippet, Tag, QuestionBank
+from core.serializers import CodeQuestionsSerializer, McqQuestionSerializer
 from core.views.utils import check_permissions_course, check_permissions_assessment, check_permissions_question, \
     construct_assessment_published_email
 
@@ -178,7 +178,7 @@ def get_code_questions(request):
 
             # get all code questions accessible by this user
             all_code_questions = CodeQuestion.objects.filter(question_bank__in=all_question_banks)
-            code_question_filter = CodeQuestionFilter(all_question_banks, request.GET, queryset=all_code_questions)
+            code_question_filter = QuestionBankFilter(all_question_banks, request.GET, queryset=all_code_questions)
 
             # serialize filtered queryset
             code_questions = CodeQuestionsSerializer(code_question_filter.qs, many=True)
@@ -195,6 +195,42 @@ def get_code_questions(request):
             "message": f"{ex}" 
         } 
         return Response(error_context, status=status.HTTP_400_BAD_REQUEST)
+    
+
+@api_view(["GET"])
+@renderer_classes([JSONRenderer])
+@login_required()
+@groups_allowed(UserGroup.educator)
+def get_mcq_questions(request):
+    """
+    Used in the Assessment Details page for educators to clone questions from question banks into assessments.
+    """
+    try:
+        if request.method == "GET":
+            # get all question banks accessible by this user
+            all_question_banks = QuestionBank.objects.filter(
+                Q(owner=request.user) | Q(shared_with=request.user, private=True) | Q(private=False)).distinct()
+
+            # get all mcq questions accessible by this user
+            all_mcq_questions = McqQuestion.objects.filter(question_bank__in=all_question_banks)
+            mcq_question_filter = QuestionBankFilter(all_question_banks, request.GET, queryset=all_mcq_questions)
+
+            # serialize filtered queryset
+            mcq_questions = McqQuestionSerializer(mcq_question_filter.qs, many=True)
+
+            context = {
+                "result": "success",
+                "mcq_questions": mcq_questions.data,
+            }
+            return Response(context, status=status.HTTP_200_OK)
+    
+    except Exception as ex:
+        error_context = { 
+            "result": "error",
+            "message": f"{ex}" 
+        } 
+        return Response(error_context, status=status.HTTP_400_BAD_REQUEST)
+
 
 
 @api_view(["POST"])
@@ -257,6 +293,74 @@ def add_code_question_to_assessment(request):
                 # duplicate and link tags (M2M)
                 for t in tags:
                     code_question.tags.add(t.id)
+
+                # remove past assessment attempts
+                assessment.assessmentattempt_set.all().delete()
+
+            context = { "result": "success" }
+            return Response(context, status=status.HTTP_200_OK)
+
+    except Exception as ex:
+        error_context = {
+            "result": "error",
+            "message": f"{ex}",
+        } 
+        return Response(error_context, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(["POST"])
+@renderer_classes([JSONRenderer])
+@login_required()
+@groups_allowed(UserGroup.educator)
+def add_mcq_question_to_assessment(request):
+    try:
+        if request.method == "POST":
+            # generic error response
+            error_context = { "result": "error", }
+
+            # get assessment object
+            assessment = Assessment.objects.filter(id=request.POST.get('assessment_id')).first()
+            if assessment is None:
+                return Response(error_context, status=status.HTTP_404_NOT_FOUND)
+
+            # check permissions
+            if check_permissions_assessment(assessment, request.user) == 0:
+                return Response(error_context, status=status.HTTP_401_UNAUTHORIZED)
+
+            # disallow if assessment is already published
+            if assessment.published:
+                return Response(error_context, status=status.HTTP_403_FORBIDDEN)
+
+            # get question (ensure only objects from question banks are allowed)
+            mcq_question_id = request.POST.get('mcq_question_id')
+            mcq_question = McqQuestion.objects.filter(id=mcq_question_id, assessment__isnull=True,
+                                                        question_bank__isnull=False).first()
+            if mcq_question is None:
+                return Response(error_context, status=status.HTTP_404_NOT_FOUND)
+
+            tags = mcq_question.tags.all()
+
+            # check permissions (need at least Read permissions to clone)
+            if check_permissions_question(mcq_question, request.user) == 0:
+                return Response(error_context, status=status.HTTP_401_UNAUTHORIZED)
+
+            with transaction.atomic():
+                # duplicate and link mcq question
+                mcq_question.pk = None
+                mcq_question.question_bank = None  # remove link to qb
+                mcq_question.assessment = assessment  # link to current assessment
+                mcq_question.save()
+
+                # duplicate and link mcq options
+                mcq_options = McqQuestionOption.objects.filter(mcq_question=mcq_question_id)
+                for option in mcq_options:
+                    option.pk = None
+                    option.mcq_question = mcq_question
+                    option.save()
+
+                # duplicate and link tags (M2M)
+                for t in tags:
+                    mcq_question.tags.add(t.id)
 
                 # remove past assessment attempts
                 assessment.assessmentattempt_set.all().delete()

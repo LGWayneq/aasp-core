@@ -1,0 +1,88 @@
+<div class="modal fade" id="mcq-questions-modal" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-dialog-centered modal-xl modal-dialog-scrollable" role="document">
+        <div class="modal-content">
+            <!-- Modal Header -->
+            <div class="modal-header">
+                <h5 class="modal-title">Add MCQ Question from Question Bank</h5>
+                <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+
+            <!-- Modal Body -->
+            <div class="modal-body">
+                <!-- Filter form -->
+                <div id="filter-form-div">
+                    <h5>Filters</h5>
+                    <p>Filter for the MCQ question that you would like to copy into the assessment.</p>
+
+                    <form id="mcq-questions-filter-form">
+                        <div class="row">
+                            <!-- Question bank input -->
+                            <div class="col-4">
+                                <div class="form-group">
+                                    <label for="mcq_id_question_bank">Question Bank</label>
+                                    <select class="form-select form-select-lg" name="question_bank" onchange="filterMcqQuestion();" id="mcq_id_question_bank">
+                                        <option value="" selected="">---------</option>
+                                        {% for qb in all_question_banks %}
+                                        <option value="{{ qb.id }}">{{ qb.name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+
+                            <!-- Name -->
+                            <div class="col-4">
+                                <div class="form-group">
+                                    <label for="mcq_id_name">Question Name</label>
+                                    <input type="text" class="form-control form-control-lg" name="name" oninput="filterMcqQuestion();" id="mcq_id_name">
+                                </div>
+                            </div>
+
+                            <!-- Tags -->
+                            <div class="col-4">
+                                <div class="form-group">
+                                    <label for="mcq_id_tags">Tags</label>
+                                    <select name="tags" onchange="filterMcqQuestion();" id="mcq_id_tags" multiple>
+                                        {% for tag in tags %}
+                                        <option value="{{ tag.id }}">{{ tag.name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Results tables -->
+                <div id="questions-results-div">
+                    <!-- MCQ questions table -->
+                    <table class="table-responsive table table-hover mb-0" id="mcq-question-table">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th style="width: 40%">Description</th>
+                                <th style="width: 140px">Multiple Answers</th>
+                                <th>Tags</th>
+                                <th style="width: 115px;">Actions
+                                    <div class="spinner-border spinner-border-sm" id="actions-loading"
+                                        style="display:none"></div>
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        </tbody>
+                    </table>
+
+                    <!-- MCQ table, etc -->
+                </div>
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="modal-footer d-flex justify-content-between align-items-center">
+                <p id="add-mcq-result"></p>
+                <button type="button" class="btn btn-light-secondary" data-bs-dismiss="modal">Done</button>
+            </div>
+        </div>
+    </div>
+</div>
