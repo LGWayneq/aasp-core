@@ -98,7 +98,8 @@ urlpatterns = [
     path('assessment/report/<int:assessment_id>/question/<int:question_id>', reports.question_report, name='question-report'),
     path('api/get-candidate-attempts/<int:assessment_id>/', reports.get_candidate_attempts, name='get-candidate-attempts'),  # ajax
     path('assessment/attempt/details/', reports.assessment_attempt_details, name='assessment-attempt-details'),
-    path('assessment/submission/details/<int:cqs_id>/', reports.submission_details, name='submission-details'),
+    path('assessment/code-submission/details/<int:cqs_id>/', reports.code_submission_details, name='code-submission-details'),
+    path('api/mcq-attempt-details/', reports.mcq_attempt_details, name='mcq-attempt-details'), # ajax
     path('assessment/export-assessment-results/<int:assessment_id>/', reports.export_assessment_results, name='export-assessment-results'),
     path('assessment/submission/candidate-snapshots/', reports.candidate_snapshots, name='candidate-snapshots'),
 

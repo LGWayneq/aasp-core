@@ -87,7 +87,7 @@
                             <td>{{ cqs.language }}</td>
                             <td>{{ cqs.score }}</td>
                             <td>
-                                <a class="text-success" target="_blank" href="{% url 'submission-details' cqs_id=cqs.id %}">View <i class="fa-solid fa-arrow-up-right-from-square"></i></a>
+                                <a class="text-success" target="_blank" href="{% url 'code-submission-details' cqs_id=cqs.id %}">View <i class="fa-solid fa-arrow-up-right-from-square"></i></a>
                             </td>
                         </tr>
                     {% endfor %}
@@ -132,7 +132,7 @@
                                 <td>{{ cqs.language }}</td>
                                 <td>{{ cqs.score }}</td>
                                 <td>
-                                    <a class="text-success" target="_blank" href="{% url 'submission-details' cqs_id=cqs.id %}">View <i class="fa-solid fa-arrow-up-right-from-square"></i></a>
+                                    <a class="text-success" target="_blank" href="{% url 'code-submission-details' cqs_id=cqs.id %}">View <i class="fa-solid fa-arrow-up-right-from-square"></i></a>
                                 </td>
                             </tr>
                         {% endfor %}

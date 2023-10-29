@@ -128,7 +128,7 @@
                                 <td>{{ attempt.assessment_attempt.candidate }}</td>
                                 <td>{{ attempt.score }}</td>
                                 <td>
-                                    <button class="btn btn-success disabled" href="{% url 'submission-details' cqs_id=attempt.id %}">View</button>
+                                    <button class="btn btn-success disabled" href="{% url 'code-submission-details' cqs_id=attempt.id %}">View</button>
                                 </td>
                             </tr>
                         {% endfor %}

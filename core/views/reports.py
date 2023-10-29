@@ -13,7 +13,7 @@ from rest_framework.decorators import api_view, renderer_classes
 from rest_framework.renderers import JSONRenderer
 
 from core.decorators import UserGroup, groups_allowed
-from core.models import Course, Assessment, AssessmentAttempt, CodeQuestionSubmission, CodeQuestion, McqQuestion, McqQuestionAttempt, TestCaseAttempt, TestCase, CandidateSnapshot
+from core.models import Course, Assessment, AssessmentAttempt, CodeQuestionSubmission, CodeQuestion, McqQuestion, McqQuestionOption, McqQuestionAttempt, McqQuestionAttemptOption, TestCaseAttempt, TestCase, CandidateSnapshot
 from core.views.utils import check_permissions_assessment, get_question_instance
 from core.views.charts import generate_score_distribution_graph, generate_assessment_time_spent_graph, generate_question_time_spent_graph, calculate_median, calculate_mean
 
@@ -259,9 +259,38 @@ def assessment_attempt_details(request):
     return render(request, "reports/assessment-attempt-details.html", context)
 
 
+@api_view(["GET"])
+@renderer_classes([JSONRenderer])
 @login_required()
 @groups_allowed(UserGroup.educator)
-def submission_details(request, cqs_id):
+def mcq_attempt_details(request):
+    try:
+        mcq_attempt_id = request.GET.get("mcq_attempt_id")
+        mcq_attempt = McqQuestionAttempt.objects.filter(id=mcq_attempt_id).values().first()
+        mcq_attempt_option_ids = McqQuestionAttemptOption.objects.filter(mcq_attempt=mcq_attempt_id).values_list('selected_option_id', flat=True)
+        mcq_question_options = McqQuestionOption.objects.filter(mcq_question=mcq_attempt['mcq_question_id']).values()
+        mcq_question = McqQuestion.objects.filter(id=mcq_attempt["mcq_question_id"]).values().first()
+
+        context = {
+            'result': 'success',
+            'mcq_attempt': mcq_attempt,
+            'mcq_attempt_option_ids': mcq_attempt_option_ids,
+            'mcq_question_options': mcq_question_options,
+            'mcq_question': mcq_question,
+        }
+
+        return Response(context, status=status.HTTP_200_OK)
+    except Exception as ex:
+        error_context = { 
+            "result": "error",
+            "message": f"{ex}"
+        }
+        return Response(error_context, status=status.HTTP_400_BAD_REQUEST)
+
+
+@login_required()
+@groups_allowed(UserGroup.educator)
+def code_submission_details(request, cqs_id):
     cqs = get_object_or_404(CodeQuestionSubmission, id=cqs_id)
     test_case_attempts = TestCaseAttempt.objects.filter(cq_submission=cqs).order_by('test_case__id')
     context = {
@@ -269,7 +298,7 @@ def submission_details(request, cqs_id):
         'test_case_attempts': test_case_attempts,
     }
 
-    return render(request, "reports/submission-details.html", context)
+    return render(request, "reports/code-submission-details.html", context)
 
 
 @login_required()
