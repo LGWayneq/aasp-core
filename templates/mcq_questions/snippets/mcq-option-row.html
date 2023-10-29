@@ -1,6 +1,8 @@
 <div id="option-{{ forloop.counter0 }}">
   <label id="option-label-{{ forloop.counter0 }}" class="mb-2">Option {{ forloop.counter }}</label>
-  <input type="hidden" name="mcq-{{ forloop.counter0 }}-id" value="{{ option.id.value }}" id="id_mcq-{{ forloop.counter0 }}-id">
+  {% if option.id.value %}
+    <input type="hidden" name="mcq-{{ forloop.counter0 }}-id" value="{{ option.id.value }}" id="id_mcq-{{ forloop.counter0 }}-id">
+  {% endif %}
   <input type="checkbox" style="visibility:hidden" class="delete-checkbox" name="mcq-{{ forloop.counter0 }}-DELETE" id="id_mcq-{{ forloop.counter0 }}-DELETE" {% if form.DELETE.value %}checked{% endif %}>
   <button type="button" class="btn btn-danger btn-sm float-end mb-2" onclick="deleteOption(this);" {% if forloop.last and forloop.counter0 == 0 %}disabled{% endif %}>Delete</button>
   <div class="mb-3">
