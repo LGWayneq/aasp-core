@@ -123,7 +123,7 @@
                 <th>Languages</th>
                 <th>Concurrency</th>
                 <th>Tags</th>
-                <th>Actions
+                <th width="230px">Actions
                   <div class="spinner-border spinner-border-sm" id="actions-loading" style="display:none"></div>
                 </th>
               </tr>
@@ -174,7 +174,7 @@
                       {% endif %}
                     </td>
                     <td>
-                      <a href="{% url 'preview-question' code_question_id=q.id %}" target="_blank"
+                      <a href="{% url 'preview-question' question_id=q.id %}" target="_blank"
                         class="btn btn-sm btn-warning {% if q.languages.count == 0 or q.testcase_set.count == 0 %}disabled{% endif %}">Preview</a>
                       <button type="button" id="more-details" class="btn btn-sm btn-primary view-modal" data-cq-id="{{ q.id }}"
                         onclick="viewCodeModal(this)">
@@ -222,7 +222,7 @@
                 <th>Score</th>
                 <th>Multiple Answers</th>
                 <th>Tags</th>
-                <th>Actions
+                <th width="230px">Actions
                   <div class="spinner-border spinner-border-sm" id="actions-loading" style="display:none"></div>
                 </th>
               </tr>
@@ -254,8 +254,8 @@
                       {% endif %}
                     </td>
                     <td>
-                      <a href="{% url 'preview-question' code_question_id=q.id %}" target="_blank"
-                        class="btn btn-sm btn-warning disabled">Preview</a>
+                      <a href="{% url 'preview-question' question_id=q.id %}" target="_blank"
+                        class="btn btn-sm btn-warning">Preview</a>
                       <button type="button" id="more-details" class="btn btn-sm btn-primary view-modal" data-mcq-id="{{ q.id }}"
                         onclick="viewMcqModal(this)">
                         View

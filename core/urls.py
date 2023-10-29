@@ -2,7 +2,7 @@ from django.urls import include, path, re_path
 from django.views.static import serve
 from django.conf import settings
 
-from .views import auth, user_management, dashboards, course_management, question_banks, code_questions, assessments, attempts, reports, mcq_questions
+from .views import auth, user_management, dashboards, course_management, question_banks, code_questions, assessments, attempts, reports, mcq_questions, preview
 
 static_urlpatterns = [
     re_path(r"^media/(?P<path>.*)$", serve, {"document_root": settings.MEDIA_ROOT}),
@@ -49,6 +49,9 @@ urlpatterns = [
     path('qb/import/', question_banks.import_question_bank, name='import-question-bank'),
     path('qb/delete/<int:question_bank_id>/', question_banks.delete_question_bank, name='delete-question-bank'),
 
+    # question preview
+    path('question/preview/<int:question_id>/', preview.preview_question, name='preview-question'),  # step 1
+
     # code questions
     path('code-question/create/<str:parent>/<int:parent_id>/', code_questions.create_code_question, name='create-code-question'),  # step 1
     path('code-question/<int:code_question_id>/update-languages/', code_questions.update_languages, name='update-languages'),  # step 2
@@ -58,7 +61,6 @@ urlpatterns = [
     path('code-question/update/<int:code_question_id>/', code_questions.update_code_question, name='update-code-question'),
     path('api/get-code-question-details/', code_questions.get_cq_details, name='get-code-question-details'),  # ajax
     path('api/compile-code/', code_questions.compile_code, name='compile-code'),  # ajax
-    path('code-question/preview/<int:question_id>/', code_questions.preview_question, name='preview-question'),  # step 1
 
     # mcq questions
     path('mcq-question/create/<str:parent>/<int:parent_id>/', mcq_questions.create_mcq_question, name='create-mcq-question'),  

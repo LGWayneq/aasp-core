@@ -123,7 +123,7 @@ def check_permissions_assessment(assessment, user):
 
 def get_question_instance(question_id):
     """
-    Returns the question instance, and the type of question.
+    Returns the question instance
     """
     code_question = CodeQuestion.objects.filter(id=question_id).first()
     if code_question:

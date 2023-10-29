@@ -1,0 +1,121 @@
+{% extends 'layouts/main-no-nav.html' %}
+{% load static %}
+
+{% block title %}{{ assessment.name }}{% endblock %}
+
+{% block styles %}
+  <!-- Split.js, ace editor css -->
+  <style>
+      .split {
+          display: flex;
+          flex-direction: row;
+      }
+
+      .gutter {
+          background-color: #eee;
+          background-repeat: no-repeat;
+          background-position: 50%;
+      }
+
+      .gutter.gutter-horizontal {
+          background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAUAAAAeCAYAAADkftS9AAAAIklEQVQoU2M4c+bMfxAGAgYYmwGrIIiDjrELjpo5aiZeMwF+yNnOs5KSvgAAAABJRU5ErkJggg==');
+          cursor: col-resize;
+      }
+
+      @font-face {
+          font-family: 'JetBrains Mono';
+          src: url('{% static 'fonts/JetBrainsMono-Regular.ttf' %}') format('truetype');
+          font-weight: normal;
+          font-style: normal;
+      }
+
+      /* for ace editor */
+      .readonly-highlight {
+          position: absolute;
+          background-color: red;
+          opacity: 0.1;
+      }
+  </style>
+  <link rel="stylesheet" href="{% static 'vendors/highlight.js/styles/night-owl.min.css' %}">
+  <link rel="stylesheet" href="{% static 'vendors/toastify/toastify.css' %}"/>
+
+{% endblock %}
+
+{% block content %}
+<body onload="WaveDrom.ProcessAll()">
+  <!-- Page Title -->
+  <div class="page-heading">
+    <div class="page-title">
+      <div class="row d-flex align-content-between">
+        <div class="col-9">
+          <div style="display:flex; flex-direction: row; align-items: center;">
+            <div>
+              <h5>Question Preview: </h5>
+              <h2>{{ code_question.name }}</h2>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="alert alert-secondary">
+    <h4 class="alert-heading">This is a question preview</h4>
+    <div class="d-flex justify-content-between px-2">
+        <h6 class="text-danger">Submissions for question previews are not saved.</h6>
+    </div>
+  </div>
+
+  {% if mcq_question %}
+    {% include "preview/snippets/mcq-question-preview-template.html" %}
+  {% elif code_question %}
+    {% include "preview/snippets/code-question-preview-template.html" %}
+  {% endif %}
+{% endblock %}
+
+{% block js %}
+  <script src="{% static 'vendors/jquery/jquery.min.js' %}"></script>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/split.js/1.6.0/split.min.js"></script>
+  <script src="{% static 'vendors/ace/src-noconflict/ace.js' %}" type="text/javascript" charset="utf-8"></script>
+  <script type="text/javascript" src="{% static 'vendors/highlight.js/highlight.min.js' %}"></script>
+  <script type="text/javascript" src="{% static 'vendors/toastify/toastify.js' %}"></script>
+  {% include "includes/js/mathjax.html" %}
+  <!-- momentjs -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/moment-duration-format/1.3.0/moment-duration-format.min.js"></script>
+  <!-- wavedrom -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/wavedrom/3.1.0/skins/default.js" type="text/javascript"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/wavedrom/3.1.0/wavedrom.min.js" type="text/javascript"></script>
+
+  <!-- General script -->
+  <script>
+      Split(['#split-0', '#split-1'], {
+          sizes: [40, 60],
+          minSize: 400,
+          onDrag: () => {
+              editor.resize() // resize code editor when panes are resized
+          }
+      })
+
+      // hljs
+      hljs.highlightAll();
+
+      // marked
+      marked.setOptions({
+          breaks: true
+      })
+      {% if mcq_question %}
+        $("#question-desc").html(marked.parse("{{ mcq_question.description|escapejs }}"));
+      {% elif code_question %}
+        $("#question-desc").html(marked.parse("{{ code_question.description|escapejs }}"));
+      {% endif %}
+
+  </script>
+
+  {% if mcq_question %}
+    {% include "preview/scripts/mcq-question-preview-script.html" %}
+  {% elif code_question %}
+    {% include "preview/scripts/code-question-preview-script.html" %}
+  {% endif %}
+{% endblock %}
