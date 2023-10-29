@@ -703,6 +703,8 @@
 
       // submit code, create new submission
       const submit = () => {
+          saveCodeSnippet();
+          
           // disable buttons
           sampleBtn.prop("disabled", true);
           submitBtn.prop("disabled", true);

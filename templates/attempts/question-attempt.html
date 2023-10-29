@@ -116,7 +116,12 @@
     </div>
   </div>
 
-  {% include 'attempts/snippets/code-question-template.html' %}
+  <!-- Question card -->
+  {% if mcq_question %}
+    {% include 'attempts/snippets/mcq-question-template.html' %}
+  {% elif code_question %}
+    {% include 'attempts/snippets/code-question-template.html' %}
+  {% endif %}
 
   <!-- Tab switching warning modal -->
   {% include 'attempts/modals/tab-switching-modal.html' %}
@@ -155,7 +160,11 @@
       marked.setOptions({
           breaks: true
       })
-      $("#question-desc").html(marked.parse("{{ code_question.description|escapejs }}"));
+      {% if mcq_question %}
+        $("#question-desc").html(marked.parse("{{ mcq_question.description|escapejs }}"));
+      {% elif code_question %}
+        $("#question-desc").html(marked.parse("{{ code_question.description|escapejs }}"));
+      {% endif %}
 
       let validNavigation = false;
       $(document).on('click', '.validNavigation', function () {
@@ -163,11 +172,15 @@
       });
   </script>
 
+  <!-- Question script -->
+  {% if mcq_question %}
+    {% include "attempts/scripts/mcq-question-script.html" %}
+  {% elif code_question %}
+    {% include "attempts/scripts/code-question-script.html" %}
+  {% endif %}
+
   <!-- Tab monitoring -->
   {% include "attempts/scripts/tab-monitoring-script.html" %}
-
-  <!-- Code question script -->
-  {% include "attempts/scripts/code-question-script.html" %}
 
   <!-- Submit assessment -->
   {% include "attempts/scripts/submit-assessment-modal-script.html" %}

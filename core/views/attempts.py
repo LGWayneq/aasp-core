@@ -266,7 +266,7 @@ def attempt_question(request, assessment_attempt_id, question_index):
                 'wavedrom_output': [signal['name'] for signal in data['signal'] if signal['name'].startswith('out_')]
             })
 
-        return render(request, "attempts/code-question-attempt.html", context)
+        return render(request, "attempts/question-attempt.html", context)
     elif isinstance(question_attempt, McqQuestionAttempt):
         mcq_question = question_attempt.mcq_question
         mcq_question_options = McqQuestionOption.objects.filter(mcq_question=mcq_question).order_by('id')
@@ -279,7 +279,7 @@ def attempt_question(request, assessment_attempt_id, question_index):
             'mcq_question_attempt_options': mcq_question_attempt_options
         })
 
-        return render(request, "attempts/mcq-question-attempt.html", context)
+        return render(request, "attempts/question-attempt.html", context)
     else:
         # should not reach here
         raise Exception("Unknown question type!")
