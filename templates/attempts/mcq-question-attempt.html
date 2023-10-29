@@ -70,6 +70,9 @@
     </div>
   </div>
 
+  <!-- Submit assessment modal -->
+  {% include 'attempts/snippets/submit-assessment-modal.html' %}
+
   <!-- Assessment information row -->
   <div class="row">
     <div class="col-9">
@@ -267,7 +270,7 @@
   </script>
 
   <!-- Submit assessment -->
-  {% include "attempts/scripts/submit-assessment-scripts.html" %}
+  {% include "attempts/scripts/submit-assessment-modal-script.html" %}
 
   <!-- Candidate snapshot script -->
   {% include "attempts/scripts/candidate-snapshot-scripts.html" %}

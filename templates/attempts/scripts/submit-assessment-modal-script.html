@@ -1,0 +1,26 @@
+<script>
+    const submitAssessment = (requireConfirmation) => {
+        if (requireConfirmation) {
+            if ({{ assessment_attempt.assessment.limit_tab_switching|yesno:"true,false"}}) {
+              window.onblur = () => {};
+            }
+    
+            $('#submitAssessmentModal').modal('show');            
+        } else {
+            document.getElementById("end-assessment-form").submit();
+        }
+    };
+
+    const confirmSubmit = () => {
+        document.getElementById("end-assessment-form").submit();
+    }
+
+    const cancelSubmit = () => {
+        if ({{ assessment_attempt.assessment.limit_tab_switching|yesno:"true,false"}}) {
+            setTimeout(() => {
+                window.onblur = () => { handleTabSwitch(); }
+            }, 1000);
+        }
+        $('#submitAssessmentModal').modal('hide');
+    }
+</script>
