@@ -50,21 +50,21 @@ urlpatterns = [
     path('qb/delete/<int:question_bank_id>/', question_banks.delete_question_bank, name='delete-question-bank'),
 
     # question preview
-    path('question/preview/<int:question_id>/', preview.preview_question, name='preview-question'),  # step 1
+    path('question/preview/<uuid:question_id>/', preview.preview_question, name='preview-question'),  # step 1
 
     # code questions
     path('code-question/create/<str:parent>/<int:parent_id>/', code_questions.create_code_question, name='create-code-question'),  # step 1
-    path('code-question/<int:code_question_id>/update-languages/', code_questions.update_languages, name='update-languages'),  # step 2
-    path('code-question/<int:code_question_id>/update-question-type/', code_questions.update_question_type, name='update-question-type'),  # step 2.1 (HDL)
-    path('code-question/<int:code_question_id>/generate-module-code/', code_questions.generate_module_code, name='generate-module-code'),  # step 2.2 (HDL)
-    path('code-question/<int:code_question_id>/update-test-cases/', code_questions.update_test_cases, name='update-test-cases'),  # step 3
-    path('code-question/update/<int:code_question_id>/', code_questions.update_code_question, name='update-code-question'),
+    path('code-question/<uuid:code_question_id>/update-languages/', code_questions.update_languages, name='update-languages'),  # step 2
+    path('code-question/<uuid:code_question_id>/update-question-type/', code_questions.update_question_type, name='update-question-type'),  # step 2.1 (HDL)
+    path('code-question/<uuid:code_question_id>/generate-module-code/', code_questions.generate_module_code, name='generate-module-code'),  # step 2.2 (HDL)
+    path('code-question/<uuid:code_question_id>/update-test-cases/', code_questions.update_test_cases, name='update-test-cases'),  # step 3
+    path('code-question/update/<uuid:code_question_id>/', code_questions.update_code_question, name='update-code-question'),
     path('api/get-code-question-details/', code_questions.get_cq_details, name='get-code-question-details'),  # ajax
     path('api/compile-code/', code_questions.compile_code, name='compile-code'),  # ajax
 
     # mcq questions
     path('mcq-question/create/<str:parent>/<int:parent_id>/', mcq_questions.create_mcq_question, name='create-mcq-question'),  
-    path('mcq-question/update/<int:mcq_question_id>/', mcq_questions.update_mcq_question, name='update-mcq-question'),
+    path('mcq-question/update/<uuid:mcq_question_id>/', mcq_questions.update_mcq_question, name='update-mcq-question'),
     path('api/get-mcq-question-details/', mcq_questions.get_mcq_details, name='get-mcq-question-details'),  # ajax
 
     # assessments
@@ -91,7 +91,7 @@ urlpatterns = [
     path('assessment/save-mcq-attempt-options/<int:mcq_question_attempt_id>/', attempts.save_mcq_attempt_options, name='save-mcq-attempt-options'),
 
     # code question attempts
-    path('api/submit-single-test-case/<int:test_case_id>/<int:code_question_id>', attempts.submit_single_test_case, name='submit-single-test-case'),  # ajax
+    path('api/submit-single-test-case/<int:test_case_id>/<uuid:code_question_id>', attempts.submit_single_test_case, name='submit-single-test-case'),  # ajax
     path('api/get-tc-details/', attempts.get_tc_details, name='get-tc-details'),  # ajax
     path('api/code-question-submission/<int:code_question_attempt_id>/', attempts.code_question_submission, name='code-question-submission'),  # ajax
     path('api/get-cq-submission-status/', attempts.get_cq_submission_status, name='get-cq-submission-status'),  # ajax
@@ -99,7 +99,7 @@ urlpatterns = [
     # reports
     path('course/report/<int:course_id>/', reports.course_report, name='course-report'),
     path('assessment/report/<int:assessment_id>/', reports.assessment_report, name='assessment-report'),
-    path('assessment/report/<int:assessment_id>/question/<int:question_id>', reports.question_report, name='question-report'),
+    path('assessment/report/<int:assessment_id>/question/<uuid:question_id>', reports.question_report, name='question-report'),
     path('api/get-candidate-attempts/<int:assessment_id>/', reports.get_candidate_attempts, name='get-candidate-attempts'),  # ajax
     path('assessment/attempt/details/', reports.assessment_attempt_details, name='assessment-attempt-details'),
     path('assessment/code-submission/details/<int:cqs_id>/', reports.code_submission_details, name='code-submission-details'),

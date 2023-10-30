@@ -1,3 +1,4 @@
+import uuid
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models import Sum
@@ -53,7 +54,8 @@ class QuestionBank(models.Model):
 class CodeQuestion(models.Model):
     class Meta:
         pass
-
+    
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False, verbose_name='ID')
     name = models.CharField(max_length=50, blank=False, null=False)
     description = models.TextField(blank=False, null=False)
     tags = models.ManyToManyField(Tag, blank=True)
@@ -100,6 +102,7 @@ class McqQuestion(models.Model):
     class Meta:
         pass
 
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False, verbose_name='ID')
     name = models.CharField(max_length=50, blank=False, null=False)
     description = models.TextField(blank=False, null=False)
     tags = models.ManyToManyField(Tag, blank=True)
