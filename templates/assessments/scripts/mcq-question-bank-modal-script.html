@@ -44,16 +44,16 @@
                         let newRows = "";
                         res.mcq_questions.forEach((mcq) => {
                             trimmed_description = mcq.description.length > 130 ? mcq.description.substring(0, 130) + " <b>...</b>" : mcq.description;
-                            concurrency = mcq.is_concurrency_question ? '<span class="badge bg-light-success">Y</span>' : '<span class="badge bg-light-danger">N</span>';
+                            multiple_answers = mcq.multiple_answers ? '<span class="badge bg-light-success">Y</span>' : '<span class="badge bg-light-danger">N</span>';
 
                             let tags = "";
                             mcq.tags.forEach((t) => {
                                 tags += "<span class='badge bg-light-secondary me-1'>" + t.name + "</span>";
                             })
-                            preview_url = "{% url 'preview-question' question_id=0 %}".replace("0", mcq.id);
+                            preview_url = "{% url 'preview-question' question_id='00000000-0000-0000-0000-000000000000' %}".replace("00000000-0000-0000-0000-000000000000", mcq.id);
                             newRows += "<tr><td>" + mcq.name 
                                 + "</td><td>" + trimmed_description 
-                                + "</td><td>" + concurrency 
+                                + "</td><td>" + multiple_answers 
                                 + "</td><td>" + tags 
                                 + "</td><td>" + `<a href=${preview_url} target="_blank" class="btn btn-sm btn-warning">Preview</a>`
                                 + `<button type='button' class='btn btn-success btn-sm' style='margin-left: 3px;' onclick='addMcqQuestion(this)' data-cq-id='` + mcq.id + "'>Add</button>"

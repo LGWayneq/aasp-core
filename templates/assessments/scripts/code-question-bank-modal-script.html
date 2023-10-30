@@ -56,7 +56,7 @@
                             cq.tags.forEach((t) => {
                                 tags += "<span class='badge bg-light-secondary me-1'>" + t.name + "</span>";
                             })
-                            preview_url = "{% url 'preview-question' question_id=0 %}".replace("0", cq.id);
+                            preview_url = "{% url 'preview-question' question_id='00000000-0000-0000-0000-000000000000' %}".replace("00000000-0000-0000-0000-000000000000", cq.id);
                             disabled_buttons = cq.languages.length === 0 || cq.testcase_set.length === 0
                             newRows += "<tr><td>" + cq.name 
                                 + "</td><td>" + trimmed_description 
