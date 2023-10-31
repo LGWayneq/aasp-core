@@ -346,7 +346,7 @@ def save_mcq_attempt_options(request, mcq_question_attempt_id):
             if mcq_question_attempt.assessment_attempt.candidate != request.user:
                 raise PermissionDenied()
 
-            selected_option_ids = request.POST.get('selected_option_ids').split(",")
+            selected_option_ids = request.POST.get('selected_option_ids').split(",")       
 
             with transaction.atomic():
                 # delete all existing McqQuestionAttemptOption
@@ -358,6 +358,12 @@ def save_mcq_attempt_options(request, mcq_question_attempt_id):
                         # create McqQuestionAttemptOption
                         attempt_option = McqQuestionAttemptOption.objects.create(mcq_attempt=mcq_question_attempt, selected_option_id=selected_option_id)      
                     attempt_option.save()
+
+                start_time = request.POST.get('start_time')
+                current_time = timezone.localtime()
+                time_spent = current_time - timezone.make_aware(datetime.strptime(start_time, "%Y-%m-%d %H:%M:%S"))    
+                mcq_question_attempt.time_spent = time_spent 
+                mcq_question_attempt.save()
 
             context = {
                 "result": "success",

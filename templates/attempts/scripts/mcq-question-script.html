@@ -9,6 +9,7 @@
       if (selected_option_ids.length === 0) return;
 
       formData.append("selected_option_ids", selected_option_ids);
+      formData.append("start_time", "{{ start_time }}");
       formData.append("csrfmiddlewaretoken", "{{ csrf_token }}");
 
       // ajax call
