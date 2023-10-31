@@ -102,9 +102,80 @@
           </div>
 
           <div class="card-body">
+            <!-- MCQ Questions section -->
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <h5>MCQ Questions</h5>
+              {% if question_bank.owner == request.user %}
+                <a class="btn btn-sm btn-success float-end" href="{% url 'create-mcq-question' parent='qb' parent_id=question_bank.id %}">
+                  Create New
+                </a>
+              {% endif %}
+            </div>
+
+            <!-- MCQ questions table -->
+            <table class="table-responsive table table-hover mb-0">
+              <thead>
+              <tr>
+                <th>Name</th>
+                <th>Score</th>
+                <th>Multiple Answers</th>
+                <th>Tags</th>
+                <th width="230px">Actions
+                  <div class="spinner-border spinner-border-sm" id="actions-loading" style="display:none"></div>
+                </th>
+              </tr>
+              </thead>
+              <tbody>
+              {% if question_bank.mcqquestion_set.count == 0 %}
+                <tr>
+                  <td colspan="5" class="text-center">No MCQ questions found</td>
+                </tr>
+              {% else %}
+                {% for q in question_bank.mcqquestion_set.all %}
+                  <tr>
+                    <td>{{ q.name }}</td>
+                    <td>{{ q.score }}</td>
+                    <td>
+                      {% if q.multiple_answers %}
+                        <span class="badge bg-light-success">Y</span>
+                      {% else %}
+                        <span class="badge bg-light-danger">N</span>
+                      {% endif %}
+                    </td>
+                    <td>
+                      {% if q.tags.all.count == 0 %}
+                        -
+                      {% else %}
+                        {% for tag in q.tags.all %}
+                          <span class="badge bg-light-secondary">{{ tag.name }}</span>
+                        {% endfor %}
+                      {% endif %}
+                    </td>
+                    <td>
+                      <a href="{% url 'preview-question' question_id=q.id %}" target="_blank"
+                        class="btn btn-sm btn-warning">Preview</a>
+                      <button type="button" id="more-details" class="btn btn-sm btn-primary view-modal" data-mcq-id="{{ q.id }}"
+                        onclick="viewMcqModal(this)">
+                        View
+                      </button>
+                      {% if question_bank.owner == request.user %}
+                        <div class="btn-group">
+                          <a type="button" class="btn btn-secondary btn-sm" href="{% url 'update-mcq-question' mcq_question_id=q.id %}">Edit</a>
+                        </div>
+                        <button data-question_id="{{ q.id }}" data-question_type="mcq" type="button" class="btn btn-sm btn-danger"
+                                onclick="deleteQuestion(this);">Delete
+                        </button>
+                      {% endif %}
+                    </td>
+                  </tr>
+                {% endfor %}
+              {% endif %}
+              </tbody>
+            </table>
+
             <!-- Code question section -->
             <!-- Add new code question button -->
-            <div class="d-flex justify-content-between align-items-center mb-3">
+            <div class="d-flex justify-content-between align-items-center mt-5 mb-3">
               <h5>Code Questions</h5>
               {% if question_bank.owner == request.user %}
                 <a class="btn btn-sm btn-success float-end" href="{% url 'create-code-question' parent='qb' parent_id=question_bank.id %}">
@@ -195,76 +266,6 @@
                           </div>
                         </div>
                         <button data-question_id="{{ q.id }}" data-question_type="code" type="button" class="btn btn-sm btn-danger"
-                                onclick="deleteQuestion(this);">Delete
-                        </button>
-                      {% endif %}
-                    </td>
-                  </tr>
-                {% endfor %}
-              {% endif %}
-              </tbody>
-            </table>
-
-            <div class="d-flex justify-content-between align-items-center mt-5 mb-3">
-              <h5>MCQ Questions</h5>
-              {% if question_bank.owner == request.user %}
-                <a class="btn btn-sm btn-success float-end" href="{% url 'create-mcq-question' parent='qb' parent_id=question_bank.id %}">
-                  Create New
-                </a>
-              {% endif %}
-            </div>
-
-            <!-- Code questions table -->
-            <table class="table-responsive table table-hover mb-0">
-              <thead>
-              <tr>
-                <th>Name</th>
-                <th>Score</th>
-                <th>Multiple Answers</th>
-                <th>Tags</th>
-                <th width="230px">Actions
-                  <div class="spinner-border spinner-border-sm" id="actions-loading" style="display:none"></div>
-                </th>
-              </tr>
-              </thead>
-              <tbody>
-              {% if question_bank.mcqquestion_set.count == 0 %}
-                <tr>
-                  <td colspan="5" class="text-center">No MCQ questions found</td>
-                </tr>
-              {% else %}
-                {% for q in question_bank.mcqquestion_set.all %}
-                  <tr>
-                    <td>{{ q.name }}</td>
-                    <td>{{ q.score }}</td>
-                    <td>
-                      {% if q.multiple_answers %}
-                        <span class="badge bg-light-success">Y</span>
-                      {% else %}
-                        <span class="badge bg-light-danger">N</span>
-                      {% endif %}
-                    </td>
-                    <td>
-                      {% if q.tags.all.count == 0 %}
-                        -
-                      {% else %}
-                        {% for tag in q.tags.all %}
-                          <span class="badge bg-light-secondary">{{ tag.name }}</span>
-                        {% endfor %}
-                      {% endif %}
-                    </td>
-                    <td>
-                      <a href="{% url 'preview-question' question_id=q.id %}" target="_blank"
-                        class="btn btn-sm btn-warning">Preview</a>
-                      <button type="button" id="more-details" class="btn btn-sm btn-primary view-modal" data-mcq-id="{{ q.id }}"
-                        onclick="viewMcqModal(this)">
-                        View
-                      </button>
-                      {% if question_bank.owner == request.user %}
-                        <div class="btn-group">
-                          <a type="button" class="btn btn-secondary btn-sm" href="{% url 'update-mcq-question' mcq_question_id=q.id %}">Edit</a>
-                        </div>
-                        <button data-question_id="{{ q.id }}" data-question_type="mcq" type="button" class="btn btn-sm btn-danger"
                                 onclick="deleteQuestion(this);">Delete
                         </button>
                       {% endif %}
