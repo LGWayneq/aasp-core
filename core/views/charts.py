@@ -1,5 +1,6 @@
 import json
 import math
+from datetime import timedelta
 from django.db.models import Avg
 from core.models import CodeQuestionAttempt, McqQuestionAttempt, CodeQuestion, McqQuestion
 
@@ -19,8 +20,7 @@ def generate_score_distribution_graph(scores, max_value, title = "Score Distribu
 def generate_assessment_time_spent_graph(questions):
     num_of_questions = len(questions)
     x_values = [i+1 for i in range(num_of_questions)]
-    y_values = [calculate_average_question_delta(question).total_seconds() for question in questions]
-    print(y_values)
+    y_values = [calculate_average_question_delta(question).total_seconds()/60 for question in questions]
     
     return {
         "title": "Average Time Spent per Question",
@@ -32,24 +32,26 @@ def generate_assessment_time_spent_graph(questions):
 
 def calculate_average_question_delta(question):
     if isinstance(question, CodeQuestion):
-        return CodeQuestionAttempt.objects \
-            .filter(code_question=question) \
-            .aggregate(Avg('time_spent'))['time_spent__avg']
+        valid_attempts = CodeQuestionAttempt.objects.filter(code_question=question, time_spent__gt=timedelta(seconds=0))
     elif isinstance(question, McqQuestion):
-        return McqQuestionAttempt.objects \
-            .filter(mcq_question=question) \
-            .aggregate(Avg('time_spent'))['time_spent__avg']
+        valid_attempts = McqQuestionAttempt.objects.filter(mcq_question=question, time_spent__gt=timedelta(seconds=0))
+    
+    if len(valid_attempts) == 0:
+        return timedelta(seconds=0)
+    else:
+        return valid_attempts.aggregate(Avg('time_spent'))['time_spent__avg']
 
 def generate_question_time_spent_graph(question):
     if isinstance(question, CodeQuestion):
         all_time_spent = [delta.total_seconds()/60 for delta in CodeQuestionAttempt.objects \
-            .filter(code_question=question, assessment_attempt__best_attempt=True) \
+            .filter(code_question=question, assessment_attempt__best_attempt=True, time_spent__gt=timedelta(seconds=0)) \
             .values_list('time_spent', flat=True)]
     elif isinstance(question, McqQuestion):
         all_time_spent = [delta.total_seconds()/60 for delta in McqQuestionAttempt.objects \
-            .filter(mcq_question=question, assessment_attempt__best_attempt=True) \
+            .filter(mcq_question=question, assessment_attempt__best_attempt=True, time_spent__gt=timedelta(seconds=0)) \
             .values_list('time_spent', flat=True)]
-    buckets = create_buckets(0, math.ceil(max(all_time_spent)))
+    max_time_spent = max(all_time_spent) if len(all_time_spent) > 0 else 0
+    buckets = create_buckets(0, math.ceil(max_time_spent))
     assign_buckets(buckets, all_time_spent)
     y_values, x_values = get_bucket_items(buckets)
     

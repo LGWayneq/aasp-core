@@ -75,6 +75,7 @@
                             <th>#</th>
                             <th>Candidate</th>
                             <th>Language</th>
+                            <th>Time Spent</th>
                             <th>Score ({{ assessment.total_score }})</th>
                             <th>Actions</th>
                         </tr>
@@ -85,6 +86,7 @@
                             <td>{{ forloop.counter }}</td>
                             <td>{{ cqs.cq_attempt.assessment_attempt.candidate }}</td>
                             <td>{{ cqs.language }}</td>
+                            <th>{{ cqs.cq_attempt.duration }}</th>
                             <td>{{ cqs.score }}</td>
                             <td>
                                 <a class="text-success" target="_blank" href="{% url 'code-submission-details' cqs_id=cqs.id %}">View <i class="fa-solid fa-arrow-up-right-from-square"></i></a>
@@ -120,6 +122,7 @@
                             <th>#</th>
                             <th>Candidate</th>
                             <th>Language</th>
+                            <th>Time Spent</th>
                             <th>Score ({{ assessment.total_score }})</th>
                             <th>Actions</th>
                         </tr>
@@ -130,6 +133,7 @@
                                 <td>{{ forloop.counter }}</td>
                                 <td>{{ cqs.cq_attempt.assessment_attempt.candidate }}</td>
                                 <td>{{ cqs.language }}</td>
+                                <th>{{ cqs.cq_attempt.duration }}</th>
                                 <td>{{ cqs.score }}</td>
                                 <td>
                                     <a class="text-success" target="_blank" href="{% url 'code-submission-details' cqs_id=cqs.id %}">View <i class="fa-solid fa-arrow-up-right-from-square"></i></a>

@@ -74,6 +74,7 @@
                         <tr>
                             <th>#</th>
                             <th>Candidate</th>
+                            <th>Time Spent</th>
                             <th>Score ({{ assessment.total_score }})</th>
                             <th>Actions</th>
                         </tr>
@@ -83,6 +84,7 @@
                         <tr>
                             <td>{{ forloop.counter }}</td>
                             <td>{{ attempt.assessment_attempt.candidate }}</td>
+                            <td>{{ attempt.duration }}</td>
                             <td>{{ attempt.score }}</td>
                             <td>
                                 <button class="btn btn-primary" onclick="viewMcqModal(this)" data-mcq-attempt-id="{{ attempt.id }}">View</button>
@@ -117,6 +119,7 @@
                         <tr>
                             <th>#</th>
                             <th>Candidate</th>
+                            <th>Time Spent</th>
                             <th>Score ({{ assessment.total_score }})</th>
                             <th>Actions</th>
                         </tr>
@@ -126,6 +129,7 @@
                             <tr>
                                 <td>{{ forloop.counter }}</td>
                                 <td>{{ attempt.assessment_attempt.candidate }}</td>
+                                <td>{{ attempt.duration }}</td>
                                 <td>{{ attempt.score }}</td>
                                 <td>
                                     <button class="btn btn-primary" onclick="viewMcqModal(this)" data-mcq-attempt-id="{{ attempt.id }}">View</button>

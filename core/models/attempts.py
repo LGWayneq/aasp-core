@@ -1,3 +1,4 @@
+import math
 from datetime import timedelta
 from django.apps import apps
 from django.db import models
@@ -119,6 +120,19 @@ class CodeQuestionAttempt(models.Model):
         Checks if this CQA has been attempted (has at least one submission)
         """
         return CodeQuestionSubmission.objects.filter(cq_attempt=self).exists()
+    
+    @property
+    def duration(self):
+        if self.time_spent is None:
+            return None
+        total_seconds = self.time_spent.total_seconds()
+        minutes = math.floor(total_seconds / 60)
+        seconds = math.floor(total_seconds % 60)
+
+        if minutes == 0:
+            return f"{seconds} sec"
+        else:
+            return f"{minutes} min {seconds} sec"
 
 
 class CodeQuestionAttemptSnippet(models.Model):
@@ -203,6 +217,19 @@ class McqQuestionAttempt(models.Model):
         if set(correct_option_ids) == set(selected_option_ids):
             score = self.mcq_question.score
         return score
+    
+    @property
+    def duration(self):
+        if self.time_spent is None:
+            return None
+        total_seconds = self.time_spent.total_seconds()
+        minutes = math.floor(total_seconds / 60)
+        seconds = math.floor(total_seconds % 60)
+
+        if minutes == 0:
+            return f"{seconds} sec"
+        else:
+            return f"{minutes} min {seconds} sec"
 
 
 class McqQuestionAttemptOption(models.Model):

@@ -1,5 +1,6 @@
 import csv
 
+from datetime import timedelta
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
 from django.db.models import Q, Avg
@@ -70,8 +71,8 @@ def course_report(request, course_id):
 @groups_allowed(UserGroup.educator)
 def assessment_report(request, assessment_id):
     assessment = get_object_or_404(Assessment, id=assessment_id)
-    code_questions = list(CodeQuestion.objects.filter(assessment=assessment))
-    mcq_questions = list(McqQuestion.objects.filter(assessment=assessment))
+    code_questions = list(CodeQuestion.objects.filter(assessment=assessment).order_by("id"))
+    mcq_questions = list(McqQuestion.objects.filter(assessment=assessment).order_by("id"))
     questions = mcq_questions + code_questions
 
     best_attempts = AssessmentAttempt.objects \
@@ -127,7 +128,8 @@ def code_question_report(request, assessment, question):
         .select_related('cq_attempt', 'cq_attempt__assessment_attempt') \
         .filter(
             Q(cq_attempt__code_question=question) &
-            Q(cq_attempt__assessment_attempt__best_attempt=True)
+            Q(cq_attempt__assessment_attempt__best_attempt=True) &
+            Q(cq_attempt__time_spent__gt=timedelta(seconds=0))
         )
     
     user_submissions = {}
@@ -144,7 +146,7 @@ def code_question_report(request, assessment, question):
     # get all submissions regardless of best attempt
     all_submissions = CodeQuestionSubmission.objects \
         .select_related('cq_attempt', 'cq_attempt__assessment_attempt') \
-        .filter(cq_attempt__code_question=question)
+        .filter(cq_attempt__code_question=question, cq_attempt__time_spent__gt=timedelta(seconds=0))
     
     # generate graph data
     score_graph = generate_score_distribution_graph([submission.score for submission in best_submissions], question.max_score())
@@ -170,7 +172,8 @@ def mcq_question_report(request, assessment, question):
         .select_related('assessment_attempt') \
         .filter(
             Q(mcq_question=question) &
-            Q(assessment_attempt__best_attempt=True)
+            Q(assessment_attempt__best_attempt=True) &
+            Q(time_spent__gt=timedelta(seconds=0))
         ))
 
     # calculate mean and median score
@@ -180,7 +183,7 @@ def mcq_question_report(request, assessment, question):
     # get all attempts regardless of best attempt
     all_attempts = McqQuestionAttempt.objects \
         .select_related('assessment_attempt') \
-        .filter(mcq_question=question)
+        .filter(mcq_question=question, time_spent__gt=timedelta(seconds=0))
     
     # generate graph data
     score_graph = generate_score_distribution_graph([attempt.score for attempt in best_attempts], question.max_score())
