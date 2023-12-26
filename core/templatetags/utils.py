@@ -24,7 +24,9 @@ def param_replace(context, **kwargs):
 def add_class(field, css):
     return field.as_widget(attrs={"class": css})
 
-@register.filter(name='chunks')
-def chunk_list(input_list, chunk_size):
-    print([input_list[i:i + chunk_size] for i in range(0, len(input_list), chunk_size)])
-    return [input_list[i:i + chunk_size] for i in range(0, len(input_list), chunk_size)]
+@register.filter(name='get_code_template')
+def get_code_template(lang, template_name):
+    try:
+        return lang.get_template_by_name(template_name).code
+    except:
+        return lang.default_template().code

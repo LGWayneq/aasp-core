@@ -9,13 +9,13 @@
         {% if form_1.id.value != None %}
             <input type="hidden" name="tc-{{ prefix_1|default:"__prefix_1__" }}-id" value="{{ form_1.id.value }}"
                 id="id_tc-{{ prefix_1|default:"__prefix_1__" }}-id">
-            <input type="checkbox" style="visibility:hidden" class="delete-checkbox"
+            <input type="checkbox" style="display:none" class="delete-checkbox"
                 name="tc-{{ prefix_1|default:"__prefix_1__" }}-DELETE"
                 id="id_tc-{{ prefix_1|default:"__prefix_1__" }}-DELETE" {% if form_1.DELETE.value %}checked{% endif %}>
             
             <input type="hidden" name="tc-{{ prefix_2|default:"__prefix_2__" }}-id" value="{{ form_2.id.value }}"
                 id="id_tc-{{ prefix_2|default:"__prefix_2__" }}-id">
-            <input type="checkbox" style="visibility:hidden" class="delete-checkbox"
+            <input type="checkbox" style="display:none" class="delete-checkbox"
                 name="tc-{{ prefix_2|default:"__prefix_2__" }}-DELETE"
                 id="id_tc-{{ prefix_2|default:"__prefix_2__" }}-DELETE" {% if form_2.DELETE.value %}checked{% endif %}>
         {% endif %}
@@ -35,15 +35,21 @@
 
         <!-- Label and delete button row -->
         {% if not sample %}
-        <div class="d-flex justify-content-between align-items-center">
-        <h6>Test Case <span style="display:none"
-                            id="tc-{{ prefix_1|default:"__prefix_1__" }}-label">{{ prefix_1|default:"__prefix_1__" }}</span>
-        </h6>
-        <button type="button"
-                class="btn btn-sm btn-danger float-end justify-content-center d-flex align-items-center"
-                onclick="removeClicked(this, {% if form_1.id.value != None %}true{% else %}false{% endif %});"><i
-                class="fa-solid fa-xmark"></i></button>
-        </div>
+            <div class="d-flex justify-content-between align-items-center">
+            <h6>Internal Test Case <span style="display:none"
+                                id="tc-{{ prefix|default:"__prefix__" }}-label">{{ prefix|default:"__prefix__" }}</span>
+            </h6>
+            <button type="button"
+                    class="btn btn-sm btn-danger float-end justify-content-center d-flex align-items-center"
+                    onclick="removeClicked(this, {% if form.id.value != None %}true{% else %}false{% endif %});"><i
+                    class="fa-solid fa-xmark"></i></button>
+            </div>
+        {% else %}
+            <div class="d-flex justify-content-between align-items-center">
+            <h6>Sample Test Case <span style="display:none"
+                                id="tc-{{ prefix|default:"__prefix__" }}-label">{{ prefix|default:"__prefix__" }}</span>
+            </h6>
+            </div>
         {% endif %}
     
         <!-- Input -->
@@ -56,13 +62,13 @@
                         class="inner rounded" style="height: 500px;" >{{ form_1.stdin.value|default:"" }}</pre>
                 <input type="hidden" name="tc-{{ prefix_1|default:"__prefix_1__" }}-stdin" 
                         id="id_tc-{{ prefix_1|default:"__prefix_1__" }}-stdin" 
-                        value="{{ form_1.stdin.value|default:"" }}">
+                        value="{{ sol_form.module.value|default:form_1.stdin.value|default:"" }}">
                 <button type="button" class="btn btn-link float-end m-0 p-0" onclick="loadFromFile(this)">Load from file</button>
                 {% for e in form_1.stdin.errors %}
                     <p class="text-danger">{{ e }}</p>
                 {% endfor %}
                 <div>
-                    <button class="btn btn-warning btn-sm" type="button" id="id_tc-{{ prefix_1|default:"__prefix_1__" }}-gen-tb" onclick="generateTestbench(this)">Generate Testbench</button>
+                    <button class="btn btn-warning btn-sm" type="button" id="id_tc-{{ prefix_1|default:"__prefix_1__" }}-gen-module" data-bs-toggle="modal" data-bs-target="#module-modal">Generate Module</button>
                 </div>
             </div>
             <!-- Testbench Ace Code Editor -->
@@ -73,11 +79,14 @@
                         class="inner rounded" style="height: 500px;" >{{ form_2.stdin.value|default:"" }}</pre>
                 <input type="hidden" name="tc-{{ prefix_2|default:"__prefix_2__" }}-stdin" 
                         id="id_tc-{{ prefix_2|default:"__prefix_2__" }}-stdin" 
-                        value="{{ form_2.stdin.value|default:"" }}">
+                        value="{{ sol_form.testbench.value|default:form_2.stdin.value|default:"" }}">
                 <button type="button" class="btn btn-link float-end m-0 p-0" onclick="loadFromFile(this)">Load from file</button>
                 {% for e in form_2.stdin.errors %}
                     <p class="text-danger">{{ e }}</p>
                 {% endfor %}
+                <div>
+                    <button class="btn btn-warning btn-sm d-none" type="button" id="id_tc-{{ prefix_1|default:"__prefix_1__" }}-gen-tb" onclick="generateTestbench(this)">Generate Testbench</button>
+                </div>
             </div>
         </div>
 
@@ -96,7 +105,7 @@
         </div>
 
         <div class="col-8">
-            <div>
+            <div class="d-none">
                 <label for="id_tc-{{ prefix_1|default:"__prefix_1__" }}-wavedrom">Expected Output</label>
                 <!-- wavedrom -->
                 <div id="id_tc-{{ prefix_1|default:"__prefix_1__" }}-wavedrom" class="nowrap d-none" style="overflow-x: auto">
@@ -109,7 +118,7 @@
                     <p class="text-danger mt-1">{% if e == 'This field is required.' %}Please generate an output.{% else %}{{ e }}{% endif %}</p>
                 {% endfor %}
             </div>
-            <div class="d-none">
+            <div>
                 <label for="id_tc-{{ prefix_2|default:"__prefix_2__" }}-wavedrom">Expected Output</label>
                 <!-- wavedrom -->
                 <div id="id_tc-{{ prefix_2|default:"__prefix_2__" }}-wavedrom" class="nowrap d-none" style="overflow-x: auto">
@@ -214,7 +223,7 @@
                     <div class="checkbox">
                         <input type="checkbox" name="tc-{{ prefix_1|default:"__prefix_1__" }}-hidden"
                             id="id_tc-{{ prefix_1|default:"__prefix_1__" }}-hidden"
-                            class="form-check-input" {% if form_1.hidden.value and not sample %}checked{% endif %}>
+                            class="form-check-input" {% if form_1.hidden.value %}checked{% endif %}>
                         <label for="id_tc-{{ prefix_1|default:"__prefix_1__" }}-hidden">Hidden</label>
                     </div>
                     <div class="checkbox" style="display:none">
@@ -226,7 +235,7 @@
                     <div class="checkbox" style="display:none">
                         <input type="checkbox" name="tc-{{ prefix_2|default:"__prefix_2__" }}-hidden"
                             id="id_tc-{{ prefix_2|default:"__prefix_2__" }}-hidden"
-                            class="form-check-input" {% if form_2.hidden.value and not sample %}checked{% endif %}>
+                            class="form-check-input" {% if form_2.hidden.value %}checked{% endif %}>
                         <label for="id_tc-{{ prefix_2|default:"__prefix_2__" }}-hidden">Hidden</label>
                     </div>
                     <div class="checkbox" style="display:none">
@@ -241,12 +250,12 @@
             <div class="row">
                 <!-- generate output button and status -->
                 <div class="d-flex justify-content-between mt-2">
-                    <button type="button" id="id_tc-{{ prefix_1|default:"__prefix_1__" }}-button" class="btn btn-sm btn-warning" style="height: min-content" onclick="generateOutput(this)">Generate Output</button>
+                    <button type="button" id="id_tc-{{ prefix_2|default:"__prefix_2__" }}-button" class="btn btn-sm btn-warning" style="height: min-content" onclick="generateOutput(this)">Generate Output</button>
                     <div class="mt-1">
-                    <span class="h5" id="id_tc-{{ prefix_1|default:"__prefix_1__" }}-run-status">Ready</span>
-                    <div class="spinner-border spinner-border-sm ms-2" id="id_tc-{{ prefix_1|default:"__prefix_1__" }}-main-loading" style="display:none;"></div>
+                    <span class="h5" id="id_tc-{{ prefix_2|default:"__prefix_2__" }}-run-status">Ready</span>
+                    <div class="spinner-border spinner-border-sm ms-2" id="id_tc-{{ prefix_2|default:"__prefix_2__" }}-main-loading" style="display:none;"></div>
                     <br>
-                    <button type="button" id="id_tc-{{ prefix_1|default:"__prefix_1__" }}-more-details" class="btn btn-link p-0 view-modal" onclick="viewModal(this)"
+                    <button type="button" id="id_tc-{{ prefix_2|default:"__prefix_2__" }}-more-details" class="btn btn-link p-0 view-modal" onclick="viewModal(this)"
                             style="display:none;">
                         More Details
                     </button>
@@ -259,27 +268,28 @@
         <div class="mt-1">
             <hr>
         </div>
-        <!-- Error modal -->
-        <div class="modal fade" id="error-modal" tabindex="-1">
-            <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-header">
-                <h5 class="modal-title">
-                    Compilation Errors
-                </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" />
-                </div>
-                <div class="modal-body">
-                <pre id="error-details" style="color: red; font-family: monospace; font-size: medium; padding: 10px;"></pre>
-                </div>
-                <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                </div>
-            </div>
-            </div>
-        </div>
     </div>
 
+    <!-- Generate Module Code Modal -->
+    <div class="modal fade" id="module-modal" tabindex="-1">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+            <h5 class="modal-title">
+                Generate Module Code
+            </h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" />
+            </div>
+            <div class="modal-body">
+                <div class="d-flex justify-content-center"><div class="spinner-border" role="status"><span class="visually-hidden">Loading...</span></div></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary float-end" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn btn-primary float-start" id="generateModule-btn" onclick="generateModule()">Generate</button>
+            </div>
+        </div>
+        </div>
+    </div>
 </body>
 
 {% block js %}
@@ -293,8 +303,8 @@
     <!-- Load wavedrom output on first load -->
     <script>
       window.addEventListener('load', () => {
-        const wavedrom = document.getElementById(`id_tc-{{ prefix_1|default:"__prefix_1__" }}-stdout`).value;
-        const index = `{{ prefix_1|default:"__prefix_1__" }}`;
+        const wavedrom = document.getElementById(`id_tc-{{ prefix_2|default:"__prefix_2__" }}-stdout`).value;
+        const index = `{{ prefix_2|default:"__prefix_2__" }}`;
         const e = document.getElementById(`InputJSON_${index}`);
         
         if (!wavedrom) return;
@@ -314,5 +324,57 @@
         e.innerHTML = JSON.stringify(wavedrom_json);
         WaveDrom.RenderWaveForm(index, WaveDrom.eva(`InputJSON_${index}`), "WaveDrom_Display_")
       });
+    </script>
+
+    <!-- Generate module modal script -->
+    <script>
+        $(document).ready(function(){
+            function loadModal() {
+                const modal = $('#module-modal');
+                modal.find('.modal-body').load("{% url 'generate-module-code-modal' %}");
+            }
+
+            // Load the generate module code modal content
+            $('#module-modal').on('show.bs.modal', function (e) {
+                // show loading gif
+                $('#module-modal .modal-body').html('<div class="d-flex justify-content-center"><div class="spinner-border" role="status"><span class="visually-hidden">Loading...</span></div></div>');
+                loadModal();
+            });
+
+            // Load modal on first load
+            loadModal();
+        })
+
+        // Handle form submission when the form is clicked
+        function generateModule() {
+            const module_editor = ace.edit("id_tc-{{ prefix_1|default:"__prefix_1__" }}-stdin-editor");
+            const testbench_editor = ace.edit("id_tc-{{ prefix_2|default:"__prefix_2__" }}-stdin-editor");
+            
+            // Serialize the form data
+            var formData = $('#module_modal_form').serialize();
+
+            // Send the form data to the server using AJAX
+            $.ajax({
+                type: 'POST',
+                url: '{% url "generate-module-code-modal" %}',
+                data: formData,
+            }).done((res, textStatus, jqXHR) => {
+                // Handle the response from the server
+                if (res.result === 'success') {
+                    // Close the modal
+                    $('#module-modal').modal('hide');
+
+                    // Set the module code and testbench
+                    module_editor.setValue(res.module_code, -1);
+                    testbench_editor.setValue(res.testbench, -1);
+                } else {
+                    // Display the error message
+                    $('#module-modal .modal-body').html(res);
+                }
+            }).fail((jqXHR, textStatus, errorThrown) => {
+                $('#module-modal').modal('hide');
+                showErrorToast("Something went wrong. Please try again.");
+            });
+        };
     </script>
 {% endblock %}

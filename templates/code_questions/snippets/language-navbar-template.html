@@ -1,3 +1,5 @@
+{% load utils %}
+
 <div class="container mt-2">
   <!-- Category Tabs -->
   <ul class="nav nav-fill nav-tabs" id="languageTabs" role="tablist">
@@ -37,7 +39,7 @@
           {% if not lang.software_language %}
             <div class="form-check radio col-4">
               <input type="radio" id="lang-{{ lang.id }}" name="hardwareLanguage" data-lang-id="{{ lang.id }}" data-lang-name="{{ lang.name }}"
-                class="form-check-input language-radio" data-lang-template="{{ lang.default_template.code }}"
+              class="form-check-input language-radio" data-lang-module-template="{{ lang|get_code_template:'Module' }}" data-lang-testbench-template="{{ lang|get_code_template:'Testbench' }}"
                 {% if lang.id in existing_languages %}checked data-existing="true"{% else %}data-existing="false"{% endif %}>
               <label class="form-check-label" for="lang-{{ lang.id }}">{{ lang.name }}</label>
             </div>

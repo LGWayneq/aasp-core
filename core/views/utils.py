@@ -214,16 +214,15 @@ def construct_expected_output_judge0_params(test_case):
 
     return params
 
-def construct_judge0_params(request, test_case) -> dict:
+def construct_judge0_params(code, lang_id, test_case) -> dict:
     """
     Constructs the parameters needed to send to Judge0 API.
     Hardware description languages require a different set up, where the code is zipped and sent to Judge0.
     """
-    if test_case.code_question.is_software_language() == True:
+    if test_case.code_question.is_software_language():
         # judge0 params
-        lang_id = int(request.POST.get('lang-id'))
         params = {
-            "source_code": request.POST.get('code'),
+            "source_code": code,
             "language_id": lang_id,
             "stdin": test_case.stdin,
             "expected_output": test_case.stdout,
@@ -234,18 +233,18 @@ def construct_judge0_params(request, test_case) -> dict:
             params = append_concurrency_compiler_options(params, lang_id)
     else:
         # check if language is verilog
-        language = Language.objects.get(judge_language_id=request.POST.get('lang-id'))
+        language = Language.objects.get(judge_language_id=lang_id)
         if language.name.find('Verilog') != -1:
-            if request.POST.get('code').find('$dumpfile') == -1 and test_case.stdin.find('$dumpfile') == -1:
+            if code.find('$dumpfile') == -1 and test_case.stdin.find('$dumpfile') == -1:
                 # add wave dump to testbench
                 # find testbench file
-                if request.POST.get('code').find('initial') != -1:
+                if code.find('initial') != -1:
                     # add wave dump to last line before endmodule
-                    testbench = request.POST.get('code').replace('endmodule', 'initial begin $dumpfile("vcd_dump.vcd"); $dumpvars(0); end endmodule')
+                    testbench = code.replace('endmodule', 'initial begin $dumpfile("vcd_dump.vcd"); $dumpvars(0); end endmodule')
                     main = test_case.stdin
                 elif test_case.stdin.find('initial') != -1:
                     # add wave dump to last line before endmodule
-                    main = request.POST.get('code')
+                    main = code
                     testbench = test_case.stdin.replace('endmodule', 'initial begin $dumpfile("vcd_dump.vcd"); $dumpvars(0); end endmodule')
             else:
                 # Define the regular expression patterns
@@ -256,19 +255,23 @@ def construct_judge0_params(request, test_case) -> dict:
                 new_dumpfile = '$dumpfile("vcd_dump.vcd")'
                 new_dumpvars = '$dumpvars(0)'
 
-                if request.POST.get('code').find('initial') != -1:
+                if code.find('initial') != -1:
                     # replace wave dump
-                    testbench = re.sub(dumpfile_pattern, new_dumpfile, request.POST.get('code'))
+                    testbench = re.sub(dumpfile_pattern, new_dumpfile, code)
                     testbench = re.sub(dumpvars_pattern, new_dumpvars, testbench)
                     main = test_case.stdin
                 elif test_case.stdin.find('initial') != -1:
                     # replace wave dump
                     testbench = re.sub(dumpfile_pattern, new_dumpfile, test_case.stdin)
                     testbench = re.sub(dumpvars_pattern, new_dumpvars, testbench)
-                    main = request.POST.get('code')
+                    main = code
 
-        main, input_ports, output_ports = embed_inout_module(main)
-        testbench = embed_inout_testbench(testbench, input_ports, output_ports)
+        try:
+            main, input_ports, output_ports = embed_inout_module(main)
+            testbench = embed_inout_testbench(testbench, input_ports, output_ports)
+        except:
+            main = code
+            testbench = test_case.stdin
         
         # create zip file
         with zipfile.ZipFile('submission.zip', 'w') as zip_file:
@@ -284,7 +287,7 @@ def construct_judge0_params(request, test_case) -> dict:
         # judge0 params
         params = {
             "additional_files": encoded,
-            "language_id": request.POST.get('lang-id'),
+            "language_id": lang_id,
             "stdin": test_case.stdin,
             "expected_output": test_case.stdout,
             "cpu_time_limit": test_case.time_limit,
@@ -347,199 +350,6 @@ def embed_inout_testbench(testbench_code, input_ports, output_ports):
         testbench_code = re.sub(r'\b' + re.escape(old_port) + r'\b', new_port, testbench_code)
     
     return testbench_code
-    test_bench = ""
-
-    # remove comments from module_code
-    while("//" in module_code):
-        module_code = module_code[:module_code.find("//")] + module_code[module_code.find("\n",module_code.find("//")) :]
-    while("/*" in module_code):
-        module_code = module_code[:module_code.find("/*")] + module_code[module_code.find("*/")+2:]
-
-    module_code = " ".join(module_code.split()) #remove all white spaces
-
-    # get module name
-    module_name_start_index = module_code.find("module") + 6
-    module_name_stop_index = module_code.find("(") if module_code.find("#") == -1  else module_code.find("#")
-    module_name = module_code[module_name_start_index:module_name_stop_index].strip()
-
-    # check if there is a clock signal 
-    clk_signal = 1 if "clk" in module_code or "clock" in module_code else 0
-
-    # check if there is a parameter
-    parameter = 1 if "parameter" in module_code.lower() else 0
-
-    # check for reset signal
-    reset_signal = 1 if "reset" in module_code or "rst" in module_code else 0
-
-    instance_name = 'uut' # default instance name
-
-    # get the parameter list
-    parameter_list = []
-    if parameter:
-        while(module_code.lower().find("parameter") != -1):
-            parameter_list.append(module_code[module_code.lower().find("parameter")+10:module_code.find(";",module_code.lower().find("parameter"))].strip())
-            module_code = module_code[module_code.find(";",module_code.lower().find("parameter"))+1:]
-
-    ## trim the rtl code to get the inputs and outputs
-    # first index
-    if module_code.find("input") < module_code.find("output"):
-        first_index = module_code.find("input")
-    else:
-        first_index = module_code.find("output")
-    # last index
-    if module_code.rfind("output") > module_code.rfind("input"):
-        last_index = module_code.find(';',module_code.rfind("output"))+1 # 1 is added to include the semi-colon @ the end
-    else:
-        last_index = module_code.find(';',module_code.rfind("input"))+1
-        
-    module_code = module_code[first_index:last_index]
-
-    module_code = [char for char in module_code if char != ' ' ] # convert the code to a list of characters
-
-    input_vector=[]
-    output_vector=[]
-
-    temp = ''
-    signal = ''
-    size = ''
-    discard_char = 1 # discard the first captured character
-
-
-    for i, char in enumerate(module_code):
-        temp = temp + char
-    
-        if "input" in temp and "output" in temp:
-            temp = "input" if (temp.find("input") >  temp.find("output")) else "output"
-            signal = ''
-            size = ''
-            discard_char = 1
-            
-        if temp.count("input") > 1 or temp.count("output") > 1 : 
-            temp = "input" if "input" in temp else "output"
-            signal = ''
-            size = ''
-            continue
-            
-        if char == ')' :
-            if "input" in temp :
-                input_vector.append(size + " " + signal)
-            elif "output" in temp:
-                output_vector.append(size + " " + signal)
-            break
-        
-        if "input" in temp :
-            if ']' in temp:
-                size = temp[temp.find('['): temp.find(']')+1]
-                signal = ''
-                temp = "input"
-            elif char == "," or char ==';':
-                input_vector.append(size + " " + signal)
-                signal = ''
-            elif discard_char:
-                discard_char  = 0
-                continue
-            else: 
-                signal += char
-        
-        if "output" in temp :
-            if ']' in temp:
-                size = temp[temp.find('['): temp.find(']')+1]
-                signal = ''
-                temp = "output"
-            elif char == ',' or char ==';':
-                output_vector.append(size + " " + signal)
-                signal = ''
-            elif discard_char:
-                discard_char  = 0
-                continue
-            else :
-                signal += char
-
-    # remove wire, reg from signals names
-    for i,signal in enumerate(input_vector):
-        if "wire" in signal:
-            input_vector[i] = signal[signal.find("wire")+4:]
-        elif "reg" in signal:
-            input_vector[i] = signal[signal.find("reg")+3:]
-
-    for i,signal in enumerate(output_vector):
-        if "wire" in signal:
-            output_vector[i] = signal[signal.find("wire")+4:]
-        elif "reg" in signal:
-            output_vector[i] = signal[signal.find("reg")+4:]
-
-    test_bench += "`timescale 1ns / 1ns\n\n"
-    test_bench += "module "
-    test_bench += module_name+'_tb' + ';\n'
-
-    ############ parameters declaration ############
-    if parameter:
-        test_bench += "\n\t// Parameters\n"
-        for param in parameter_list:
-            test_bench += "\tparameter "+param+';\n'
-
-    ############ signals declaration ############
-    test_bench += "\n\t// Inputs\n"
-    for input in input_vector:
-        test_bench += "\treg "+input+';\n'
-
-    test_bench += "\n\t// Outputs\n"
-    for output in output_vector:
-        test_bench += "\twire "+ output+';\n'
-
-    ############ instantiation ############
-    test_bench += "\n\t// Instantiate the Unit Under Test (UUT)\n"
-    test_bench += "\t" + module_name + ' ' + instance_name + " (\n"
-
-    stripped_input = []
-    stripped_output = []
-
-    for input in input_vector:
-        if ']' in input:
-            input = input[input.find(']')+1:]
-        input = input.strip()
-        stripped_input.append(input)
-        test_bench += "\t\t."+input+f'({input}),\n'
-
-    for output in output_vector:
-        if ']' in output:
-            output = output[output.find(']')+1:]
-        output = output.strip()
-        stripped_output.append(output)
-        test_bench += "\t\t."+output+f'({output}),'
-    else:
-        # remove the last comma
-        test_bench = test_bench[:-1]
-        test_bench += "\n"
-
-    test_bench += "\t);"
-
-    ############ clock generator block ############
-    if clk_signal:
-        test_bench += "\n\n\t// clock signal\n"
-        test_bench += "\talways #5 clk = ~clk;" +'\n\n'
-
-    test_bench += "\tinitial "+ "begin\n"
-    test_bench += "\t\t// Initialize Inputs\n"
-
-    for input in stripped_input:
-        test_bench += "\t\t"+input+" = 0;\n"
-        
-    ############ wait for global reset  ############
-    test_bench += "\n\t\t// Wait 20 ns for global reset to finish\n"
-    test_bench += "\t\t#20;"
-    test_bench += "\n\n\t\t// Add stimulus here\n\n"
-
-    test_bench += "\t\t$finish; \n\tend" +'\n'
-
-    ############ monitor block ############
-    test_bench += "\n\tinitial\n"
-    test_bench += "\t\t// Monitor output here to verify correctness\n"
-    test_bench += "\t\t$monitor(\"%-0t" + ", %-0d" * len(stripped_output) + "\", $time" + "{1}{0}".format(", ".join(stripped_output), ", ") + ");\n\n"
-
-    test_bench += "\nendmodule"
-
-    return test_bench
 
 def generate_module(module_name, ports):
     """
@@ -745,330 +555,3 @@ class TestbenchGenerator:
         # remove space in line end
         align_cont = list(map(lambda s:re.sub('[ ]*$', '', s), align_cont))
         return "\n".join(align_cont) + "\n"
-
-
-class VCD2Wavedrom:
-
-    busregex = re.compile(r'(.+)(\[|\()(\d+)(\]|\))')
-    busregex2 = re.compile(r'(.+)\[(\d):(\d)\]')
-    config = {}
-    bit_open = None
-    bit_close = None
-
-    def __init__(self, config):
-        self.config = config
-
-    def replacevalue(self, wave, strval):
-        if 'replace' in self.config and \
-        wave in self.config['replace']:
-            if strval in self.config['replace'][wave]:
-                return self.config['replace'][wave][strval]
-        return strval
-
-    def group_buses(self, vcd_dict, slots):
-        buses = {}
-        buswidth = {}
-        global bit_open
-        global bit_close
-
-        """
-        Extract bus name and width
-        """
-        for isig, wave in enumerate(vcd_dict):
-            result = self.busregex.match(wave)
-            if result is not None and len(result.groups()) == 4:
-                name = result.group(1)
-                pos = int(result.group(3))
-                self.bit_open = result.group(2)
-                self.bit_close = ']' if self.bit_open == '[' else ')'
-                if name not in buses:
-                    buses[name] = {
-                            'name': name,
-                            'wave': '',
-                            'data': []
-                    }
-                    buswidth[name] = 0
-                if pos > buswidth[name]:
-                    buswidth[name] = pos
-
-        """
-        Create hex from bits
-        """
-        for wave in buses:
-            for slot in range(slots):
-                if not self.samplenow(slot):
-                    continue
-                byte = 0
-                strval = ''
-                for bit in range(buswidth[wave]+1):
-                    if bit % 8 == 0 and bit != 0:
-                        strval = format(byte, 'X')+strval
-                        byte = 0
-                    val = vcd_dict[wave+self.bit_open+str(bit)+self.bit_close][slot][1]
-                    if val != '0' and val != '1':
-                        byte = -1
-                        break
-                    byte += pow(2, bit % 8) * int(val)
-                strval = format(byte, 'X')+strval
-                if byte == -1:
-                    buses[wave]['wave'] += 'x'
-                else:
-                    strval = self.replacevalue(wave, strval)
-                    if len(buses[wave]['data']) > 0 and \
-                        buses[wave]['data'][-1] == strval:
-                        buses[wave]['wave'] += '.'
-                    else:
-                        buses[wave]['wave'] += '='
-                        buses[wave]['data'].append(strval)
-        return buses
-
-    def auto_config_waves(self, vcd_dict):
-        startTime = -1
-        syncTime = -1
-        endTime = -1
-        minDiffTime = -1
-
-        """
-        Warning: will overwrite all information from config file if any
-        Works best with full synchronous signals
-        """
-
-        self.config['filter'] = ['__all__']
-        self.config['clocks'] = []
-        self.config['signal'] = []
-
-        for isig, wave in enumerate(vcd_dict):
-            wave_points = vcd_dict[wave]
-            if len(wave_points) == 0:
-                raise ValueError(f"Signal {wave} is empty!")
-            wave_first_point = wave_points[0]
-            wave_first_time = wave_first_point[0]
-            if (startTime < 0) or (wave_first_time < startTime):
-                startTime = wave_first_time
-
-            if (len(wave_points) > 1) and ((syncTime < 0) or (wave_points[1][0] < syncTime)):
-                syncTime = wave_points[1][0]
-
-            for wave_point in wave_points:
-                if (endTime < 0) or (wave_point[0] > endTime):
-                    endTime = wave_point[0]
-
-            for tidx in range(2, len(wave_points)):
-                tmpDiff = wave_points[tidx][0] - wave_points[tidx - 1][0]
-                if (wave_points[tidx - 1][0] >= startTime):
-                    if ((minDiffTime < 0) or (tmpDiff < minDiffTime)) and (tmpDiff > 0):
-                        minDiffTime = tmpDiff
-
-        # Corner case
-        if minDiffTime < 0:
-            for tidx in range(1, len(wave_points)):
-                tmpDiff = wave_points[tidx][0] - wave_points[tidx - 1][0]
-                if (wave_points[tidx - 1][0] >= startTime):
-                    if ((minDiffTime < 0) or (tmpDiff < minDiffTime)) and (tmpDiff > 0):
-                        minDiffTime = tmpDiff
-
-        # 1st loop to refine minDiffTime for async design or multiple async clocks
-        tmpRatio = 1
-        tmpReal = 0
-        for isig, wave in enumerate(vcd_dict):
-            wave_points = vcd_dict[wave]
-            for wave_point in wave_points:
-                tmpReal = (wave_point[0] - syncTime) / minDiffTime / tmpRatio
-                if abs(tmpReal - round(tmpReal)) > 0.25:
-                    # not too much otherwise un-readable
-                    if tmpRatio < 4:
-                        tmpRatio = tmpRatio * 2
-
-        minDiffTime = minDiffTime / tmpRatio
-        startTime = syncTime - \
-            ceil((syncTime - startTime) / minDiffTime) * minDiffTime
-
-        # 2nd loop to apply rounding
-        tmpReal = 0
-        for isig, wave in enumerate(vcd_dict):
-            wave_points = vcd_dict[wave]
-            for wave_point in wave_points:
-                tmpReal = (wave_point[0] - startTime) / minDiffTime
-                wave_point[0] = round(tmpReal)
-            wave_points[0][0] = 0
-
-        if 'maxtime' in self.config and self.config['maxtime'] is not None:
-            self.config['maxtime'] = min(
-                ceil((endTime - startTime) / minDiffTime), self.config['maxtime'])
-        else:
-            self.config['maxtime'] = ceil((endTime - startTime) / minDiffTime)
-
-        return 1
-
-    def homogenize_waves(self, vcd_dict, timescale):
-        slots = int(self.config['maxtime']/timescale) + 1
-        for isig, wave in enumerate(vcd_dict):
-            lastval = 'x'
-            for tidx, t in enumerate(range(0, self.config['maxtime'] + timescale, timescale)):
-                if len(vcd_dict[wave]) > tidx:
-                    newtime = vcd_dict[wave][tidx][0]
-                else:
-                    newtime = t + 1
-                if newtime != t:
-                    for ito_padd, padd in enumerate(range(t, newtime, timescale)):
-                        vcd_dict[wave].insert(tidx+ito_padd, (padd, lastval))
-                else:
-                    lastval = vcd_dict[wave][tidx][1]
-            vcd_dict[wave] = vcd_dict[wave][0:slots]
-
-
-    def includewave(self, wave):
-        if '__top__' in self.config['filter'] or ('top' in self.config and self.config['top']):
-            return wave.count('.') <= 1
-        elif '__all__' in self.config['filter'] or wave in self.config['filter']:
-            return True
-        return False
-
-
-    def clockvalue(self, wave, digit):
-        if wave in self.config['clocks'] and digit == '1':
-            return 'P'
-        return digit
-
-
-    def samplenow(self, tick):
-        offset = 0
-        if 'offset' in self.config:
-            offset = self.config['offset']
-
-        samplerate = 1
-        if 'samplerate' in self.config:
-            samplerate = self.config['samplerate']
-
-        if (tick - offset) >= 0 and (tick - offset) % samplerate <= 0:
-            return True
-        return False
-
-
-    def appendconfig(self, wave):
-        wavename = wave['name']
-        if wavename in self.config['signal']:
-            wave.update(self.config['signal'][wavename])
-
-    def dump_wavedrom(self, vcd_dict, vcd_dict_types, timescale):
-        drom = {'signal': [], 'config': {'hscale': 1}}
-        slots = int(self.config['maxtime']/timescale)
-        buses = self.group_buses(vcd_dict, slots)
-        """
-        Replace old signals that were grouped
-        """
-        for bus in buses:
-            pattern = re.compile(r"^" + re.escape(bus) +
-                                 "\\"+self.bit_open+".*")
-            for wave in list(vcd_dict.keys()):
-                if pattern.match(wave) is not None:
-                    del vcd_dict[wave]
-        """
-        Create waveforms for the rest of the signals
-        """
-        idromsig = 0
-        for wave in vcd_dict:
-            if not self.includewave(wave):
-                continue
-            drom['signal'].append({
-                'name': wave,
-                'wave': '',
-                'data': []
-            })
-            lastval = ''
-            isbus = self.busregex2.match(
-                wave) is not None or vcd_dict_types[wave] == 'bus'
-            for j in vcd_dict[wave]:
-                if not self.samplenow(j[0]):
-                    continue
-                digit = '.'
-                value = None
-                try:
-                    value = int(j[1])
-                    value = format(int(j[1], 2), 'X')
-                except:
-                    pass
-                if value is None:
-                    try:
-                        value = float(j[1])
-                        value = "{:.3e}".format(float(j[1]))
-                    except:
-                        pass
-                if value is None:
-                    value = j[1]
-                if isbus or vcd_dict_types[wave] == 'string':
-                    if lastval != j[1]:
-                        digit = '='
-                        if 'x' not in j[1]:
-                            drom['signal'][idromsig]['data'].append(value)
-                        else:
-                            digit = 'x'
-                else:
-                    j = (j[0], self.clockvalue(wave, j[1]))
-                    if lastval != j[1]:
-                        digit = j[1]
-                drom['signal'][idromsig]['wave'] += digit
-                lastval = j[1]
-            idromsig += 1
-
-        """
-        Insert buses waveforms
-        """
-        for bus in buses:
-            if not self.includewave(bus):
-                continue
-            drom['signal'].append(buses[bus])
-
-        """
-        Order per config and add extra user parameters
-        """
-        ordered = []
-        if '__all__' in self.config['filter']:
-            ordered = drom['signal']
-        else:
-            for filtered in self.config['filter']:
-                for wave in drom['signal']:
-                    if wave['name'] == filtered:
-                        ordered.append(wave)
-                        self.appendconfig(wave)
-        drom['signal'] = ordered
-        if 'hscale' in self.config:
-            drom['config']['hscale'] = self.config['hscale']
-
-        return drom
-
-    def execute(self, auto):
-        vcd = VCDVCD(vcd_string=self.config['input_text'])
-        timescale = int(vcd.timescale['magnitude'])
-        vcd_dict = {}
-        vcd_dict_types = {}
-        vcd = vcd.data
-        for i in vcd:
-            if i != '$end':
-                if int(vcd[i].size) > 1:
-                    vcd_dict_types[vcd[i].references[0]] = 'bus'
-                else:
-                    vcd_dict_types[vcd[i].references[0]] = 'signal'
-                vcd_dict[vcd[i].references[0]] = [list(tv) for tv in vcd[i].tv]
-
-        if auto:
-            timescale = self.auto_config_waves(vcd_dict)
-
-        self.homogenize_waves(vcd_dict, timescale)
-        return self.dump_wavedrom(vcd_dict, vcd_dict_types, timescale)
-    
-def vcd2wavedrom(vcd):
-    # find the last changed time
-    for line in vcd.strip().split('\n')[::-1]:
-        if line.startswith('#'):
-            last_changed_time = int(line[1:])
-            break  # Stop searching once the last timestamp is found
-    
-    sample_rate = last_changed_time // 10
-    config = {
-        'input_text': vcd,
-        'samplerate': 1,
-    }
-
-    vcd2wavedrom = VCD2Wavedrom(config)
-    return vcd2wavedrom.execute(auto=True)

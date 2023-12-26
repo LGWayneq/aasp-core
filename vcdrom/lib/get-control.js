@@ -22,7 +22,6 @@ const getControl = (pstate, els, render, cm) => {
 const executeControlHandler = (key, keyBindo, pstate, els, cm) => {
     if (key === 'zoomIn' || key ==='zoomOut') {
         pstate.xCursor = pstate.xTime;
-        console.log(pstate)
         return keyBindo[key].fn(pstate, cm);
     }
     else

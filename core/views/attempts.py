@@ -25,7 +25,7 @@ from core.models import Assessment, AssessmentAttempt, \
     McqQuestion, McqQuestionOption, McqQuestionAttempt, McqQuestionAttemptOption, \
     CandidateSnapshot
 from core.tasks import update_test_case_attempt_status, force_submit_assessment, detect_faces
-from core.views.utils import get_assessment_attempt_question, check_permissions_course, user_enrolled_in_course, construct_expected_output_judge0_params, construct_judge0_params, vcd2wavedrom
+from core.views.utils import get_assessment_attempt_question, check_permissions_course, user_enrolled_in_course, construct_expected_output_judge0_params, construct_judge0_params
 
 
 @login_required()
@@ -265,6 +265,10 @@ def attempt_question(request, assessment_attempt_id, question_index):
             context.update({
                 'wavedrom_output': [signal['name'] for signal in data['signal'] if signal['name'].startswith('out_')]
             })
+            if hasattr(code_question, 'hdlquestionconfig') and code_question.hdlquestionconfig.get_question_type() == 'Module and Testbench Design':
+                context.update({
+                    'tab': True,
+                })
 
         return render(request, "attempts/question-attempt.html", context)
     elif isinstance(question_attempt, McqQuestionAttempt):
@@ -437,7 +441,14 @@ def submit_single_test_case(request, test_case_id, code_question_id):
                     expected_output_result = check_tc_result(token)
                 test_case.stdout = expected_output_result['stdout']
 
-            params = construct_judge0_params(request, test_case)
+            lang_id = request.POST.get('lang-id')
+            if not test_case.code_question.is_software_language and test_case.code_question.hdlquestionconfig.get_question_type() == 'Module and Testbench Design':
+                test_case.stdin = request.POST.get('testbench_code')
+                code = request.POST.get('module_code')
+            else:
+                code = request.POST.get('code')
+
+            params = construct_judge0_params(code, lang_id, test_case)
 
             # call judge0
             url = settings.JUDGE0_URL + "/submissions/?base64_encoded=false&wait=false"
@@ -614,9 +625,25 @@ def code_question_submission(request, code_question_attempt_id):
             test_cases = TestCase.objects.filter(code_question__codequestionattempt=cqa)
 
             # generate params for judge0 call
-            code = request.POST.get('code')
             language_id = request.POST.get('lang-id')
-            submissions = [construct_judge0_params(request, test_case) for test_case in test_cases]
+
+            # get question type
+            question_type = cqa.code_question.hdlquestionconfig.get_question_type()
+
+            # get code according to question type
+            if question_type == 'Module and Testbench Design':
+                submissions = []
+
+                code = request.POST.get('module_code')
+                testbench_code = request.POST.get('testbench_code')
+
+                # first test case is module code, others are testbench code
+                submissions.append(construct_judge0_params(testbench_code, language_id, test_cases[0]))
+                submissions.extend([construct_judge0_params(code, language_id, test_case) for test_case in test_cases[1:]])
+            else:
+                code = request.POST.get('code')
+                submissions = [construct_judge0_params(code, language_id, test_case) for test_case in test_cases]
+
             params = {"submissions": submissions}
 
             # call judge0
@@ -907,21 +934,6 @@ def vcdrom(request):
     vcd = request.POST.get('vcd')
     if vcd:
         return render(request, 'vcdrom/vcdrom.html', {'vcd': vcd})
-    else:
-        error_context = {
-            "result": "error",
-            "message": "No vcd found.",
-        }
-        return Response(error_context, status=status.HTTP_400_BAD_REQUEST)
-    
-@api_view(["POST"])
-@renderer_classes([JSONRenderer])
-@login_required()
-@groups_allowed(UserGroup.educator, UserGroup.lab_assistant, UserGroup.student)
-def wavedrom(request):
-    vcd = request.POST.get('vcd')
-    if vcd:
-        return Response({'wavedrom': vcd2wavedrom(vcd)}, status=status.HTTP_200_OK)
     else:
         error_context = {
             "result": "error",

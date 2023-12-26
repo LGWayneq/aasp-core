@@ -200,7 +200,7 @@
       const totalFormsInput = $("#id_cs-TOTAL_FORMS");
       let totalForms = totalFormsInput.val();
 
-      function addSnippet(langId, langName, langTemplate) {
+      function addSnippet(langId, langName, langTemplate, hide=true) {
         // increment totalForms
         totalForms++;
         totalFormsInput.val(totalForms);
@@ -216,7 +216,8 @@
 
         // update prefix
         $(cloned).html($(cloned).html().replaceAll('__prefix__', `${totalForms - 1}`));
-        cloned.hide();
+        if (hide) cloned.hide();
+        else cloned.show();
 
         // append to container
         snippetsContainer.append(cloned);
@@ -273,7 +274,8 @@
       const existing = radio.data("existing");
       const langId = radio.data("lang-id");
       const langName = radio.data("lang-name");
-      const langTemplate = radio.data("lang-template");
+      const langModuleTemplate = radio.data("lang-module-template");
+      const langTestbenchTemplate = radio.data("lang-testbench-template");
 
       // remove existing row
       $(".language-radio").each((idx, radio) => {
@@ -283,12 +285,13 @@
           toRemove.remove();
 
           // decrement totalForms
-          totalForms--;
+          totalForms -= 2;
           totalFormsInput.val(totalForms);
         }
       })
       $(`.code-snippet-toggle-${langId}`).show();
-      addSnippet(langId, langName, langTemplate)
+      addSnippet(langId, `${langName} - Module`, langModuleTemplate, false)
+      addSnippet(langId, `${langName} - Testbench`, langTestbenchTemplate, false)
     });
   </script>
 
@@ -312,7 +315,7 @@
                 $(delete_checkbox).prop('checked', true);
             } else {
                 // decrement totalForms
-                totalForms--;
+                totalForms -= 2;
                 totalFormsInput.val(totalForms);
 
                 // remove and update prefixes

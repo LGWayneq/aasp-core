@@ -10,7 +10,7 @@
         {% if form.id.value != None %}
             <input type="hidden" name="tc-{{ prefix|default:"__prefix__" }}-id" value="{{ form.id.value }}"
                 id="id_tc-{{ prefix|default:"__prefix__" }}-id">
-            <input type="checkbox" style="visibility:hidden" class="delete-checkbox"
+            <input type="checkbox" style="display:none" class="delete-checkbox"
                 name="tc-{{ prefix|default:"__prefix__" }}-DELETE"
                 id="id_tc-{{ prefix|default:"__prefix__" }}-DELETE" {% if form.DELETE.value %}checked{% endif %}>
         {% endif %}
@@ -18,7 +18,7 @@
         <!-- Label and delete button row -->
         {% if not sample %}
             <div class="d-flex justify-content-between align-items-center">
-            <h6>Test Case <span style="display:none"
+            <h6>Internal Test Case <span style="display:none"
                                 id="tc-{{ prefix|default:"__prefix__" }}-label">{{ prefix|default:"__prefix__" }}</span>
             </h6>
             <button type="button"
@@ -26,13 +26,19 @@
                     onclick="removeClicked(this, {% if form.id.value != None %}true{% else %}false{% endif %});"><i
                     class="fa-solid fa-xmark"></i></button>
             </div>
+        {% else %}
+            <div class="d-flex justify-content-between align-items-center">
+            <h6>Sample Test Case <span style="display:none"
+                                id="tc-{{ prefix|default:"__prefix__" }}-label">{{ prefix|default:"__prefix__" }}</span>
+            </h6>
+            </div>
         {% endif %}
     
         <!-- Input -->
         <!-- Ace Code Editor -->
-        <div class="col-8">
+        <div class="col-9">
         <div class="form-group">
-            <label for="id_tc-{{ prefix|default:"__prefix__" }}-stdin">{% if question_type == 'Module Design' %}Testbench{% else %}Module Definition{% endif %}</label>
+            <label for="id_tc-{{ prefix|default:"__prefix__" }}-stdin">{% if question_type == 'Testbench Design' %}Module Definition{% else %}Testbench{% endif %}</label>
             <pre name="tc-{{ prefix|default:"__prefix__" }}-stdin" 
                 id="id_tc-{{ prefix|default:"__prefix__" }}-stdin-editor" 
                 class="inner rounded" style="height: 500px;" >{{ form.stdin.value|default:"" }}</pre>
@@ -46,7 +52,7 @@
         </div>
         </div>
     
-        <div class="form-group col-4">
+        <div class="form-group col-3">
             <!-- stdout output -->
             <div class="form-group row d-none">
             <label for="id_tc-{{ prefix|default:"__prefix__" }}-stdout">Output</label>
@@ -104,7 +110,7 @@
                 {% endfor %}
             </div>
 
-            <div class="form-group" {% if sample %} style="visibility:hidden"{% endif %}>
+            <div class="form-group" {% if sample or double %} style="visibility:hidden"{% endif %}>
                 <label>Options</label>
                 <div class="form-check">
                 <div class="checkbox">
@@ -152,26 +158,6 @@
             <hr>
         </div>
 
-        <!-- Error modal -->
-        <div class="modal fade" id="error-modal" tabindex="-1">
-            <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-header">
-                <h5 class="modal-title">
-                    Compilation Errors
-                </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" />
-                </div>
-                <div class="modal-body">
-                <pre id="error-details" style="color: red; font-family: monospace; font-size: medium; padding: 10px;"></pre>
-                </div>
-                <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                </div>
-            </div>
-            </div>
-        </div>
-
     </div>
 </body>
 
@@ -211,10 +197,10 @@
     <!-- Ace code editor config -->
     <script>
         // initialize testbench ace editor
-        let row_editor_{{prefix}} = ace.edit(`id_tc-${"{{prefix}}"|"__prefix__"}-stdin-editor`);
+        let row_editor_{{ prefix|default:"__prefix__" }} = ace.edit("id_tc-{{ prefix|default:"__prefix__" }}-stdin-editor");
 
-        row_editor_{{prefix}}.renderer.setScrollMargin(10);
-        row_editor_{{prefix}}.setOptions({
+        row_editor_{{ prefix|default:"__prefix__" }}.renderer.setScrollMargin(10);
+        row_editor_{{ prefix|default:"__prefix__" }}.setOptions({
             fontFamily: "JetBrains Mono",
             fontSize: "16px",
             theme: "ace/theme/cloud9_day",
@@ -223,17 +209,24 @@
             wrap: true,
             tabSize: 4,
         });
-        row_editor_{{prefix}}.setOption("dragEnabled", false);
+        row_editor_{{ prefix|default:"__prefix__" }}.setOption("dragEnabled", false);
 
-        row_editor_{{prefix}}.session.setMode("ace/mode/" + $("#lang-select").find("option:selected").data('ace-mode'));
+        row_editor_{{ prefix|default:"__prefix__" }}.session.setMode("ace/mode/" + $("#lang-select").find("option:selected").data('ace-mode'));
 
         // Synchronize Ace editor content with the hidden input field
-        row_editor_{{prefix}}.getSession().on('change', function(){
-        var code = row_editor_{{prefix}}.getValue();
-        document.getElementById("id_tc-{{ prefix|default:"__prefix__" }}-stdin").value = code;
+        row_editor_{{ prefix|default:"__prefix__" }}.getSession().on('change', function(){
+            var code = row_editor_{{ prefix|default:"__prefix__" }}.getValue();
+            document.getElementById("id_tc-{{ prefix|default:"__prefix__" }}-stdin").value = code;
         });
 
-        row_editor_{{prefix}}.commands.on("afterExec", function (e) {
+        if (!document.getElementById("id_tc-{{ prefix|default:"__prefix__" }}-stdin").value)
+            "{{ question_type }}" === 'Testbench Design' ? row_editor_{{ prefix|default:"__prefix__" }}.setValue($('option:first', $("#lang-select")).data('code'), -1)
+            : "{{ question_type }}" === 'Module Design' ? row_editor_{{ prefix|default:"__prefix__" }}.setValue($('option:eq(1)', $("#lang-select")).data('code'), -1)
+            : "";
+        else
+            row_editor_{{ prefix|default:"__prefix__" }}.setValue(document.getElementById("id_tc-{{ prefix }}-stdin").value, -1);
+
+        row_editor_{{ prefix|default:"__prefix__" }}.commands.on("afterExec", function (e) {
             // ignore arrow keys commands
             if (arrowCommands.includes(e.command.name))
                 return;

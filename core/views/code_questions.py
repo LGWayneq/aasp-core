@@ -60,10 +60,14 @@ def create_code_question(request, parent, parent_id):
         context = {
         'assessment': assessment,
         'question_bank': question_bank,
-        'description_placeholder': """This editor supports **markdown**! And math equations too!
+        'description_placeholder': """#### Overview
+This editor supports **markdown**! And math equations too!
 
 You can do this: $a \\ne 0$, and this:
 $$x = {-b \pm \sqrt{b^2-4ac} \over 2a}$$
+
+#### Hardware Description Language (HDL) Guidelines
+When creating a **HDL** question, it is recommended to specify the input and output ports in your question description. Alternatively, if you prefer to define the input and output ports for the students, you can do so in the code snippet section.
 
 **Click preview!**""",
             'form': form,
@@ -164,7 +168,7 @@ def update_test_cases(request, code_question_id):
             if question_type == 'Testbench Design':
                 extra_test_cases = 1
             elif question_type == 'Module and Testbench Design':
-                extra_test_cases = 6
+                extra_test_cases = 4
             else:
                 extra_test_cases = 3
         else:
@@ -194,13 +198,6 @@ def update_test_cases(request, code_question_id):
             hdl_solution_form = QuestionSolutionForm(instance=code_question.hdlquestionsolution)
         else:
             hdl_solution_form = QuestionSolutionForm()
-
-        if request.session.get('module'):
-            hdl_solution_form.initial['module'] = request.session.get('module')
-            hdl_solution_form.initial['testbench'] = request.session.get('testbench')
-            
-            del request.session['module']
-            del request.session['testbench']
     else:
         code_question_form = CodeQuestionForm(instance=code_question)
 
@@ -318,20 +315,24 @@ def update_languages(request, code_question_id):
                     if hasattr(code_question, 'hdlquestionconfig'):
                         code_question.hdlquestionconfig.delete()
 
+                    # redirect to update test cases since test cases are removed
                     if not language.software_language:
+                        request.session['next'] = request.GET.get('next')
                         return redirect('update-question-type', code_question_id=code_question.id)
 
                     return redirect('update-test-cases', code_question_id=code_question.id)
+
+                # redirect to question type if HDL
+                if not code_question.is_software_language():
+                    request.session['next'] = request.GET.get('next')
+                    return redirect('update-question-type', code_question_id=code_question.id)
 
                 next_url = request.GET.get("next")
                 if next_url:
                     return redirect(next_url)
                 
-                if code_question.is_software_language():
-                    return redirect('update-test-cases', code_question_id=code_question.id)
-                else:
-                    return redirect('update-question-type', code_question_id=code_question.id)
-
+                return redirect('update-test-cases', code_question_id=code_question.id)
+                
 
 @login_required()
 @groups_allowed(UserGroup.educator)
@@ -357,52 +358,51 @@ def update_question_type(request, code_question_id):
 
         if form.is_valid():
             with transaction.atomic():
+                current_question_type = code_question.hdlquestionconfig.question_type if hasattr(code_question, 'hdlquestionconfig') else None
+                new_question_type = form.cleaned_data.get('question_type')
+
+                # check if existing question type is unchanged
+                if current_question_type == new_question_type:
+                    # if no existing test cases, redirect to update test cases
+                    next_url = request.session.get('next')
+
+                    if next_url:
+                        del request.session['next']
+                        return redirect(next_url)
+
+                    return redirect('update-test-cases', code_question_id=code_question.id)
+
+                # remove existing test cases since question type is changed
+                code_question.testcase_set.all().delete()
+
                 # remove existing config
-                if hasattr(code_question, 'hdlquestionconfig'):
+                if current_question_type != None:
                     code_question.hdlquestionconfig.delete()
 
                 hdl_config = form.save(commit=False)
                 hdl_config.code_question = code_question
                 hdl_config.save()
-
-                next_url = request.GET.get("next")
-                if next_url:
-                    return redirect(next_url)
                 
-                return redirect('generate-module-code', code_question_id=code_question.id)
+                return redirect('update-test-cases', code_question_id=code_question.id)
     
     context = {
-        'creation': request.GET.get('next') is None or HDLQuestionConfig.objects.filter(code_question=code_question).count() == 0,
+        'creation': request.session['next'] is None,
         'code_question': code_question,
         'question_type_form': question_type_form,
     }
 
     return render(request, 'code_questions/update-question-type.html', context)
 
+@api_view(["GET", "POST"])
 @login_required()
-def generate_module_code(request, code_question_id):
-    # get CodeQuestion instance
-    code_question = get_object_or_404(CodeQuestion, id=code_question_id)
-
-    # check permissions
-    if check_permissions_question(code_question, request.user) != 2:
-        return PermissionDenied()
-
-    # if belongs to a published assessment, disallow
-    if code_question.assessment and code_question.assessment.published:
-        messages.warning(request, "Question type from a published assessment cannot be modified!")
-        return redirect('assessment-details', assessment_id=code_question.assessment.id)
-    
+@renderer_classes([JSONRenderer])
+def generate_module_code_modal(request):
     # render form
     ModuleGenerationFormset = formset_factory(ModuleGenerationForm, extra=0)
     module_generation_formset = ModuleGenerationFormset(prefix='module', initial=[{'module_name': '', 'port_direction': 'input', 'bus': False, 'msb': 0, 'lsb': 0}])
 
     # process POST requests
     if request.method == "POST":
-        # check if skip button is pressed
-        if 'skip' in request.POST:
-            return redirect('update-test-cases', code_question_id=code_question.id)
-        
         module_generation_formset = ModuleGenerationFormset(request.POST, prefix='module')
 
         if module_generation_formset.is_valid():
@@ -427,22 +427,20 @@ def generate_module_code(request, code_question_id):
             module_code = generate_module(module_name, ports)
             testbench = TestbenchGenerator(module_code)()
 
-            request.session['module'] = module_code
-            request.session['testbench'] = testbench
+            context = {
+                'result': 'success',
+                'module_code': module_code,
+                'testbench': testbench,
+            }
 
-            next_url = request.GET.get("next")
-            if next_url:
-                return redirect(next_url)
-
-            return redirect('update-test-cases', code_question_id=code_question.id)
+            return Response(context, status=status.HTTP_200_OK)
 
     context = {
         'creation': request.GET.get('next') is None,
-        'code_question': code_question,
         'module_formset': module_generation_formset,
     }
 
-    return render(request, 'code_questions/generate-module-code.html', context)
+    return render(request, 'code_questions/generate-module-code-modal.html', context)
 
 @api_view(["GET"])
 @renderer_classes([JSONRenderer])

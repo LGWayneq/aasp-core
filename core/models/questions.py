@@ -36,6 +36,9 @@ class Language(models.Model):
 
     def default_template(self):
         return self.codetemplate_set.first()
+    
+    def get_template_by_name(self, template_name):
+        return self.codetemplate_set.get(name=template_name)
 
 
 class QuestionBank(models.Model):
@@ -86,7 +89,7 @@ class CodeQuestion(models.Model):
         return total
 
     def languages(self):
-        return Language.objects.filter(codesnippet__code_question=self)
+        return Language.objects.filter(codesnippet__code_question=self).distinct()
     
     def is_software_language(self):
         """

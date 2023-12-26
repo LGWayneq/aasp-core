@@ -3,19 +3,48 @@
     {{ testcase_formset.management_form }}
 
     <!-- solution row -->
-    {% include 'code_questions/snippets/hdl-solution-row.html' with form=hdl_solution_form %}
+    {% include 'code_questions/snippets/hdl-solution-row.html' with type="module" form=hdl_solution_form %}
 
     <hr>
 
-    <!-- Sample Test case -->
-    <h5>Sample Test Case</h5>
-    {% include 'code_questions/snippets/hdl-test-case-row.html' with sample=True prefix="0" form=testcase_formset.0 %}
-    <!-- this div holds all internal test case rows -->
-    <h5>Internal Test Cases</h5>
-    <div id="test-cases-container" class="mt-4">
-    {% for f in testcase_formset|slice:"1:" %}
-        {% include 'code_questions/snippets/hdl-test-case-row.html' with prefix=forloop.counter form=f %}
-    {% endfor %}
+    <nav>
+        <div class="nav nav-tabs" id="test-cases-nav" role="tablist">
+            <button class="nav-link active" id="sample-tab" data-bs-toggle="tab" data-bs-target="#sample" type="button" role="tab" aria-controls="sample" aria-selected="true">Sample Test Case {% if testcase_formset.0.errors %}&#x274C;{% endif %}</button>
+            {% for f in testcase_formset|slice:"1:" %}
+                <button class="nav-link" id="internal-tab-{{ forloop.counter }}" data-bs-toggle="tab" data-bs-target="#internal-{{ forloop.counter }}" type="button" role="tab" aria-controls="internal-{{ forloop.counter }}" aria-selected="true">Internal Test Case {{ forloop.counter }} {% if f.errors %}&#x274C;{% endif %}</button>
+            {% endfor %}
+        </div>
+    </nav>
+    <div class="tab-content mt-4" id="test-cases-tab-content">
+        <!-- sample test case -->
+        <div class="tab-pane fade show active" id="sample" role="tabpanel" aria-labelledby="sample-tab">
+            {% include 'code_questions/snippets/hdl-test-case-row.html' with sample=True prefix="0" form=testcase_formset.0 %}
+        </div>
+        <!-- internal test cases -->
+        {% for f in testcase_formset|slice:"1:" %}
+            <div class="tab-pane fade" id="internal-{{ forloop.counter }}" role="tabpanel" aria-labelledby="internal-tab-{{ forloop.counter }}">
+                {% include 'code_questions/snippets/hdl-test-case-row.html' with prefix=forloop.counter form=f %}
+            </div>
+        {% endfor %}
     </div>
 
+    <!-- Error modal -->
+    <div class="modal fade" id="error-modal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+            <h5 class="modal-title">
+                Compilation Errors
+            </h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" />
+            </div>
+            <div class="modal-body">
+            <pre id="error-details" style="color: red; font-family: monospace; font-size: medium; padding: 10px;"></pre>
+            </div>
+            <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+        </div>
+    </div>
 </div>

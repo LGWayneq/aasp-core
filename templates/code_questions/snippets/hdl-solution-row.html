@@ -2,6 +2,11 @@
 
 <div class="row solution-row">
     <h4 class="pb-2">Solution</h4>
+    {% if type == 'module' %}
+    <p>Complete the module definition code in the solution section to compile and generate an output for your testbench code provided in the test case section.</p>
+    {% elif type == 'testbench' %}
+    <p>Complete the testbench code in the solution section to compile and generate an output for your module definition code provided in the test case section.</p>
+    {% endif %}
     <div class="mb-3">
     
     <div class="row">
@@ -19,28 +24,51 @@
     </div>
 
     <div class="row">
-        <!-- Ace Code Editor -->
         <div class="col pe-2">
-            <label>Module Definition</label>
-            <pre id="module_editor" class="inner rounded" style="height: 500px;"></pre>
-            <input type="hidden" name="module" 
-            id="id_module" 
-            value="{{ form.module.value|default:"" }}">
+            <!-- Ace Code Editor -->
+            <div class="">
+                <label>Module Definition</label>
+                <pre id="module_editor" class="inner rounded" style="height: 500px;"></pre>
+                <input type="hidden" name="module" 
+                id="id_module" 
+                value="{{ form.module.value|default:"" }}">
+            </div>
+            <button class="btn btn-warning btn-sm" type="button" id="generateModule-btn" data-bs-toggle="modal" data-bs-target="#module-modal">Generate Module</button>
         </div>
 
-        <!-- Ace Code Editor -->
-        <div class="col ps-2">
-            <label>Testbench</label>
-            <pre id="testbench_editor" class="inner rounded" style="height: 500px;"></pre>
-            <input type="hidden" name="testbench" 
-            id="id_testbench" 
-            value="{{ form.testbench.value|default:"" }}">
+        <div class="col pe-2">
+            <!-- Ace Code Editor -->
+            <div class="">
+                <label>Testbench</label>
+                <pre id="testbench_editor" class="inner rounded" style="height: 500px;"></pre>
+                <input type="hidden" name="testbench" 
+                id="id_testbench" 
+                value="{{ form.testbench.value|default:"" }}">
+            </div>
+            <button class="btn btn-warning btn-sm d-none" type="button" id="generateTestbench-btn" onclick="generateTestbench()">Generate Testbench</button>
+            <button class="btn btn-primary btn-sm float-end" type="button" onclick="applyToAll()">Apply to All</button>
         </div>
     </div>
 
-    <div>
-        <button class="btn btn-warning btn-sm" type="button" id="generateTestbench-btn" onclick="generateTestbench()">Generate Testbench</button>
-        <button class="btn btn-primary btn-sm float-end" type="button" onclick="applyToAll()">Apply to All</button>
+    <!-- Generate Module Code Modal -->
+    <div class="modal fade" id="module-modal" tabindex="-1">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+            <h5 class="modal-title">
+                Generate Module Code
+            </h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" />
+            </div>
+            <div class="modal-body">
+                <div class="d-flex justify-content-center"><div class="spinner-border" role="status"><span class="visually-hidden">Loading...</span></div></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary float-end" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn btn-primary float-start" id="generateModule-btn" onclick="generateModule()">Generate</button>
+            </div>
+        </div>
+        </div>
     </div>
 </div>
 
@@ -72,6 +100,10 @@
         const moduleInput = $("#id_module");
         const testbenchInput = $("#id_testbench");
 
+        // default code
+        const defaultModuleCode = $('option:first', langSelect).data('code');
+        const defaultTBCode = $('option:eq(1)', langSelect).data('code');
+
         // initialize solution ace editor
         let module_editor = ace.edit("module_editor");
         module_editor.renderer.setScrollMargin(10);
@@ -99,20 +131,21 @@
             tabSize: 4,
         });
         testbench_editor.setOption("dragEnabled", false);
-
-        const arrowCommands = ["gotoleft", "gotoright", "golineup", "golinedown"];
+        
         let markers = [];
 
         // function that sets the language and code snippet
         const setLanguage = () => {
             // get the selected option
             const selected = langSelect.find("option:selected");
+
             // get the solution code
             const module = moduleInput.val();
             const testbench = testbenchInput.val();
             // set the code snippet
-            module_editor.session.setValue(module ? module : selected.data('code'));
-            testbench_editor.session.setValue(testbench ? testbench : "");
+            module_editor.session.setValue(module ? module : defaultModuleCode);
+            testbench_editor.session.setValue(testbench ? testbench : defaultTBCode);
+
             // set ace mode
             module_editor.session.setMode("ace/mode/" + selected.data('ace-mode'));
             testbench_editor.session.setMode("ace/mode/" + selected.data('ace-mode'));
@@ -120,11 +153,6 @@
 
         // set language on first load
         setLanguage();
-
-        // when language dropdown changed
-        langSelect.change(function () {
-            setLanguage();
-        });
 
         // Synchronize both Ace editor content with the hidden input field
         module_editor.getSession().on('change', function(){
@@ -141,6 +169,11 @@
 
     <!-- Generate Testbench -->
     <script>
+        // event listener for module editor update to show generate testbench button
+        module_editor.getSession().once('change', function(){
+            $('#generateTestbench-btn').removeClass('d-none');
+        });
+
         const generateTestbench = () => {
             let editor = ace.edit("module_editor");
             const module_code = editor.getValue();
@@ -193,5 +226,53 @@
                 ace.edit(editor).clearSelection();
             });
         }
+    </script>
+
+    <script>
+        $(document).ready(function(){
+            function loadModal() {
+                const modal = $('#module-modal');
+                modal.find('.modal-body').load("{% url 'generate-module-code-modal' %}");
+            }
+
+            // Load the generate module code modal content
+            $('#module-modal').on('show.bs.modal', function (e) {
+                // show loading gif
+                $('#module-modal .modal-body').html('<div class="d-flex justify-content-center"><div class="spinner-border" role="status"><span class="visually-hidden">Loading...</span></div></div>');
+                loadModal();
+            });
+
+            // Load modal on first load
+            loadModal();
+        })
+
+        // Handle form submission when the form is clicked
+        function generateModule() {
+            // Serialize the form data
+            var formData = $('#module_modal_form').serialize();
+
+            // Send the form data to the server using AJAX
+            $.ajax({
+                type: 'POST',
+                url: '{% url "generate-module-code-modal" %}',
+                data: formData,
+            }).done((res, textStatus, jqXHR) => {
+                // Handle the response from the server
+                if (res.result === 'success') {
+                    // Close the modal
+                    $('#module-modal').modal('hide');
+
+                    // Set the module code and testbench
+                    module_editor.setValue(res.module_code, -1);
+                    testbench_editor.setValue(res.testbench, -1);
+                } else {
+                    // Display the error message
+                    $('#module-modal .modal-body').html(res);
+                }
+            }).fail((jqXHR, textStatus, errorThrown) => {
+                $('#module-modal').modal('hide');
+                showErrorToast("Something went wrong. Please try again.");
+            });
+        };
     </script>
 {% endblock %}

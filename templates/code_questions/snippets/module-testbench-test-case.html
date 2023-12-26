@@ -1,23 +1,50 @@
 {% load static %}
-{% load utils %}
 
 <div>
     <!-- test cases & code snippet management forms -->
     {{ testcase_formset.management_form }}
-
-    <!-- Sample Test case -->
-    <h5>Sample Test Case</h5>
-    {% include 'code_questions/snippets/double-hdl-test-case-row.html' with sample=True double=True prefix_1="0" prefix_2="1" form_1=testcase_formset.0 form_2=testcase_formset.1 %}
-    <!-- this div holds all internal test case rows -->
-    <h5>Internal Test Cases</h5>
-    <div id="test-cases-container" class="mt-4">
-    {% with testcase_formset|slice:"2:"|chunks:2 as form_pairs %}
-        {% for form_pair in form_pairs %}
-            {% with f1=form_pair.0 f2=form_pair.1 %}
-                {% include 'code_questions/snippets/double-hdl-test-case-row.html' with double=True prefix_1=forloop.counter|add:forloop.counter prefix_2=forloop.counter|add:forloop.counter|add:1 form_1=f1 form_2=f2 %}
-            {% endwith %}
+    <h4>Test Cases</h4>
+    <p>For the 'Module and Testbench Design' question type, the sample and hidden test cases are concealed from the students, displaying only the expected output of the sample test case as a reference. Please note that the testbenches in the internal test cases utilize the module definition code from the sample test case for compilation.</p>
+    
+    <nav>
+        <div class="nav nav-tabs" id="test-cases-nav" role="tablist">
+            <button class="nav-link active" id="sample-tab" data-bs-toggle="tab" data-bs-target="#sample" type="button" role="tab" aria-controls="sample" aria-selected="true">Sample Test Case {% if testcase_formset.0.errors %}&#x274C;{% endif %}</button>
+            {% for f in testcase_formset|slice:"2:" %}
+                <button class="nav-link" id="internal-tab-{{ forloop.counter }}" data-bs-toggle="tab" data-bs-target="#internal-{{ forloop.counter }}" type="button" role="tab" aria-controls="internal-{{ forloop.counter }}" aria-selected="true">Internal Test Case {{ forloop.counter }} {% if f.errors %}&#x274C;{% endif %}</button>
+            {% endfor %}
+        </div>
+    </nav>
+    <div class="tab-content mt-4" id="test-cases-tab-content">
+        <!-- sample test case -->
+        <div class="tab-pane fade show active" id="sample" role="tabpanel" aria-labelledby="sample-tab">
+            {% include 'code_questions/snippets/double-hdl-test-case-row.html' with sample=True prefix_1="0" prefix_2="1" form_1=testcase_formset.0 form_2=testcase_formset.1 sol_form=hdl_solution_form %}
+        </div>
+        <!-- internal test cases -->
+        {% for f in testcase_formset|slice:"2:" %}
+            <div class="tab-pane fade" id="internal-{{ forloop.counter }}" role="tabpanel" aria-labelledby="internal-tab-{{ forloop.counter }}">
+                {% include 'code_questions/snippets/hdl-test-case-row.html' with double=True prefix=forloop.counter|add:1 form=f %}
+            </div>
         {% endfor %}
-    {% endwith %}
+    </div>
+
+    <!-- Error modal -->
+    <div class="modal fade" id="error-modal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+            <h5 class="modal-title">
+                Compilation Errors
+            </h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" />
+            </div>
+            <div class="modal-body">
+            <pre id="error-details" style="color: red; font-family: monospace; font-size: medium; padding: 10px;"></pre>
+            </div>
+            <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+        </div>
     </div>
 
 </div>
@@ -38,7 +65,11 @@
     </script>
 
     <script>
-        const initialize_editor = (editor, textId) => {
+        const langSelect = $("#lang-select");
+        const defaultModuleCode = $('option:first', langSelect).data('code');
+        const defaultTBCode = $('option:eq(1)', langSelect).data('code');
+
+        const initialize_editor = (editor, idx) => {
             editor.renderer.setScrollMargin(10);
 
             editor.setOptions({
@@ -52,21 +83,41 @@
             });
 
             editor.setOption("dragEnabled", false);
-
             editor.session.setMode("ace/mode/" + $("#lang-select").find("option:selected").data('ace-mode'));
 
             // Synchronize Ace editor content with the hidden input field
             editor.getSession().on('change', function(){
                 var code = editor.getValue();
-                document.getElementById(textId).value = code;
+                document.getElementById(`id_tc-${idx}-stdin`).value = code;
             });
+
+            // get the default code
+            const defaultCode = idx == 0 ? defaultModuleCode : defaultTBCode; // module code for first editor, testbench code for rest
+
+            // get the solution code
+            const stdin = $(`#id_tc-${idx}-stdin`).val() ? $(`#id_tc-${idx}-stdin`).val() : defaultCode;
+
+            // set the code snippet
+            editor.session.setValue(stdin);
+            document.getElementById(`id_tc-${idx}-stdin`).value = stdin;
         }
 
-        for (let i = 0; i < $("#id_tc-TOTAL_FORMS").val(); i++) {
-            let editor = ace.edit(`id_tc-${i}-stdin-editor`);
-
-            initialize_editor(editor, `id_tc-${i}-stdin`);
-        }
+        $(document).ready(function() {
+            for (let i = 0; i < $("#id_tc-TOTAL_FORMS").val(); i++) {
+                let editor = ace.edit(`id_tc-${i}-stdin-editor`);
+    
+                initialize_editor(editor, i);
+    
+                // event listener for module editor update to show generate testbench button
+                if (i == 0)
+                    editor.getSession().once('change', function(){
+                        $('#id_tc-0-gen-tb').removeClass('d-none');
+                    });
+            }
+    
+            // initialize default editor for new test cases
+            initialize_editor(ace.edit('id_tc-__prefix__-stdin-editor'), '__prefix__');
+        })
 
         const generateTestbench = (elem) => {
             const index = elem.id.replace("id_tc-", "").replace("-gen-tb", "");

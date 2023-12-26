@@ -35,6 +35,13 @@
         <div class="card">
           <div class="card-body">
 
+            {# Test case deletion warning #}
+            {% if not creation %}
+              <div class="alert alert-warning">
+                <p class="text-danger fw-bold">Warning! Updating question type will delete all existing test cases!</p>
+              </div>
+            {% endif %}
+
             <!-- Tabs -->
               <ul class="nav nav-pills mb-3">
                 <li class="nav-item">
