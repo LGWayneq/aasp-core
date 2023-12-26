@@ -88,20 +88,33 @@
                 For concurrency questions, only languages with concurrency support are available. Concurrency is not supported for hardware languages.
               </p>
 
-              <!-- Languages navbar -->
-              <div class="form-group row">
-                {% include 'code_questions/snippets/language-navbar-template.html' %}
-              </div>
-
-              {% for error in code_snippet_formset.errors %}
-                {{ error }}
-              {% endfor %}
-
               <form method="POST" id="code-snippet-form">
                 {% csrf_token %}
 
                 <!-- code snippet management form -->
                 {{ code_snippet_formset.management_form }}
+                
+                <!-- Concurrency Question checkbox -->
+                <div class="checkbox mt-4">
+                  <input 
+                    type="checkbox" 
+                    id="id_is_concurrency_question" 
+                    name="is_concurrency_question" 
+                    class="form-check-input me-2" 
+                    {% if not code_question.is_software_language %}disabled{% endif %}
+                    {% if code_question_form.is_concurrency_question.value %}checked{% endif %}>
+                  <label class="form-check-label" for="id_is_concurrency_question">Enable Concurrency</label>
+                </div>
+                <br>
+
+                <!-- Languages navbar -->
+                <div class="form-group row">
+                  {% include 'code_questions/snippets/language-navbar-template.html' %}
+                </div>
+
+                {% for error in code_snippet_formset.errors %}
+                  {{ error }}
+                {% endfor %}
 
                 <!-- this div holds all code snippet rows -->
                 <h5 class="mt-5">Code Snippets</h5>
@@ -297,6 +310,47 @@
 
   <!-- Language tab script-->
   <script>
+    function hideLanguage(element, isSoftwareLanguage = true) {
+      const langId = $(element).data("lang-id");
+      const existing = $(element).data("existing");
+      const toRemove = $("#code-snippets-container #code-snippet-row-" + langId);
+      hideSnippetToggle(langId);
+
+      if (existing) {
+          // simply check the checkbox and hide the row
+          toRemove.hide();
+          const delete_checkbox = $(toRemove).children(".delete-checkbox").first();
+          $(delete_checkbox).prop('checked', true);
+      } else {
+          // decrement totalForms
+          if (isSoftwareLanguage) totalForms--;
+          else totalForms -= 2;
+          totalFormsInput.val(totalForms);
+
+          // remove and update prefixes
+          toRemove.remove();
+          updatePrefixes();
+      }
+    }
+
+    function showLanguage(element, isSoftwareLanguage = true) {
+      const existing = $(element).data("existing");
+      const langId = $(element).data("lang-id");
+      const langName = $(element).data("lang-name");
+      const langTemplate = $(element).data("lang-template");
+      const shouldToggleSnippet = $('#code-snippets-row').filter(':not(:hidden)').length === 0;
+      $(`.code-snippet-toggle-${langId}`).show();
+      
+      if (existing) {
+        const toShow = $("#code-snippets-container #code-snippet-row-" + langId);
+        if (shouldToggleSnippet && isSoftwareLanguage) toggleSnippet(langId);
+        const delete_checkbox = $(toShow).children(".delete-checkbox").first();
+        $(delete_checkbox).prop('checked', false);
+      } else {
+        addSnippet(langId, langName, langTemplate)
+      }
+    }
+
     $(".languageTab").on('shown.bs.tab', function () {
       const tab = $(this);
       const id = tab.attr('id');
@@ -304,98 +358,63 @@
       if (id == "software-tab") { // software tab was selected
         $(".language-radio").each((idx, radio) => {
           if ($(radio).prop("checked")) {
-            const langId = $(radio).data("lang-id");
-            const existing = $(radio).data("existing");
-            const toRemove = $("#code-snippets-container #code-snippet-row-" + langId);
-            hideSnippetToggle(langId);
-            if (existing) {
-                // simply check the checkbox and hide the row
-                toRemove.hide();
-                const delete_checkbox = $(toRemove).children(".delete-checkbox").first();
-                $(delete_checkbox).prop('checked', true);
-            } else {
-                // decrement totalForms
-                totalForms -= 2;
-                totalFormsInput.val(totalForms);
-
-                // remove and update prefixes
-                toRemove.remove();
-                updatePrefixes();
-            }
+            hideLanguage(radio, false);
           }
         })
 
         // show the row with the selected language
         $(".language-checkbox").each((idx, checkbox) => {
-          const existing = $(checkbox).data("existing");
-
           if ($(checkbox).prop("checked")) {
-            const langId = $(checkbox).data("lang-id");
-            const langName = $(checkbox).data("lang-name");
-            const langTemplate = $(checkbox).data("lang-template");
-            const shouldToggleSnippet = $('#code-snippets-row').filter(':not(:hidden)').length === 0;
-            $(`.code-snippet-toggle-${langId}`).show();
-            
-            if (existing) {
-              // uncheck the checkbox
-              const toShow = $("#code-snippets-container #code-snippet-row-" + langId);
-              if (shouldToggleSnippet) {
-                toggleSnippet(langId);
-              }
-              const delete_checkbox = $(toShow).children(".delete-checkbox").first();
-              $(delete_checkbox).prop('checked', false);
-            } else {
-              addSnippet(langId, langName, langTemplate)
-            }
-        };
-      })
+            showLanguage(checkbox);
+          };
+        })
+
+        $("#id_is_concurrency_question").removeAttr("disabled");
+
       } else if (id == 'hardware-tab') { // hardware tab was selected
         $(".language-checkbox").each((idx, checkbox) => {
           if ($(checkbox).prop("checked")) {
-            const langId = $(checkbox).data("lang-id");
-            const existing = $(checkbox).data("existing");
-            const toRemove = $("#code-snippets-container #code-snippet-row-" + langId);
-            hideSnippetToggle(langId);
-
-            if (existing) {
-                // simply check the checkbox and hide the row
-                toRemove.hide();
-                const delete_checkbox = $(toRemove).children(".delete-checkbox").first();
-                $(delete_checkbox).prop('checked', true);
-            } else {
-                // decrement totalForms
-                totalForms--;
-                totalFormsInput.val(totalForms);
-
-                // remove and update prefixes
-                toRemove.remove();
-                updatePrefixes();
-            }
+            hideLanguage(checkbox);
           }
         })
 
         $(".language-radio").each((idx, radio) => {
-          const existing = $(radio).data("existing");
-          
           if (radio.checked) {
-            const langId = $(radio).data("lang-id");
-            const langName = $(radio).data("lang-name");
-            const langTemplate = $(radio).data("lang-template");
-            $(`.code-snippet-toggle-${langId}`).show();
-
-            if (existing) {
-              // uncheck the checkbox
-              const toShow = $("#code-snippets-container #code-snippet-row-" + langId);
-              toggleSnippet(langId);
-              const delete_checkbox = $(toShow).children(".delete-checkbox").first();
-              $(delete_checkbox).prop('checked', false);
-            } else {
-              addSnippet(langId, langName, langTemplate)
-            }
+            showLanguage(radio, false);
           }
         })
+
+        $("#id_is_concurrency_question").attr("disabled", true);
       }
     })
+  </script>
+
+  <!-- Enable concurrency script-->
+  <script>
+    $("#id_is_concurrency_question").change(function () {
+      const checkbox = $(this);
+      const existing = checkbox.data("existing");
+
+      if (this.checked) { // checkbox was checked (add)
+        $("#software-tab").click();
+        $("#hardware-tab").addClass("disabled");
+        $(".language-checkbox").each((idx, languageCheckbox) => {
+          const langSupportsConcurrency = $(languageCheckbox).data("concurrency-support") === "True";
+          if (langSupportsConcurrency) return;
+
+          $(languageCheckbox).attr("disabled", true);
+          if ($(languageCheckbox).prop("checked")) {
+            hideLanguage(languageCheckbox);
+            $(languageCheckbox).prop("checked", false);
+          }
+        });
+      } else {  // checkbox was unchecked (remove)
+        $("#hardware-tab").removeClass("disabled");
+        $(".language-checkbox").each((idx, languageCheckbox) => {
+          $(languageCheckbox).removeAttr("disabled");
+        });
+      }
+    });
   </script>
 
   <!-- Prevent no language selected submission script -->

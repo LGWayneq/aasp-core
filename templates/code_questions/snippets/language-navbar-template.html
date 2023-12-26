@@ -6,11 +6,9 @@
     <li class="nav-item">
       <a class="nav-link {% if code_question.is_software_language %}active{% endif %} languageTab" id="software-tab" data-bs-toggle="tab" data-bs-target="#tab-software" href="#software" role="tab" aria-controls="software" aria-selected="true">Software Languages</a>
     </li>
-    {% if not code_question.is_concurrency_question %}
     <li class="nav-item">
-      <a class="nav-link {% if not code_question.is_software_language %}active{% endif %} languageTab" id="hardware-tab" data-bs-toggle="tab" data-bs-target="#tab-hardware" href="#hardware" role="tab" aria-controls="hardware" aria-selected="false">Hardware Languages</a>
+      <a class="nav-link {% if not code_question.is_software_language %}active{% endif %} languageTab {% if code_question.is_concurrency_question %}disabled{% endif %}" id="hardware-tab" data-bs-toggle="tab" data-bs-target="#tab-hardware" href="#hardware" role="tab" aria-controls="hardware" aria-selected="false">Hardware Languages</a>
     </li>
-    {% endif %}
   </ul>
 
   <!-- Language Selection Content -->
@@ -21,8 +19,8 @@
         {% for lang in languages %}
           {% if lang.software_language %}
             <div class="form-check checkbox col-4">
-              <input type="checkbox" id="lang-{{ lang.id }}" data-lang-id="{{ lang.id }}" data-lang-name="{{ lang.name }}"
-                class="form-check-input language-checkbox" data-lang-template="{{ lang.default_template.code }}"
+              <input type="checkbox" id="lang-{{ lang.id }}" data-lang-id="{{ lang.id }}" data-lang-name="{{ lang.name }}" data-concurrency-support="{{ lang.concurrency_support }}" data-lang-template="{{ lang.default_template.code }}"
+                class="form-check-input language-checkbox" {% if code_question.is_concurrency_question and not lang.concurrency_support %}disabled{% endif %}
                 {% if lang.id in existing_languages %}checked data-existing="true"{% else %}data-existing="false"{% endif %}>
               <label class="form-check-label" for="lang-{{ lang.id }}">{{ lang.name }}</label>
             </div>
@@ -31,7 +29,6 @@
       </div>
     </div>
 
-    {% if not code_question.is_concurrency_question %}
     <!-- Hardware Languages Section -->
     <div class="tab-pane fade {% if not code_question.is_software_language %}show active{% endif %}" id="tab-hardware" role="tabpanel" aria-labelledby="hardware-tab">
       <div class="row mx-2">
@@ -47,6 +44,5 @@
         {% endfor %}
       </div>
     </div>
-    {% endif %}
   </div>
 </div>

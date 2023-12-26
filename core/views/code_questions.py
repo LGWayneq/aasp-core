@@ -271,15 +271,15 @@ def update_languages(request, code_question_id):
     CodeSnippetFormset = inlineformset_factory(CodeQuestion, CodeSnippet, extra=0, fields=['language', 'code'])
     code_snippet_formset = CodeSnippetFormset(prefix='cs', instance=code_question)
 
-    # filter languages offered
-    languages = Language.objects.filter(concurrency_support=True) if code_question.is_concurrency_question else Language.objects.all()
+    code_question_form = CodeQuestionForm(instance=code_question)
 
     if request.method == "GET":
         context = {
             'creation': request.GET.get('next') is None or CodeSnippet.objects.filter(code_question=code_question).count() == 0,
             'code_question': code_question,
             'code_snippet_formset': code_snippet_formset,
-            'languages': languages,
+            'code_question_form': code_question_form,
+            'languages': Language.objects.all(),
             'existing_languages': code_question.codesnippet_set.all().values_list('language', flat=True).distinct()
         }
 
@@ -289,6 +289,14 @@ def update_languages(request, code_question_id):
 
         if code_snippet_formset.is_valid():
             with transaction.atomic():
+                # update concurrency question
+                if request.POST.get('is_concurrency_question'):
+                    code_question.is_concurrency_question = True
+                    code_question.save()
+                else:
+                    code_question.is_concurrency_question = False
+                    code_question.save()
+
                 # remove past attempts
                 if code_question.assessment:
                     code_question.assessment.assessmentattempt_set.all().delete()
