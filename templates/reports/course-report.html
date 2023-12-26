@@ -63,6 +63,7 @@
             <thead>
             <tr>
                 <th>Name</th>
+                <th>Weightage</th>
                 <th>No. of candidates with submissions</th>
                 <th>Max Score</th>
                 <th>Start</th>
@@ -78,6 +79,7 @@
             {% for a in assessments %}
                 <tr>
                 <td>{{ a.name }}</td>
+                <td>{{ a.weightage }}</td>
                 <td>{{ a.num_of_candidates_attempted }}</td>
                 <td>{{ a.total_score }}</td>
                 <td>{{ a.time_start }}</td>
