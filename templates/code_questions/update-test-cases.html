@@ -95,6 +95,11 @@
                   <!-- test cases & code snippet management forms -->
                   {{ testcase_formset.management_form }}
 
+                  <!-- Concurrency test case information -->
+                  {% if code_question.is_concurrency_question %}
+                    <p>Time & Memory Limits are applied to each thread for concurrency questions.</p>
+                  {% endif %}
+
                   <!-- Sample Test case -->
                   <h5>Sample Test Case</h5>
                   {% include 'code_questions/snippets/test-case-row.html' with sample=True prefix="0" form=testcase_formset.0 %}

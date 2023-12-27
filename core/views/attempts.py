@@ -441,13 +441,12 @@ def submit_single_test_case(request, test_case_id, code_question_id):
                     expected_output_result = check_tc_result(token)
                 test_case.stdout = expected_output_result['stdout']
 
-            lang_id = request.POST.get('lang-id')
+            lang_id = int(request.POST.get('lang-id'))
             if not test_case.code_question.is_software_language and test_case.code_question.hdlquestionconfig.get_question_type() == 'Module and Testbench Design':
                 test_case.stdin = request.POST.get('testbench_code')
                 code = request.POST.get('module_code')
             else:
                 code = request.POST.get('code')
-
             params = construct_judge0_params(code, lang_id, test_case)
 
             # call judge0

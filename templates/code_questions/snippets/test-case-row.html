@@ -30,7 +30,7 @@
     <div class="form-group">
       <label for="id_tc-{{ prefix|default:"__prefix__" }}-stdin">Input</label>
       <textarea name="tc-{{ prefix|default:"__prefix__" }}-stdin"
-                id="id_tc-{{ prefix|default:"__prefix__" }}-stdin" rows="4"
+                id="id_tc-{{ prefix|default:"__prefix__" }}-stdin" rows="6"
                 class="form-control font-monospace">{{ form.stdin.value|default:"" }}</textarea>
       <button type="button" class="btn btn-link float-end m-0 p-0" onclick="loadFromFile(this)">Load from file</button>
       {# stdin errors #}
@@ -48,7 +48,7 @@
         <div class="spinner-border spinner-border-sm ms-2" id="id_tc-{{ prefix|default:"__prefix__" }}-loading" style="display:none;"></div>
       </div>
       <textarea name="tc-{{ prefix|default:"__prefix__" }}-stdout"
-                id="id_tc-{{ prefix|default:"__prefix__" }}-stdout" rows="4"
+                id="id_tc-{{ prefix|default:"__prefix__" }}-stdout" rows="6"
                 class="form-control font-monospace">{{ form.stdout.value|default:"" }}</textarea>
       <button type="button" class="btn btn-link float-end m-0 p-0" onclick="loadFromFile(this)">Load from file</button>
       {# stdout errors #}
@@ -81,6 +81,24 @@
         <p class="text-danger">{{ e }}</p>
       {% endfor %}
     </div>
+
+    <div class="form-group" {% if sample %} style="visibility:hidden"{% endif %}>
+      <label>Options</label>
+      <div class="form-check">
+        <div class="checkbox">
+          <input type="checkbox" name="tc-{{ prefix|default:"__prefix__" }}-hidden"
+                 id="id_tc-{{ prefix|default:"__prefix__" }}-hidden"
+                 class="form-check-input" {% if form.hidden.value and not sample %}checked{% endif %}>
+          <label for="id_tc-{{ prefix|default:"__prefix__" }}-hidden">Hidden</label>
+        </div>
+        <div class="checkbox" style="visibility:hidden">
+          <input type="checkbox" name="tc-{{ prefix|default:"__prefix__" }}-sample"
+                 id="id_tc-{{ prefix|default:"__prefix__" }}-sample"
+                 class="form-check-input" {% if sample %}checked{% endif %}>
+          <label for="id_tc-{{ prefix|default:"__prefix__" }}-sample">Sample</label>
+        </div>
+      </div>
+    </div>
   </div>
 
   <!-- score and sample/hidden checkboxes input -->
@@ -101,23 +119,19 @@
       {% endfor %}
     </div>
 
-    <div class="form-group" {% if sample %} style="visibility:hidden"{% endif %}>
-      <label>Options</label>
-      <div class="form-check">
-        <div class="checkbox">
-          <input type="checkbox" name="tc-{{ prefix|default:"__prefix__" }}-hidden"
-                 id="id_tc-{{ prefix|default:"__prefix__" }}-hidden"
-                 class="form-check-input" {% if form.hidden.value and not sample %}checked{% endif %}>
-          <label for="id_tc-{{ prefix|default:"__prefix__" }}-hidden">Hidden</label>
-        </div>
-        <div class="checkbox" style="visibility:hidden">
-          <input type="checkbox" name="tc-{{ prefix|default:"__prefix__" }}-sample"
-                 id="id_tc-{{ prefix|default:"__prefix__" }}-sample"
-                 class="form-check-input" {% if sample %}checked{% endif %}>
-          <label for="id_tc-{{ prefix|default:"__prefix__" }}-sample">Sample</label>
-        </div>
+    <!-- Concurrency parameters - Maximum threads -->
+    {% if code_question.is_concurrency_question %}
+      <div class="form-group">
+        <label for="id_tc-{{ prefix|default:"__prefix__" }}-max_threads">Maximum Threads</label>
+        <input name="tc-{{ prefix|default:"__prefix__" }}-max_threads"
+              id="id_tc-{{ prefix|default:"__prefix__" }}-max_threads" type="number"
+              class="form-control" min="1" value="{{ form.max_threads.value }}">
+        {# max_threads errors #}
+        {% for e in form.max_threads.errors %}
+          <p class="text-danger">{{ e }}</p>
+        {% endfor %}
       </div>
-    </div>
+    {% endif %}
   </div>
   <div class="mt-1">
     <hr>

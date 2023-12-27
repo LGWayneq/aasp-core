@@ -210,7 +210,7 @@ def construct_expected_output_judge0_params(test_case):
         "memory_limit": test_case.memory_limit,
     }
     if test_case.code_question.is_concurrency_question:
-        params = append_concurrency_compiler_options(params, code_question.solution_code_language.judge_language_id)
+        params = append_concurrency_compiler_options(params, code_question.solution_code_language.judge_language_id, test_case)
 
     return params
 
@@ -230,7 +230,7 @@ def construct_judge0_params(code, lang_id, test_case) -> dict:
             "memory_limit": test_case.memory_limit,
         }
         if test_case.code_question.is_concurrency_question:
-            params = append_concurrency_compiler_options(params, lang_id)
+            params = append_concurrency_compiler_options(params, lang_id, test_case)
     else:
         # check if language is verilog
         language = Language.objects.get(judge_language_id=lang_id)
@@ -296,13 +296,17 @@ def construct_judge0_params(code, lang_id, test_case) -> dict:
     
     return params
 
-def append_concurrency_compiler_options(params, lang_id):
+def append_concurrency_compiler_options(params, lang_id, test_case):
     # C
     if lang_id == 75:
         params['compiler_options'] = "-pthread -fsanitize=thread"
     # C++
     elif lang_id == 76:
         params['compiler_options'] = "-fsanitize=thread"
+
+    params["max_processes_and_or_threads"] = test_case.max_threads
+    params["enable_per_process_and_thread_time_limit"] = True
+    params["enable_per_process_and_thread_memory_limit"] = True
     return params
 
 def embed_inout_module(module_code):
