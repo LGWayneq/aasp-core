@@ -413,6 +413,11 @@
         $("#hardware-tab").removeClass("disabled");
         $(".language-checkbox").each((idx, languageCheckbox) => {
           $(languageCheckbox).removeAttr("disabled");
+
+          if ($(languageCheckbox).prop("checked")) {
+            hideLanguage(languageCheckbox);
+            $(languageCheckbox).prop("checked", false);
+          }
         });
       }
     });

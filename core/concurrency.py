@@ -9,7 +9,7 @@ def append_concurrency_compiler_options(params, lang_id, test_case):
         params['compiler_options'] = "-pthread -fsanitize=thread"
     # C++
     elif lang_id == 76:
-        params['compiler_options'] = "-fsanitize=thread -Wl,--wrap=thread"
+        params['compiler_options'] = "-fsanitize=thread"
 
     params["max_processes_and_or_threads"] = test_case.max_threads
     params["enable_per_process_and_thread_time_limit"] = True
