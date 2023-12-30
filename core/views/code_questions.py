@@ -182,7 +182,7 @@ def update_test_cases(request, code_question_id):
         CodeQuestion,
         TestCase,
         extra=extra_test_cases,
-        fields=['stdin', 'stdout', 'time_limit', 'memory_limit', 'score', 'hidden', 'sample', 'max_threads']
+        fields=['stdin', 'stdout', 'time_limit', 'memory_limit', 'score', 'hidden', 'sample', 'min_threads', 'max_threads']
     )
     testcase_formset = TestCaseFormset(prefix='tc', instance=code_question)
 

@@ -169,6 +169,7 @@ class Migration(migrations.Migration):
                 ('stdout', models.TextField()),
                 ('time_limit', models.PositiveIntegerField(default=5)),
                 ('memory_limit', models.PositiveIntegerField(default=40960)),
+                ('min_threads', models.PositiveIntegerField(default=1)),
                 ('max_threads', models.PositiveIntegerField(default=1)),
                 ('score', models.PositiveIntegerField()),
                 ('hidden', models.BooleanField(default=True)),

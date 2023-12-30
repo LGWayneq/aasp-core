@@ -65,22 +65,70 @@
       <label for="id_tc-{{ prefix|default:"__prefix__" }}-time_limit">Time Limit (s)</label>
       <input name="tc-{{ prefix|default:"__prefix__" }}-time_limit"
              id="id_tc-{{ prefix|default:"__prefix__" }}-time_limit" type="number"
-             class="form-control" min="0" value="{{ form.time_limit.value }}">
+             class="form-control" min="1" value="{{ form.time_limit.value }}">
       {# time_limit errors #}
       {% for e in form.time_limit.errors %}
         <p class="text-danger">{{ e }}</p>
       {% endfor %}
     </div>
+
+    <!-- Concurrency parameters - Minimum threads -->
+    {% if code_question.is_concurrency_question %}
+      <div class="form-group">
+        <label for="id_tc-{{ prefix|default:"__prefix__" }}-min_threads">Minimum Threads</label>
+        <input name="tc-{{ prefix|default:"__prefix__" }}-min_threads"
+              id="id_tc-{{ prefix|default:"__prefix__" }}-min_threads" type="number"
+              class="form-control" min="1" max="100" value="{{ form.min_threads.value }}">
+        {# min_threads errors #}
+        {% for e in form.min_threads.errors %}
+          <p class="text-danger">{{ e }}</p>
+        {% endfor %}
+      </div>
+    {% endif %}
+
+    <div class="form-group">
+      <label for="id_tc-{{ prefix|default:"__prefix__" }}-score">Score</label>
+      <input name="tc-{{ prefix|default:"__prefix__" }}-score" id="id_tc-{{ prefix|default:"__prefix__" }}-score"
+             type="number" class="form-control"
+             min="0"
+              {% if sample %}
+             value="{{ form.score.value|default:0 }}"
+              {% else %}
+             value="{{ form.score.value|default:5 }}"
+              {% endif %}>
+      {# score errors #}
+      {% for e in form.score.errors %}
+        <p class="text-danger">{{ e }}</p>
+      {% endfor %}
+    </div>    
+  </div>
+
+  <!-- score and sample/hidden checkboxes input -->
+  <div class="col-3">
     <div class="form-group">
       <label for="id_tc-{{ prefix|default:"__prefix__" }}-memory_limit">Memory Limit (KB)</label>
       <input name="tc-{{ prefix|default:"__prefix__" }}-memory_limit"
              id="id_tc-{{ prefix|default:"__prefix__" }}-memory_limit" type="number"
-             class="form-control" min="0" value="{{ form.memory_limit.value }}">
+             class="form-control" min="20000" value="{{ form.memory_limit.value }}">
       {# memory_limit errors #}
       {% for e in form.memory_limit.errors %}
         <p class="text-danger">{{ e }}</p>
       {% endfor %}
     </div>
+
+    <!-- Concurrency parameters - Maximum threads -->
+    {% if code_question.is_concurrency_question %}
+      <div class="form-group">
+        <label for="id_tc-{{ prefix|default:"__prefix__" }}-max_threads">Maximum Threads</label>
+        <input name="tc-{{ prefix|default:"__prefix__" }}-max_threads"
+              id="id_tc-{{ prefix|default:"__prefix__" }}-max_threads" type="number"
+              class="form-control" min="1" max="100" value="{{ form.max_threads.value }}">
+        {# max_threads errors #}
+        {% for e in form.max_threads.errors %}
+          <p class="text-danger">{{ e }}</p>
+        {% endfor %}
+      </div>
+    {% endif %}
 
     <div class="form-group" {% if sample %} style="visibility:hidden"{% endif %}>
       <label>Options</label>
@@ -99,39 +147,6 @@
         </div>
       </div>
     </div>
-  </div>
-
-  <!-- score and sample/hidden checkboxes input -->
-  <div class="col-3">
-    <div class="form-group">
-      <label for="id_tc-{{ prefix|default:"__prefix__" }}-score">Score</label>
-      <input name="tc-{{ prefix|default:"__prefix__" }}-score" id="id_tc-{{ prefix|default:"__prefix__" }}-score"
-             type="number" class="form-control"
-             min="0"
-              {% if sample %}
-             value="{{ form.score.value|default:0 }}"
-              {% else %}
-             value="{{ form.score.value|default:5 }}"
-              {% endif %}>
-      {# score errors #}
-      {% for e in form.score.errors %}
-        <p class="text-danger">{{ e }}</p>
-      {% endfor %}
-    </div>
-
-    <!-- Concurrency parameters - Maximum threads -->
-    {% if code_question.is_concurrency_question %}
-      <div class="form-group">
-        <label for="id_tc-{{ prefix|default:"__prefix__" }}-max_threads">Maximum Threads</label>
-        <input name="tc-{{ prefix|default:"__prefix__" }}-max_threads"
-              id="id_tc-{{ prefix|default:"__prefix__" }}-max_threads" type="number"
-              class="form-control" min="1" value="{{ form.max_threads.value }}">
-        {# max_threads errors #}
-        {% for e in form.max_threads.errors %}
-          <p class="text-danger">{{ e }}</p>
-        {% endfor %}
-      </div>
-    {% endif %}
   </div>
   <div class="mt-1">
     <hr>
