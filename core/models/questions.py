@@ -35,7 +35,10 @@ class Language(models.Model):
         return self.name
 
     def default_template(self):
-        return self.codetemplate_set.first()
+        return self.codetemplate_set.get(name="Default")
+    
+    def concurrency_template(self):
+        return self.codetemplate_set.get(name="Concurrency")
     
     def get_template_by_name(self, template_name):
         return self.codetemplate_set.get(name=template_name)
@@ -167,6 +170,7 @@ class TestCase(models.Model):
     stdout = models.TextField(blank=False, null=False)
     time_limit = models.PositiveIntegerField(default=5)
     memory_limit = models.PositiveIntegerField(default=40960)
+    min_threads = models.PositiveIntegerField(default=1)
     max_threads = models.PositiveIntegerField(default=1)
 
     score = models.PositiveIntegerField()

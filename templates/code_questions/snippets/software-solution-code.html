@@ -229,6 +229,9 @@
                   if (res.data.stderr != undefined) {
                     resultsStderrContainer.show();
                     resultsStderr.html(res.data.stderr);
+                  } else if (res.data.status_id === 6 && res.data.compile_output) {
+                    resultsStderrContainer.show();
+                    resultsStderr.html(res.data.compile_output);
                   } else {
                     resultsStderrContainer.hide();
                   }

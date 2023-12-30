@@ -1,5 +1,6 @@
 from datetime import timedelta, datetime
 
+import re
 import base64
 import cv2
 import requests
@@ -407,9 +408,11 @@ def submit_single_test_case(request, test_case_id, code_question_id):
                 test_case = TestCase()
                 test_case.code_question = CodeQuestion.objects.filter(id=code_question_id).first()
                 test_case.stdin = request.data["run_stdin"]
-                test_case.time_limit = 5
-                test_case.memory_limit = 40960
+                test_case.time_limit = 10
+                test_case.memory_limit = 409600
                 test_case.score = 0
+                test_case.max_threads = 100
+                test_case.min_threads = 1
 
             # evaluate expected_output using judge0 for custom inputs
             if request.data["run_stdin"] != test_case.stdin:
@@ -547,6 +550,7 @@ def check_tc_result(token, status_only = False, vcd = False):
         12: "Runtime Error Other",
         13: "Internal Error",
         14: "Exec Format Error",
+        15: "Insufficient Threads Used",
     }
     try:
         if status_only:
@@ -575,14 +579,24 @@ def check_tc_result(token, status_only = False, vcd = False):
             if data["compile_output"]:
                 data['compile_output'] = base64.b64decode(data['compile_output'])
 
-        # append friendly status name
-        data['status'] = judge0_statuses[int(data['status_id'])]
-
         # hide fields if this belongs to a hidden test case
         if TestCase.objects.filter(hidden=True, testcaseattempt__token=token).exists():
             data['stdin'] = "Hidden"
             data['stdout'] = "Hidden"
             data['expected_output'] = "Hidden"
+
+        stdout = data['stdout']
+        if stdout:
+            if "NUM_THREADS_CREATED_INSUFFICIENT" in stdout and "NUM_THREADS_CREATED_SUFFICIENT" not in stdout and data['status_id'] == 3:
+                data['status_id'] = 15
+
+            # remove thread counter tokens from output
+            data['stdout'] = re.sub(r'NUM_THREADS_CREATED_SUFFICIENT', '', data['stdout'])
+            data['stdout'] = re.sub(r'NUM_THREADS_CREATED_INSUFFICIENT', '', data['stdout'])
+
+        # append friendly status name
+        data['status'] = judge0_statuses[int(data['status_id'])]
+
         return data
     
     except requests.exceptions.ConnectionError:

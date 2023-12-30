@@ -244,7 +244,7 @@
           const existing = checkbox.data("existing");
           const langId = checkbox.data("lang-id");
           const langName = checkbox.data("lang-name");
-          const langTemplate = checkbox.data("lang-template");
+          const langTemplate = $("#id_is_concurrency_question").is(":checked") ? checkbox.data("lang-concurrency-template") : checkbox.data("lang-template");
 
           if (this.checked) { // checkbox was checked (add)
             $(`.code-snippet-toggle-${langId}`).show();
@@ -337,7 +337,7 @@
       const existing = $(element).data("existing");
       const langId = $(element).data("lang-id");
       const langName = $(element).data("lang-name");
-      const langTemplate = $(element).data("lang-template");
+      const langTemplate = $("#id_is_concurrency_question").is(":checked") ? $(element).data("lang-concurrency-template") : $(element).data("lang-template");
       const shouldToggleSnippet = $('#code-snippets-row').filter(':not(:hidden)').length === 0;
       $(`.code-snippet-toggle-${langId}`).show();
       
@@ -400,9 +400,10 @@
         $("#hardware-tab").addClass("disabled");
         $(".language-checkbox").each((idx, languageCheckbox) => {
           const langSupportsConcurrency = $(languageCheckbox).data("concurrency-support") === "True";
-          if (langSupportsConcurrency) return;
-
-          $(languageCheckbox).attr("disabled", true);
+          if (!langSupportsConcurrency) {
+            $(languageCheckbox).attr("disabled", true);
+          }
+          
           if ($(languageCheckbox).prop("checked")) {
             hideLanguage(languageCheckbox);
             $(languageCheckbox).prop("checked", false);
