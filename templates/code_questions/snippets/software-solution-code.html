@@ -43,20 +43,24 @@
       <input name="solution-time_limit"
         id="id_solution-time_limit" type="number"
         class="form-control" min="1" value="5">
-      <label class="mt-2" for="id_solution-min_threads">Minimum Threads</label>
-      <input name="solution-min_threads"
-        id="id_solution-min_threads" type="number"
-        class="form-control" min="1" max="100" value="1">
+      <div class="mt-2 {% if not code_question.is_concurrency_question %}d-none{% endif %}">
+        <label for="id_solution-min_threads">Minimum Threads</label>
+        <input name="solution-min_threads"
+          id="id_solution-min_threads" type="number"
+          class="form-control" min="1" max="100" value="1">
+      </div>
     </div>
     <div class="col-3">
       <label for="id_solution-memory_limit">Memory Limit (KB)</label>
       <input name="solution-memory_limit"
         id="id_solution-memory_limit" type="number"
         class="form-control" min="20000" value="40960">
-      <label class="mt-2" for="id_solution-max_threads">Maximum Threads</label>
-      <input name="solution-max_threads"
-        id="id_solution-max_threads" type="number"
-        class="form-control" min="1" max="100" value="100">
+      <div class="mt-2 {% if not code_question.is_concurrency_question %}d-none{% endif %}">
+        <label for="id_solution-max_threads">Maximum Threads</label>
+        <input name="solution-max_threads"
+          id="id_solution-max_threads" type="number"
+          class="form-control" min="1" max="100" value="100">
+      </div>
     </div>
   </div>
 
