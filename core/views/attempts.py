@@ -407,15 +407,15 @@ def submit_single_test_case(request, test_case_id, code_question_id):
                 # create temporary test_case object
                 test_case = TestCase()
                 test_case.code_question = CodeQuestion.objects.filter(id=code_question_id).first()
-                test_case.stdin = request.data["run_stdin"]
-                test_case.time_limit = 10
-                test_case.memory_limit = 409600
+                test_case.stdin = request.data.get("run_stdin")
+                test_case.time_limit = request.data.get("run_time_limit")
+                test_case.memory_limit = request.data.get("run_memory_limit")
                 test_case.score = 0
-                test_case.max_threads = 100
-                test_case.min_threads = 1
+                test_case.max_threads = request.data.get("run_max_threads")
+                test_case.min_threads = request.data.get("run_min_threads")
 
             # evaluate expected_output using judge0 for custom inputs
-            if request.data["run_stdin"] != test_case.stdin:
+            if request.data.get("run_stdin") != test_case.stdin:
                 test_case.stdin = request.data["run_stdin"]
                 expected_output_params = construct_expected_output_judge0_params(test_case)
                 if expected_output_params is None:
@@ -451,7 +451,7 @@ def submit_single_test_case(request, test_case_id, code_question_id):
             else:
                 code = request.POST.get('code')
             params = construct_judge0_params(code, lang_id, test_case)
-
+            
             # call judge0
             url = settings.JUDGE0_URL + "/submissions/?base64_encoded=false&wait=false"
             res = requests.post(url, json=params)
