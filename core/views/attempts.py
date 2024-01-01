@@ -408,6 +408,7 @@ def submit_single_test_case(request, test_case_id, code_question_id):
                 test_case = TestCase()
                 test_case.code_question = CodeQuestion.objects.filter(id=code_question_id).first()
                 test_case.stdin = request.data.get("run_stdin")
+                test_case.stdout = request.data.get("run_stdout")
                 test_case.time_limit = request.data.get("run_time_limit")
                 test_case.memory_limit = request.data.get("run_memory_limit")
                 test_case.score = 0
@@ -579,23 +580,28 @@ def check_tc_result(token, status_only = False, vcd = False):
             if data["compile_output"]:
                 data['compile_output'] = base64.b64decode(data['compile_output'])
 
+        stdout = data['stdout']
+        if stdout and re.match(r'AASP_\d+_THREADS_CREATED_INSUFFICIENT', stdout):
+            sufficient_threads = re.search(r'AASP_\d+_THREADS_CREATED_SUFFICIENT', stdout)
+
+            # remove thread counter tokens from output
+            data['stdout'] = re.sub(r'AASP_\d+_THREADS_CREATED_SUFFICIENT', '', data['stdout'])
+            data['stdout'] = re.sub(r'AASP_\d+_THREADS_CREATED_INSUFFICIENT', '', data['stdout'])
+
+            # manually evaluate correctness
+            if data['expected_output'] == data['stdout'] and data['status_id'] == 4:
+                data['status_id'] = 3
+            if not sufficient_threads and data['status_id'] == 3:
+                data['status_id'] = 15
+
+        # append friendly status name
+        data['status'] = judge0_statuses[int(data['status_id'])]
+
         # hide fields if this belongs to a hidden test case
         if TestCase.objects.filter(hidden=True, testcaseattempt__token=token).exists():
             data['stdin'] = "Hidden"
             data['stdout'] = "Hidden"
             data['expected_output'] = "Hidden"
-
-        stdout = data['stdout']
-        if stdout:
-            if "NUM_THREADS_CREATED_INSUFFICIENT" in stdout and "NUM_THREADS_CREATED_SUFFICIENT" not in stdout and data['status_id'] == 3:
-                data['status_id'] = 15
-
-            # remove thread counter tokens from output
-            data['stdout'] = re.sub(r'NUM_THREADS_CREATED_SUFFICIENT', '', data['stdout'])
-            data['stdout'] = re.sub(r'NUM_THREADS_CREATED_INSUFFICIENT', '', data['stdout'])
-
-        # append friendly status name
-        data['status'] = judge0_statuses[int(data['status_id'])]
 
         return data
     

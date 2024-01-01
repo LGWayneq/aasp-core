@@ -38,13 +38,13 @@ std::thread createThread(Function&& func, Args&&... args) {
     std::lock_guard<std::mutex> lock(createMtx);
     std::thread newThread(func, args...);
     numThreadsCreated++;
-    std::string NUM_THREADS_VALID_TOKEN("");
+    std::string AASP_NUM_THREADS_VALID_TOKEN("");
     if (numThreadsCreated == TEST_CASE.MIN_THREADS) {
-        NUM_THREADS_VALID_TOKEN = "NUM_THREADS_CREATED_SUFFICIENT";
+        AASP_NUM_THREADS_VALID_TOKEN = "AASP_" + std::to_string(numThreadsCreated) + "_THREADS_CREATED_SUFFICIENT";
     } else if (numThreadsCreated < TEST_CASE.MIN_THREADS) {
-        NUM_THREADS_VALID_TOKEN = "NUM_THREADS_CREATED_INSUFFICIENT";
+        AASP_NUM_THREADS_VALID_TOKEN = "AASP_" + std::to_string(numThreadsCreated) + "_THREADS_CREATED_INSUFFICIENT";
     }
-    std::cout << NUM_THREADS_VALID_TOKEN;
+    std::cout << AASP_NUM_THREADS_VALID_TOKEN;
     return newThread;
 }
 
@@ -54,5 +54,6 @@ void joinThread(std::thread& _thread) {
 }
 """
         cpp_counter_functions = cpp_counter_functions.replace("TEST_CASE.MIN_THREADS", str(test_case.min_threads))
+        code = code.replace("int main() {", 'int main() { std::cout << "AASP_0_THREADS_CREATED_INSUFFICIENT";')
         params['source_code'] = cpp_counter_init + cpp_counter_functions + code
     return params

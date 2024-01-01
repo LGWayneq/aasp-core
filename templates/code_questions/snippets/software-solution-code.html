@@ -39,6 +39,10 @@
       <textarea id="id_solution-stdin" rows="4" class="form-control font-monospace">1</textarea>
     </div>
     <div class="col-3">
+      <label>Expected Output</label>
+      <textarea id="id_solution-stdout" rows="4" class="form-control font-monospace"></textarea>
+    </div>
+    <div class="col-3">
       <label for="id_solution-time_limit">Time Limit (s)</label>
       <input name="solution-time_limit"
         id="id_solution-time_limit" type="number"
@@ -86,6 +90,10 @@
               <h5>Standard Error</h5>
               <pre><code class="language-plaintext rounded run-results" id="results-stderr" style="max-height: 130px; overflow-y: auto; white-space: pre-wrap; word-wrap: break-word;"></code></pre>
           </div>
+
+          <!-- stdout -->
+          <h5>Expected Output</h5>
+          <pre><code class="language-plaintext rounded run-results" id="results-expected-output" style="max-height: 130px; overflow-y: auto; white-space: pre-wrap; word-wrap: break-word;"></code></pre>
       </div>
   </div>
 
@@ -182,12 +190,14 @@
     const resultsBody = $('#results-body')
     const loading = $('#loading')
     const resultsStdin = $('#results-stdin')
+    const resultsExpectedOutput = $('#results-expected-output')
     const resultsStdout = $('#results-stdout')
     const resultsStderrContainer = $('#results-stderr-container')
     const resultsStderr = $('#results-stderr')
 
     const compileAndRun = () => {
       stdin = $("#id_solution-stdin").val();
+      stdout = $("#id_solution-stdout").val();
       time_limit = $("#id_solution-time_limit").val();
       memory_limit = $("#id_solution-memory_limit").val();
       min_threads = $("#id_solution-min_threads").val();
@@ -210,6 +220,7 @@
       formData.append("lang-id", langSelect.find("option:selected").data('judgeid'));
       formData.append("csrfmiddlewaretoken", "{{ csrf_token }}");
       formData.append("run_stdin", stdin);
+      formData.append("run_stdout", stdout);
       formData.append("run_time_limit", time_limit);
       formData.append("run_memory_limit", memory_limit);
       formData.append("run_min_threads", min_threads);
@@ -260,7 +271,7 @@
 
                   // set values
                   resultsStdin.html(res.data.stdin ? res.data.stdin : '&nbsp;');
-
+                  resultsExpectedOutput.html(res.data.expected_output ? res.data.expected_output : '&nbsp;');
                   resultsStdout.html(res.data.stdout ? res.data.stdout : '&nbsp;');
                   if (res.data.stderr != undefined) {
                     resultsStderrContainer.show();
