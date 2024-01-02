@@ -202,10 +202,10 @@
       memory_limit = $("#id_solution-memory_limit").val();
       min_threads = $("#id_solution-min_threads").val();
       max_threads = $("#id_solution-max_threads").val();
-      submit(stdin, time_limit, memory_limit, min_threads, max_threads, updateSampleStatus);
+      submit(stdin, stdout, time_limit, memory_limit, min_threads, max_threads, updateSampleStatus);
     }
 
-    const submit = async (stdin, time_limit, memory_limit, min_threads, max_threads, successCallback) => {
+    const submit = async (stdin, stdout, time_limit, memory_limit, min_threads, max_threads, successCallback) => {
       // disable buttons
       runBtn.prop("disabled", true);
       applyBtn.prop("disabled", true);
@@ -331,7 +331,7 @@
         const min_threads = $(`#id_tc-${i}-min_threads`).val();
         const max_threads = $(`#id_tc-${i}-max_threads`).val();
         $(`#id_tc-${i}-loading`).show();
-        submit(stdin, time_limit, memory_limit, min_threads, max_threads, (token) => updateTestcaseOutput(i, token));
+        submit(stdin, "", time_limit, memory_limit, min_threads, max_threads, (token) => updateTestcaseOutput(i, token));
       }
     }
 

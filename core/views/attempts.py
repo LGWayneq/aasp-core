@@ -27,7 +27,7 @@ from core.models import Assessment, AssessmentAttempt, \
     CandidateSnapshot
 from core.tasks import update_test_case_attempt_status, force_submit_assessment, detect_faces
 from core.views.utils import get_assessment_attempt_question, check_permissions_course, user_enrolled_in_course, construct_expected_output_judge0_params, construct_judge0_params
-
+from core.concurrency import evaluate_concurrency_results
 
 @login_required()
 @groups_allowed(UserGroup.educator, UserGroup.lab_assistant, UserGroup.student)
@@ -581,18 +581,11 @@ def check_tc_result(token, status_only = False, vcd = False):
                 data['compile_output'] = base64.b64decode(data['compile_output'])
 
         stdout = data['stdout']
+        # post processing for concurrency question
         if stdout and re.match(r'AASP_\d+_THREADS_CREATED_INSUFFICIENT', stdout):
-            sufficient_threads = re.search(r'AASP_\d+_THREADS_CREATED_SUFFICIENT', stdout)
-
-            # remove thread counter tokens from output
-            data['stdout'] = re.sub(r'AASP_\d+_THREADS_CREATED_SUFFICIENT', '', data['stdout'])
-            data['stdout'] = re.sub(r'AASP_\d+_THREADS_CREATED_INSUFFICIENT', '', data['stdout'])
-
-            # manually evaluate correctness
-            if data['expected_output'] == data['stdout'] and data['status_id'] == 4:
-                data['status_id'] = 3
-            if not sufficient_threads and data['status_id'] == 3:
-                data['status_id'] = 15
+            concurrency_results = evaluate_concurrency_results(stdout, data['expected_output'], data['status_id'])
+            data["status_id"] = concurrency_results['status_id']
+            data["stdout"] = concurrency_results['stdout']
 
         # append friendly status name
         data['status'] = judge0_statuses[int(data['status_id'])]
@@ -644,10 +637,10 @@ def code_question_submission(request, code_question_attempt_id):
             test_cases = TestCase.objects.filter(code_question__codequestionattempt=cqa)
 
             # generate params for judge0 call
-            language_id = request.POST.get('lang-id')
+            language_id = int(request.POST.get('lang-id'))
 
             # get question type
-            question_type = cqa.code_question.hdlquestionconfig.get_question_type()
+            question_type = cqa.code_question.hdlquestionconfig.get_question_type() if not cqa.code_question.is_software_language() else None
 
             # get code according to question type
             if question_type == 'Module and Testbench Design':
@@ -664,7 +657,6 @@ def code_question_submission(request, code_question_attempt_id):
                 submissions = [construct_judge0_params(code, language_id, test_case) for test_case in test_cases]
 
             params = {"submissions": submissions}
-
             # call judge0
             try:
                 url = settings.JUDGE0_URL + "/submissions/batch?base64_encoded=false"
@@ -743,6 +735,12 @@ def update_test_case_attempt_status(tca_id: int, token: str):
             tca.stdout = stdout
             tca.time = time
             tca.memory = memory
+            
+            # post processing for concurrency question
+            if tca.test_case.code_question.is_concurrency_question:
+                concurrency_results = evaluate_concurrency_results(stdout, tca.test_case.stdout, status_id)
+                tca.status = concurrency_results['status_id']
+
             tca.save()
             # check if all test cases have been completed
             finished = not TestCaseAttempt.objects.filter(cq_submission_id=tca.cq_submission.id, status__in=[1, 2]).exists()
@@ -770,7 +768,7 @@ def update_cqs_passed_flag(cqs_id):
     # only continue if it was not previously calculated
     if cqs.passed is None:
         # update the passed flag
-        passed = not TestCaseAttempt.objects.filter(cq_submission_id=cqs_id, status__range=(4, 14)).exists()
+        passed = not TestCaseAttempt.objects.filter(cq_submission_id=cqs_id, status__range=(4, 15)).exists()
         cqs.passed = passed
         cqs.save()
 

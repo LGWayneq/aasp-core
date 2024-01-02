@@ -178,11 +178,14 @@ def update_test_cases(request, code_question_id):
             extra_test_cases = 0
 
     # Create the TestCaseFormset with the determined number of extra test cases
+    fields = ['stdin', 'stdout', 'time_limit', 'memory_limit', 'score', 'hidden', 'sample']
+    if code_question.is_concurrency_question:
+        fields += ['min_threads', 'max_threads']
     TestCaseFormset = inlineformset_factory(
         CodeQuestion,
         TestCase,
         extra=extra_test_cases,
-        fields=['stdin', 'stdout', 'time_limit', 'memory_limit', 'score', 'hidden', 'sample', 'min_threads', 'max_threads']
+        fields=fields
     )
     testcase_formset = TestCaseFormset(prefix='tc', instance=code_question)
 
@@ -203,6 +206,7 @@ def update_test_cases(request, code_question_id):
 
     # process POST requests
     if request.method == "POST":
+        print(request.POST)
         if not code_question.is_software_language():
             hdl_solution_form = QuestionSolutionForm(request.POST)
 

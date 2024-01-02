@@ -1,3 +1,5 @@
+import re
+
 def modify_concurrency_params(params, code, lang_id, test_case):
     params = append_concurrency_compiler_options(params, lang_id, test_case)
     params = process_concurrency_code(params, lang_id, code, test_case)
@@ -57,3 +59,22 @@ void joinThread(std::thread& _thread) {
         code = code.replace("int main() {", 'int main() { std::cout << "AASP_0_THREADS_CREATED_INSUFFICIENT";')
         params['source_code'] = cpp_counter_init + cpp_counter_functions + code
     return params
+
+def evaluate_concurrency_results(stdout, expected_output, status_id):
+    sufficient_threads = re.search(r'AASP_\d+_THREADS_CREATED_SUFFICIENT', stdout) is not None
+
+    # remove thread counter tokens from output
+    stdout = re.sub(r'AASP_\d+_THREADS_CREATED_SUFFICIENT', '', stdout)
+    stdout = re.sub(r'AASP_\d+_THREADS_CREATED_INSUFFICIENT', '', stdout)
+
+    # manually evaluate correctness
+    if expected_output.strip() == stdout.strip() and status_id == 4:
+        if sufficient_threads:
+            status_id = 3
+        else:
+            status_id = 15
+    
+    return {
+        stdout,
+        status_id
+    }
