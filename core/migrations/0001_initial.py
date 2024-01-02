@@ -182,10 +182,11 @@ class Migration(migrations.Migration):
             fields=[
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('token', models.CharField(max_length=36)),
-                ('status', models.IntegerField(choices=[(1, 'In Queue'), (2, 'Processing'), (3, 'Accepted'), (4, 'Wrong Answer'), (5, 'Time Limit Exceeded'), (6, 'Compilation Error'), (7, 'Runtime Error (SIGSEGV)'), (8, 'Runtime Error (SIGXFSZ)'), (9, 'Runtime Error (SIGFPE)'), (10, 'Runtime Error (SIGABRT)'), (11, 'Runtime Error (NZEC)'), (12, 'Runtime Error (Other)'), (13, 'Internal Error'), (14, 'Exec Format Error')], default=1)),
+                ('status', models.IntegerField(choices=[(1, 'In Queue'), (2, 'Processing'), (3, 'Accepted'), (4, 'Wrong Answer'), (5, 'Time Limit Exceeded'), (6, 'Compilation Error'), (7, 'Runtime Error (SIGSEGV)'), (8, 'Runtime Error (SIGXFSZ)'), (9, 'Runtime Error (SIGFPE)'), (10, 'Runtime Error (SIGABRT)'), (11, 'Runtime Error (NZEC)'), (12, 'Runtime Error (Other)'), (13, 'Internal Error'), (14, 'Exec Format Error'), (15, "Insufficient Threads Used")], default=1)),
                 ('stdout', models.TextField(blank=True, null=True)),
                 ('time', models.FloatField(blank=True, null=True)),
                 ('memory', models.FloatField(blank=True, null=True)),
+                ('threads', models.PositiveIntegerField(blank=True, null=True)),
                 ('cq_submission', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='core.codequestionsubmission')),
                 ('test_case', models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, to='core.testcase')),
             ],

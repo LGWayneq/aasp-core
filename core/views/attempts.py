@@ -27,7 +27,7 @@ from core.models import Assessment, AssessmentAttempt, \
     CandidateSnapshot
 from core.tasks import update_test_case_attempt_status, force_submit_assessment, detect_faces
 from core.views.utils import get_assessment_attempt_question, check_permissions_course, user_enrolled_in_course, construct_expected_output_judge0_params, construct_judge0_params
-from core.concurrency import evaluate_concurrency_results
+from core.concurrency import evaluate_concurrency_results, get_max_threads_used
 
 @login_required()
 @groups_allowed(UserGroup.educator, UserGroup.lab_assistant, UserGroup.student)
@@ -740,6 +740,8 @@ def update_test_case_attempt_status(tca_id: int, token: str):
             if tca.test_case.code_question.is_concurrency_question:
                 concurrency_results = evaluate_concurrency_results(stdout, tca.test_case.stdout, status_id)
                 tca.status = concurrency_results['status_id']
+
+                get_max_threads_used(stdout)
 
             tca.save()
             # check if all test cases have been completed

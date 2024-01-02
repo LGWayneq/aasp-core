@@ -41,7 +41,7 @@ std::thread createThread(Function&& func, Args&&... args) {
     std::thread newThread(func, args...);
     numThreadsCreated++;
     std::string AASP_NUM_THREADS_VALID_TOKEN("");
-    if (numThreadsCreated == TEST_CASE.MIN_THREADS) {
+    if (numThreadsCreated >= TEST_CASE.MIN_THREADS) {
         AASP_NUM_THREADS_VALID_TOKEN = "AASP_" + std::to_string(numThreadsCreated) + "_THREADS_CREATED_SUFFICIENT";
     } else if (numThreadsCreated < TEST_CASE.MIN_THREADS) {
         AASP_NUM_THREADS_VALID_TOKEN = "AASP_" + std::to_string(numThreadsCreated) + "_THREADS_CREATED_INSUFFICIENT";
@@ -68,13 +68,30 @@ def evaluate_concurrency_results(stdout, expected_output, status_id):
     stdout = re.sub(r'AASP_\d+_THREADS_CREATED_INSUFFICIENT', '', stdout)
 
     # manually evaluate correctness
-    if expected_output.strip() == stdout.strip() and status_id == 4:
+    valid = True
+    stdout_lines = stdout.splitlines()
+    expected_output_lines = expected_output.splitlines()
+    for i in range(len(stdout_lines)):
+        if stdout_lines[i].strip() != expected_output_lines[i].strip():
+            valid = False
+            break
+    if valid and status_id == 4:
         if sufficient_threads:
             status_id = 3
         else:
             status_id = 15
     
     return {
-        stdout,
-        status_id
+        "stdout": stdout,
+        "status_id": status_id
     }
+
+def get_max_threads_used(stdout):
+    max_threads_used = 0
+    insufficient_tokens = re.findall(r'AASP_\d+_THREADS_CREATED_INSUFFICIENT', stdout)
+    for token in insufficient_tokens:
+        max_threads_used = max(max_threads_used, int(re.search(r'\d+', token).group(0)))
+    sufficient_tokens = re.findall(r'AASP_\d+_THREADS_CREATED_SUFFICIENT', stdout)
+    for token in sufficient_tokens:
+        max_threads_used = max(max_threads_used, int(re.search(r'\d+', token).group(0)))
+    return max_threads_used

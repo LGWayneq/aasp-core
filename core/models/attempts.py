@@ -192,6 +192,7 @@ class TestCaseAttempt(models.Model):
     stdout = models.TextField(blank=True, null=True)
     time = models.FloatField(blank=True, null=True)
     memory = models.FloatField(blank=True, null=True)
+    threads = models.PositiveIntegerField(blank=True, null=True)
 
 
 class McqQuestionAttempt(models.Model):
