@@ -66,6 +66,9 @@
               <th>Status</th>
               <th>Time (s)</th>
               <th>Memory (kb)</th>
+              {% if cqs.cq_attempt.code_question.is_concurrency_question %}
+                <th>Threads Used</th>
+              {% endif %}
               <th>Input</th>
               <th>Output</th>
               <th>Expected Output</th>
@@ -98,6 +101,9 @@
                 <td>{{ tca.get_status_display }}</td>
                 <td>{{ tca.time }}</td>
                 <td>{{ tca.memory }}</td>
+                {% if tca.test_case.code_question.is_concurrency_question %}
+                  <td>{{ tca.threads }}</td>
+                {% endif %}
                 <td><a class="link" href="{% url 'export-test-case-stdin' %}?test_case_id={{ tca.test_case.id }}" target="_blank"><i
                         class="fa-solid fa-file-arrow-down"></i></a></td>
                 <td><a class="link" href="{% url 'export-test-case-attempt-stdout' tca_id=tca.id %}" target="_blank"><i

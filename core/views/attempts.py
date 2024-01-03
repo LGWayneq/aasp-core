@@ -740,8 +740,9 @@ def update_test_case_attempt_status(tca_id: int, token: str):
             if tca.test_case.code_question.is_concurrency_question:
                 concurrency_results = evaluate_concurrency_results(stdout, tca.test_case.stdout, status_id)
                 tca.status = concurrency_results['status_id']
-
-                get_max_threads_used(stdout)
+                
+                # save number of threads used
+                tca.threads = get_max_threads_used(stdout)
 
             tca.save()
             # check if all test cases have been completed

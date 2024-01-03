@@ -165,6 +165,15 @@ class CodeQuestionSubmission(models.Model):
         cqs_score = cqs_score if cqs_score else 0
         return cqs_score
 
+    @property
+    def average_thread_usage(self):
+        TestCaseAttempt = apps.get_model(app_label="core", model_name="TestCaseAttempt")
+        thread_usages = TestCaseAttempt.objects.filter(cq_submission=self).values_list('threads', flat=True)
+        thread_usages = [x for x in thread_usages if x is not None]
+        if len(thread_usages) == 0:
+            return 0
+        else:
+            return sum(thread_usages) / len(thread_usages)
 
 class TestCaseAttempt(models.Model):
     STATUSES = [

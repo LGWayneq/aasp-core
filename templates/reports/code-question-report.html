@@ -77,6 +77,9 @@
                             <th>Language</th>
                             <th>Time Spent</th>
                             <th>Score ({{ assessment.total_score }})</th>
+                            {% if question.is_concurrency_question %}
+                                <th>Average No. of Threads Used</th>
+                            {% endif %}
                             <th>Actions</th>
                         </tr>
                     </thead>
@@ -88,6 +91,9 @@
                             <td>{{ cqs.language }}</td>
                             <th>{{ cqs.cq_attempt.duration }}</th>
                             <td>{{ cqs.score }}</td>
+                            {% if cqs.cq_attempt.code_question.is_concurrency_question %}
+                                <th>{{ cqs.average_thread_usage }}</th>
+                            {% endif %}
                             <td>
                                 <a class="text-success" target="_blank" href="{% url 'code-submission-details' cqs_id=cqs.id %}">View <i class="fa-solid fa-arrow-up-right-from-square"></i></a>
                             </td>
