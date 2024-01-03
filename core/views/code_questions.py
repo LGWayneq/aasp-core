@@ -206,7 +206,6 @@ def update_test_cases(request, code_question_id):
 
     # process POST requests
     if request.method == "POST":
-        print(request.POST)
         if not code_question.is_software_language():
             hdl_solution_form = QuestionSolutionForm(request.POST)
 

@@ -69,12 +69,15 @@ def evaluate_concurrency_results(stdout, expected_output, status_id):
 
     # manually evaluate correctness
     valid = True
-    stdout_lines = stdout.splitlines()
-    expected_output_lines = expected_output.splitlines()
-    for i in range(len(stdout_lines)):
-        if stdout_lines[i].strip() != expected_output_lines[i].strip():
-            valid = False
-            break
+    stdout_lines = stdout.strip().splitlines()
+    expected_output_lines = expected_output.strip().splitlines()
+
+    if len(stdout_lines) == len(expected_output_lines):
+        for i in range(len(stdout_lines)):
+            if stdout_lines[i].strip() != expected_output_lines[i].strip():
+                valid = False
+                break
+            
     if valid and status_id == 4:
         if sufficient_threads:
             status_id = 3
