@@ -581,8 +581,10 @@ def check_tc_result(token, status_only = False, vcd = False):
                 data['compile_output'] = base64.b64decode(data['compile_output'])
 
         stdout = data['stdout']
+        if isinstance(stdout, bytes):
+            stdout = stdout.decode('utf-8')
         # post processing for concurrency question
-        if stdout and re.match(r'AASP_\d+_THREADS_CREATED_INSUFFICIENT', stdout):
+        if stdout and re.match(r'AASP_\d+_THREADS_CREATED_INSUFFICIENT', stdout): 
             concurrency_results = evaluate_concurrency_results(stdout, data['expected_output'], data['status_id'])
             data["status_id"] = concurrency_results['status_id']
             data["stdout"] = concurrency_results['stdout']

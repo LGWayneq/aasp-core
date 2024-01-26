@@ -21,7 +21,46 @@ def append_concurrency_compiler_options(params, lang_id, test_case):
 def process_concurrency_code(params, lang_id, code, test_case):
     # C
     if lang_id == 75:
-        params['source_code'] = code
+        c_counter_init = """
+#include <stdio.h>
+#include <stdlib.h>
+#include <pthread.h>
+
+pthread_mutex_t createMtx = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t joinMtx = PTHREAD_MUTEX_INITIALIZER;
+int numThreadsCreated = 0;
+"""
+        c_counter_functions = """
+void* createThread(void* (*func)(void*), void* args) {
+    pthread_mutex_lock(&createMtx);
+    
+    pthread_t newThread;
+    pthread_create(&newThread, NULL, func, args);
+    numThreadsCreated++;
+    
+    char AASP_NUM_THREADS_VALID_TOKEN[50];
+    
+    if (numThreadsCreated >= TEST_CASE.MIN_THREADS) {
+        sprintf(AASP_NUM_THREADS_VALID_TOKEN, "AASP_%d_THREADS_CREATED_SUFFICIENT", numThreadsCreated);
+    } else {
+        sprintf(AASP_NUM_THREADS_VALID_TOKEN, "AASP_%d_THREADS_CREATED_INSUFFICIENT", numThreadsCreated);
+    }
+    
+    printf("%s", AASP_NUM_THREADS_VALID_TOKEN);
+    
+    pthread_mutex_unlock(&createMtx);
+    return (void*)newThread;
+}
+
+void joinThread(void* _thread) {
+    pthread_mutex_lock(&joinMtx);
+    pthread_join(*(pthread_t*)_thread, NULL);
+    pthread_mutex_unlock(&joinMtx);
+}
+"""
+        c_counter_functions = c_counter_functions.replace("TEST_CASE.MIN_THREADS", str(test_case.min_threads))
+        code = code.replace("int main() {", 'int main() { printf("AASP_0_THREADS_CREATED_INSUFFICIENT");')
+        params['source_code'] = c_counter_init + c_counter_functions + code
     # C++
     elif lang_id == 76:
         cpp_counter_init = """
