@@ -552,6 +552,7 @@ def check_tc_result(token, status_only = False, vcd = False):
         13: "Internal Error",
         14: "Exec Format Error",
         15: "Insufficient Threads Used",
+        16: "Data Race Detected",
     }
     try:
         if status_only:
@@ -585,7 +586,7 @@ def check_tc_result(token, status_only = False, vcd = False):
             stdout = stdout.decode('utf-8')
         # post processing for concurrency question
         if stdout and re.match(r'AASP_\d+_THREADS_CREATED_INSUFFICIENT', stdout): 
-            concurrency_results = evaluate_concurrency_results(stdout, data['expected_output'], data['status_id'])
+            concurrency_results = evaluate_concurrency_results(stdout, data['expected_output'], data['status_id'], data['stderr'])
             data["status_id"] = concurrency_results['status_id']
             data["stdout"] = concurrency_results['stdout']
 
@@ -722,12 +723,13 @@ def update_test_case_attempt_status(tca_id: int, token: str):
     """
     try:
         # call judge0
-        url = f"{settings.JUDGE0_URL}/submissions/{token}?base64_encoded=false&fields=status_id,stdout,time,memory"
+        url = f"{settings.JUDGE0_URL}/submissions/{token}?base64_encoded=false&fields=status_id,stdout,stderr,time,memory"
         res = requests.get(url)
         data = res.json()
 
         status_id = data.get('status_id')
         stdout = data.get('stdout')
+        stderr = data.get('stderr')
         time = data.get('time')
         memory = data.get('memory')
 
@@ -740,7 +742,7 @@ def update_test_case_attempt_status(tca_id: int, token: str):
             
             # post processing for concurrency question
             if tca.test_case.code_question.is_concurrency_question:
-                concurrency_results = evaluate_concurrency_results(stdout, tca.test_case.stdout, status_id)
+                concurrency_results = evaluate_concurrency_results(stdout, tca.test_case.stdout, status_id, stderr)
                 tca.status = concurrency_results['status_id']
                 
                 # save number of threads used

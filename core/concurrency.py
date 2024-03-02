@@ -99,7 +99,7 @@ void joinThread(std::thread& _thread) {
         params['source_code'] = cpp_counter_init + cpp_counter_functions + code
     return params
 
-def evaluate_concurrency_results(stdout, expected_output, status_id):
+def evaluate_concurrency_results(stdout, expected_output, status_id, stderr):
     sufficient_threads = re.search(r'AASP_\d+_THREADS_CREATED_SUFFICIENT', stdout) is not None
 
     # remove thread counter tokens from output
@@ -116,13 +116,18 @@ def evaluate_concurrency_results(stdout, expected_output, status_id):
             if stdout_lines[i].strip() != expected_output_lines[i].strip():
                 valid = False
                 break
-            
+
+    # check for sufficient thread usage        
     if valid and status_id == 4:
         if sufficient_threads:
             status_id = 3
         else:
             status_id = 15
     
+    # check for data race
+    if "data race" in stderr.lower():
+        status_id = 16
+
     return {
         "stdout": stdout,
         "status_id": status_id
