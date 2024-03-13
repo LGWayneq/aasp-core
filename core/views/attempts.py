@@ -736,7 +736,6 @@ def update_test_case_attempt_status(tca_id: int, token: str):
         if status_id not in [1, 2]:
             tca = TestCaseAttempt.objects.prefetch_related('cq_submission').get(id=tca_id)
             tca.status = status_id
-            tca.stdout = stdout
             tca.time = time
             tca.memory = memory
             
@@ -747,7 +746,8 @@ def update_test_case_attempt_status(tca_id: int, token: str):
                 
                 # save number of threads used
                 tca.threads = get_max_threads_used(stdout)
-
+                tca.thread_times = ",".join(concurrency_results['thread_times'])
+            tca.stdout = stdout
             tca.save()
             # check if all test cases have been completed
             finished = not TestCaseAttempt.objects.filter(cq_submission_id=tca.cq_submission.id, status__in=[1, 2]).exists()

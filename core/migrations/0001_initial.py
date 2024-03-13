@@ -187,6 +187,7 @@ class Migration(migrations.Migration):
                 ('time', models.FloatField(blank=True, null=True)),
                 ('memory', models.FloatField(blank=True, null=True)),
                 ('threads', models.PositiveIntegerField(blank=True, null=True)),
+                ('thread_times', models.TextField(blank=True, null=True)),
                 ('cq_submission', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='core.codequestionsubmission')),
                 ('test_case', models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, to='core.testcase')),
             ],
