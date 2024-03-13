@@ -67,7 +67,7 @@
               <th>Time (s)</th>
               <th>Memory (kb)</th>
               {% if cqs.cq_attempt.code_question.is_concurrency_question %}
-                <th>Threads Used</th>
+                <th>Threads</th>
               {% endif %}
               <th>Input</th>
               <th>Output</th>
@@ -102,7 +102,12 @@
                 <td>{{ tca.time }}</td>
                 <td>{{ tca.memory }}</td>
                 {% if tca.test_case.code_question.is_concurrency_question %}
-                  <td>{{ tca.threads }}</td>
+                  <td>{{ tca.threads }}
+                    <button type="button" class="btn btn-sm btn-success" data-thread-times="{{tca.thread_times}}" onclick="viewThreadModal(this);"
+                        data-bs-toggle="modal" data-bs-target="#threadModal">
+                      View
+                    </button>
+                  </td>
                 {% endif %}
                 <td><a class="link" href="{% url 'export-test-case-stdin' %}?test_case_id={{ tca.test_case.id }}" target="_blank"><i
                         class="fa-solid fa-file-arrow-down"></i></a></td>
@@ -134,13 +139,74 @@
     </div>
   </div>
 
+  <!-- Threads modal -->
+  <div class="modal fade" id="threadModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Threads</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+
+          <!-- modal body -->
+          <div id="m-body" style="display:none;">
+            <table class="table display table-borderless" id="modal-table">
+              <thead>
+              <tr>
+                <th>Thread</th>
+                <th>Time Spent (ms)</th>
+              </tr>
+              </thead>
+              <tbody>
+
+              </tbody>
+            </table>
+          </div>
+
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
 {% endblock %}
 
 {% block js %}
-  <script type="text/javascript" src="{% static 'vendors/highlight.js/highlight.min.js' %}"></script>
   <script src="{% static 'vendors/jquery/jquery.min.js' %}"></script>
+  <script type="text/javascript" src="{% static 'vendors/highlight.js/highlight.min.js' %}"></script>
+  <script src="https://cdn.datatables.net/1.12.1/js/jquery.dataTables.min.js"></script>
 
   <script>
       hljs.highlightAll();
   </script>
+
+  <!-- script for loading attempts modal -->
+  <script>
+    let modalTable = $("#modal-table").DataTable({searching: false, paging: false, info: false});
+
+    const modalBody = $("#m-body");
+    const viewThreadModal = (btn) => {
+        // update datatable rows
+        const tableData = [];
+        const threadTimes = btn.getAttribute('data-thread-times').split(',');
+        threadTimes.forEach((time, idx) => {
+            tableData.push([
+                idx + 1,
+                parseInt(time) / 1000,
+            ]);
+        });
+
+        modalTable.clear();
+        modalTable.rows.add(tableData);
+        modalTable.draw();
+
+        setTimeout(() => {
+          modalBody.show();
+        }, 500);
+
+        $('#threadModal').modal('show');
+    }
+</script>
 {% endblock %}
