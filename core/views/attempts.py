@@ -26,7 +26,7 @@ from core.models import Assessment, AssessmentAttempt, \
     McqQuestion, McqQuestionOption, McqQuestionAttempt, McqQuestionAttemptOption, \
     CandidateSnapshot
 from core.tasks import update_test_case_attempt_status, force_submit_assessment, detect_faces
-from core.views.utils import get_assessment_attempt_question, check_permissions_course, user_enrolled_in_course, construct_expected_output_judge0_params, construct_judge0_params
+from core.views.utils import get_assessment_attempt_question, check_permissions_course, user_enrolled_in_course, construct_expected_output_judge0_params, construct_judge0_params, decode_judge0_params
 from core.concurrency import evaluate_concurrency_results, get_max_threads_used
 
 @login_required()
@@ -570,20 +570,13 @@ def check_tc_result(token, status_only = False, vcd = False):
             url = url.replace("base64_encoded=false", "base64_encoded=true")
             res = requests.get(url)
             data = res.json()
-            if data["stdout"]:
-                data['stdout'] = base64.b64decode(data['stdout'])
-            if data["stdin"]:
-                data['stdin'] = base64.b64decode(data['stdin'])
-            if data["stderr"]:
-                data['stderr'] = base64.b64decode(data['stderr'])
-            if data["expected_output"]:
-                data['expected_output'] = base64.b64decode(data['expected_output'])
-            if data["compile_output"]:
-                data['compile_output'] = base64.b64decode(data['compile_output'])
+            decode_judge0_params(data, "stdout")
+            decode_judge0_params(data, "stdin")
+            decode_judge0_params(data, "stderr")
+            decode_judge0_params(data, "expected_output")
+            decode_judge0_params(data, "compile_output")
 
         stdout = data['stdout']
-        if isinstance(stdout, bytes):
-            stdout = stdout.decode('utf-8')
         # post processing for concurrency question
         if stdout and re.match(r'AASP_\d+_THREADS_CREATED_INSUFFICIENT', stdout): 
             concurrency_results = evaluate_concurrency_results(stdout, data['expected_output'], data['status_id'], data['stderr'])
@@ -746,7 +739,7 @@ def update_test_case_attempt_status(tca_id: int, token: str):
                 
                 # save number of threads used
                 tca.threads = get_max_threads_used(stdout)
-                tca.thread_times = ",".join(concurrency_results['thread_times'])
+                tca.thread_times = "|".join(concurrency_results['thread_times'])
             tca.stdout = stdout
             tca.save()
             # check if all test cases have been completed

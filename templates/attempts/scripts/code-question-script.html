@@ -394,6 +394,9 @@
                         if (res.data.stderr != undefined) {
                           resultsStderrContainer.show();
                           resultsStderr.html(res.data.stderr);
+                        } else if (res.data.compile_output != undefined) {
+                          resultsStderrContainer.show();
+                          resultsStderr.html(res.data.compile_output);
                         } else {
                           resultsStderrContainer.hide();
                         }

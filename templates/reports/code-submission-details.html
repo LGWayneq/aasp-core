@@ -103,7 +103,7 @@
                 <td>{{ tca.memory }}</td>
                 {% if tca.test_case.code_question.is_concurrency_question %}
                   <td>{{ tca.threads }}
-                    <button type="button" class="btn btn-sm btn-success" data-thread-times="{{tca.thread_times}}" onclick="viewThreadModal(this);"
+                    <button type="button" class="btn btn-sm btn-success" data-thread-times="{{tca.thread_times}}" data-counter="{{forloop.counter0}}" onclick="viewThreadModal(this);"
                         data-bs-toggle="modal" data-bs-target="#threadModal">
                       View
                     </button>
@@ -151,6 +151,11 @@
 
           <!-- modal body -->
           <div id="m-body" style="display:none;">
+            {% for timeline in thread_timelines %}
+              <div class="col-6" id="timeline-container-{{forloop.counter0}}" style="display: none;">
+                {% include 'reports/snippets/timeline.html' %}
+              </div>
+            {% endfor %}
             <table class="table display table-borderless" id="modal-table">
               <thead>
               <tr>
@@ -190,11 +195,13 @@
     const viewThreadModal = (btn) => {
         // update datatable rows
         const tableData = [];
-        const threadTimes = btn.getAttribute('data-thread-times').split(',');
-        threadTimes.forEach((time, idx) => {
+        const threadTimes = btn.getAttribute('data-thread-times').split('|');
+        threadTimes.forEach((start_end, idx) => {
+            const [start, end] = start_end.split(',');
+            const timeElapsed = parseInt(end) - parseInt(start);
             tableData.push([
                 idx + 1,
-                parseInt(time) / 1000,
+                parseInt(timeElapsed) / 1000,
             ]);
         });
 
@@ -202,6 +209,14 @@
         modalTable.rows.add(tableData);
         modalTable.draw();
 
+        const counter = btn.getAttribute('data-counter');
+        const timelineContainer = document.getElementById(`timeline-container-${counter}`);
+        // hide all other timelines
+        for (let i = 0; i < {{ thread_timelines|length }}; i++) {
+            document.getElementById(`timeline-container-${i}`).style.display = 'none';
+        }
+        timelineContainer.style.display = 'block';
+        
         setTimeout(() => {
           modalBody.show();
         }, 500);

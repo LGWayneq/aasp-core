@@ -25,56 +25,13 @@ def process_concurrency_code(params, lang_id, code, test_case):
 #include <stdio.h>
 #include <stdlib.h>
 #include <pthread.h>
+#include <string.h>
 #include <sys/time.h>
 
 pthread_mutex_t createMtx = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t joinMtx = PTHREAD_MUTEX_INITIALIZER;
 int numThreadsCreated = 0;
-"""
-        hash_table_def = """
-#include <stdint.h>
-
-#define HASH_TABLE_SIZE 200
-
-typedef struct Entry {
-    pthread_t thread_id;
-    long long microseconds;
-    struct Entry* next;
-} Entry;
-
-typedef struct {
-    Entry* table[HASH_TABLE_SIZE];
-} ThreadStartsMap;
-
-unsigned int hash(pthread_t thread_id) {
-    return thread_id % HASH_TABLE_SIZE;
-}
-
-void map_put(ThreadStartsMap* map, pthread_t thread_id, long long microseconds) {
-    unsigned int index = hash(thread_id);
-    Entry* new_entry = malloc(sizeof(Entry));
-    if (!new_entry) {
-        exit(EXIT_FAILURE);
-    }
-    new_entry->thread_id = thread_id;
-    new_entry->microseconds = microseconds;
-    new_entry->next = map->table[index];
-    map->table[index] = new_entry;
-}
-
-long long map_get(ThreadStartsMap* map, pthread_t thread_id) {
-    unsigned int index = hash(thread_id);
-    Entry* entry = map->table[index];
-    while (entry) {
-        if (entry->thread_id == thread_id) {
-            return entry->microseconds;
-        }
-        entry = entry->next;
-    }
-    return NULL;
-}
-
-ThreadStartsMap threatStarts = { 0 };
+long long processStartTime;
 """
         c_time_functions = """
 long long getCurrentTime() {
@@ -83,19 +40,23 @@ long long getCurrentTime() {
     return currentTime.tv_sec * 1000000 + currentTime.tv_usec;
 }
 
-void setThreadStart(pthread_t _thread) {
+long long getTimeElapsed() {
     long long currentTime = getCurrentTime();
-    map_put(&threatStarts, _thread, currentTime);
+    return currentTime - processStartTime;
 }
 
-long long getThreadElapsed(pthread_t threadId) {
-    long long currentTime = getCurrentTime();
-    long long threadStart = map_get(&threatStarts, threadId);
-    return currentTime - threadStart;
+void setThreadStart(pthread_t _thread) {
+    long long timeElapsed = getTimeElapsed();
+    printf("AASP_STARTED_THREAD_%lu_%lu", _thread, timeElapsed);
+}
+
+void setThreadEnd(pthread_t threadId) {
+    long long timeElapsed = getTimeElapsed();
+    printf("AASP_ENDED_THREAD_%lu_%lu", threadId, timeElapsed);
 }
 """
         c_counter_functions = """
-void* createThread(void* (*func)(void*), void* args) {
+pthread_t createThread(void* (*func)(void*), void* args) {
     pthread_mutex_lock(&createMtx);
     
     pthread_t newThread;
@@ -114,20 +75,19 @@ void* createThread(void* (*func)(void*), void* args) {
     printf("%s", AASP_NUM_THREADS_VALID_TOKEN);
     
     pthread_mutex_unlock(&createMtx);
-    return (void*)newThread;
+    return newThread;
 }
 
-void joinThread(void* _thread) {
+void joinThread(pthread_t _thread) {
     pthread_mutex_lock(&joinMtx);
-    pthread_join(*(pthread_t*)_thread, NULL);
-    long long timeElapsed = getThreadElapsed(_thread);
-    printf("AASP_ELAPSED_THREAD_%lu_%lu", (unsigned long)_thread, timeElapsed);
+    pthread_join(_thread, NULL);
+    setThreadEnd(_thread);
     pthread_mutex_unlock(&joinMtx);
 }
 """
         c_counter_functions = c_counter_functions.replace("TEST_CASE.MIN_THREADS", str(test_case.min_threads))
-        code = code.replace("int main() {", 'int main() { printf("AASP_0_THREADS_CREATED_INSUFFICIENT");')
-        params['source_code'] = c_counter_init + hash_table_def + c_time_functions + c_counter_functions + code
+        code = code.replace("int main() {", 'int main() { printf("AASP_0_THREADS_CREATED_INSUFFICIENT"); processStartTime = getCurrentTime();')
+        params['source_code'] = c_counter_init + c_time_functions + c_counter_functions + code
     # C++
     elif lang_id == 76:
         cpp_counter_init = """
@@ -135,7 +95,6 @@ void joinThread(void* _thread) {
 #include <thread>
 #include <mutex>
 #include <string>
-#include <unordered_map>
 #include <chrono>
 #include <unistd.h>
 #include <fstream>
@@ -143,22 +102,27 @@ void joinThread(void* _thread) {
 std::mutex createMtx;
 std::mutex joinMtx;
 int numThreadsCreated = 0;
-std::unordered_map<std::thread::id, std::chrono::microseconds::rep> threadStarts;
 """
         cpp_time_functions = """
 std::chrono::microseconds::rep getCurrentTime() {
     return std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
 }
 
-void setThreadStart(std::thread& _thread) {
-    std::chrono::microseconds::rep currentTime = getCurrentTime();
-    threadStarts[_thread.get_id()] = currentTime;
+std::chrono::microseconds::rep processStartTime = getCurrentTime();
+
+std::chrono::microseconds::rep getTimeElapsed() {
+    return getCurrentTime() - processStartTime;
 }
 
-std::chrono::microseconds::rep getThreadElapsed(std::thread::id threadId) {
-    std::chrono::microseconds::rep currentTime = getCurrentTime();
-    std::chrono::microseconds::rep threadStart = threadStarts[threadId];
-    return currentTime - threadStart;
+void setThreadStart(std::thread& _thread) {
+    std::thread::id threadId = _thread.get_id();
+    std::chrono::microseconds::rep timeElapsed = getTimeElapsed();
+    std::cout << "AASP_STARTED_THREAD_" << threadId << "_" << timeElapsed;
+}
+
+void setThreadEnd(std::thread::id threadId) {
+    std::chrono::microseconds::rep timeElapsed = getTimeElapsed();
+    std::cout << "AASP_ENDED_THREAD_" << threadId << "_" << timeElapsed;
 }
 """
         cpp_counter_functions = """
@@ -182,8 +146,7 @@ void joinThread(std::thread& _thread) {
     std::lock_guard<std::mutex> lock(joinMtx);
     std::thread::id threadId = _thread.get_id();
     _thread.join();
-    std::chrono::microseconds::rep timeElapsed = getThreadElapsed(threadId);
-    std::cout << "AASP_ELAPSED_THREAD_" << threadId << "_" << timeElapsed;
+    setThreadEnd(threadId);
 }
 """
         cpp_counter_functions = cpp_counter_functions.replace("TEST_CASE.MIN_THREADS", str(test_case.min_threads))
@@ -231,13 +194,24 @@ def evaluate_concurrency_results(stdout, expected_output, status_id, stderr):
     }
 
 def process_concurrency_thread_times(stdout):
-    thread_times = []
-    elapsed_tokens = re.findall(r'AASP_ELAPSED_THREAD_(\d+)_([0-9]+)', stdout)
-    for token in elapsed_tokens:
-        elapsed_time = token[1]
-        thread_times.append(elapsed_time)
-    
-    stdout = re.sub(r'AASP_ELAPSED_THREAD_(\d+)_([0-9]+)', '', stdout)
+    thread_times = {}
+    started_tokens = re.findall(r'AASP_STARTED_THREAD_(\d+)_([0-9]+)', stdout)
+    for token in started_tokens:
+        thread_number = token[0]
+        start_time = token[1]
+        thread_times[thread_number] = [start_time]
+    stdout = re.sub(r'AASP_STARTED_THREAD_(\d+)_([0-9]+)', '', stdout)
+
+    ended_tokens = re.findall(r'AASP_ENDED_THREAD_(\d+)_([0-9]+)', stdout)
+    for token in ended_tokens:
+        thread_number = token[0]
+        print("Token: ", token)
+        print("Thread Number: ", thread_number)
+        end_time = token[1]
+        thread_times[thread_number].append(end_time)
+    stdout = re.sub(r'AASP_ENDED_THREAD_(\d+)_([0-9]+)', '', stdout)
+
+    thread_times = [",".join(times) for times in thread_times.values()]
     return stdout, thread_times
 
 def get_max_threads_used(stdout):

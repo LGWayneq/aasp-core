@@ -16,7 +16,7 @@ from rest_framework.renderers import JSONRenderer
 from core.decorators import UserGroup, groups_allowed
 from core.models import Course, Assessment, AssessmentAttempt, CodeQuestionSubmission, CodeQuestion, McqQuestion, McqQuestionOption, McqQuestionAttempt, McqQuestionAttemptOption, TestCaseAttempt, TestCase, CandidateSnapshot
 from core.views.utils import check_permissions_assessment, get_question_instance
-from core.views.charts import generate_score_distribution_graph, generate_assessment_time_spent_graph, generate_question_time_spent_graph, calculate_median, calculate_mean
+from core.views.charts import generate_score_distribution_graph, generate_assessment_time_spent_graph, generate_question_time_spent_graph, generate_thread_timelines, calculate_median, calculate_mean
 
 @login_required()
 @groups_allowed(UserGroup.educator)
@@ -296,9 +296,12 @@ def mcq_attempt_details(request):
 def code_submission_details(request, cqs_id):
     cqs = get_object_or_404(CodeQuestionSubmission, id=cqs_id)
     test_case_attempts = TestCaseAttempt.objects.filter(cq_submission=cqs).order_by('test_case__id')
+    thread_timelines = generate_thread_timelines(test_case_attempts)
+
     context = {
         'cqs': cqs,
         'test_case_attempts': test_case_attempts,
+        'thread_timelines': thread_timelines,
     }
 
     return render(request, "reports/code-submission-details.html", context)

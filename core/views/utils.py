@@ -294,6 +294,13 @@ def construct_judge0_params(code, lang_id, test_case) -> dict:
     
     return params
 
+def decode_judge0_params(data, key):
+    if data[key]:
+        data[key] = base64.b64decode(data[key])
+        if isinstance(data[key], bytes):
+            data[key] = data[key].decode('utf-8')
+    return data
+
 def embed_inout_module(module_code):
     """
     Find the inputs and outputs of a module and embed in_ and out_ in front of signal names to identify them easily.

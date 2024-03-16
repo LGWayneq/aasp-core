@@ -30,6 +30,28 @@ def generate_assessment_time_spent_graph(questions):
         "y_values": y_values,
     }
 
+def generate_thread_timelines(test_case_attempts):
+    timelines = []
+    for attempt in test_case_attempts:
+        timelines.append(generate_thread_timeline(attempt.thread_times, attempt.time))
+
+    return timelines
+
+def generate_thread_timeline(thread_times_string, time):
+    thread_times = thread_times_string.split("|")
+    num_of_threads = len(thread_times)
+    y_values = [[int(t)/1000 for t in start_end.split(",")] for start_end in thread_times]
+    x_values = [i+1 for i in range(num_of_threads)]
+    
+    return {
+        "title": "Thread Timeline",
+        "x_title": "Time (ms)",
+        "x_values": format_x_values(x_values),
+        "y_title": "Thread",
+        "y_values": y_values,
+        "max_time": time * 1000
+    }
+
 def calculate_average_question_delta(question):
     if isinstance(question, CodeQuestion):
         valid_attempts = CodeQuestionAttempt.objects.filter(code_question=question, time_spent__gt=timedelta(seconds=0))
