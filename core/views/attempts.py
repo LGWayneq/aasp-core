@@ -768,7 +768,7 @@ def update_cqs_passed_flag(cqs_id):
     # only continue if it was not previously calculated
     if cqs.passed is None:
         # update the passed flag
-        passed = not TestCaseAttempt.objects.filter(cq_submission_id=cqs_id, status__range=(4, 15)).exists()
+        passed = not TestCaseAttempt.objects.filter(cq_submission_id=cqs_id, status__range=(4, 16)).exists()
         cqs.passed = passed
         cqs.save()
 

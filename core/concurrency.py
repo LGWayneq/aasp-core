@@ -205,8 +205,6 @@ def process_concurrency_thread_times(stdout):
     ended_tokens = re.findall(r'AASP_ENDED_THREAD_(\d+)_([0-9]+)', stdout)
     for token in ended_tokens:
         thread_number = token[0]
-        print("Token: ", token)
-        print("Thread Number: ", thread_number)
         end_time = token[1]
         thread_times[thread_number].append(end_time)
     stdout = re.sub(r'AASP_ENDED_THREAD_(\d+)_([0-9]+)', '', stdout)
