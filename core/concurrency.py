@@ -47,12 +47,12 @@ long long getTimeElapsed() {
 
 void setThreadStart(pthread_t _thread) {
     long long timeElapsed = getTimeElapsed();
-    printf("AASP_STARTED_THREAD_%lu_%lu", _thread, timeElapsed);
+    printf("AASP_STARTED_THREAD_%lu_%lu_AASP", _thread, timeElapsed);
 }
 
 void setThreadEnd(pthread_t threadId) {
     long long timeElapsed = getTimeElapsed();
-    printf("AASP_ENDED_THREAD_%lu_%lu", threadId, timeElapsed);
+    printf("AASP_ENDED_THREAD_%lu_%lu_AASP", threadId, timeElapsed);
 }
 """
         c_counter_functions = """
@@ -117,12 +117,12 @@ std::chrono::microseconds::rep getTimeElapsed() {
 void setThreadStart(std::thread& _thread) {
     std::thread::id threadId = _thread.get_id();
     std::chrono::microseconds::rep timeElapsed = getTimeElapsed();
-    std::cout << "AASP_STARTED_THREAD_" << threadId << "_" << timeElapsed;
+    std::cout << "AASP_STARTED_THREAD_" << threadId << "_" << timeElapsed << "_AASP";
 }
 
 void setThreadEnd(std::thread::id threadId) {
     std::chrono::microseconds::rep timeElapsed = getTimeElapsed();
-    std::cout << "AASP_ENDED_THREAD_" << threadId << "_" << timeElapsed;
+    std::cout << "AASP_ENDED_THREAD_" << threadId << "_" << timeElapsed << "_AASP";
 }
 """
         cpp_counter_functions = """
@@ -195,19 +195,19 @@ def evaluate_concurrency_results(stdout, expected_output, status_id, stderr):
 
 def process_concurrency_thread_times(stdout):
     thread_times = {}
-    started_tokens = re.findall(r'AASP_STARTED_THREAD_(\d+)_([0-9]+)', stdout)
+    started_tokens = re.findall(r'AASP_STARTED_THREAD_(\d+)_([0-9]+)_AASP', stdout)
     for token in started_tokens:
         thread_number = token[0]
         start_time = token[1]
         thread_times[thread_number] = [start_time]
-    stdout = re.sub(r'AASP_STARTED_THREAD_(\d+)_([0-9]+)', '', stdout)
+    stdout = re.sub(r'AASP_STARTED_THREAD_(\d+)_([0-9]+)_AASP', '', stdout)
 
-    ended_tokens = re.findall(r'AASP_ENDED_THREAD_(\d+)_([0-9]+)', stdout)
+    ended_tokens = re.findall(r'AASP_ENDED_THREAD_(\d+)_([0-9]+)_AASP', stdout)
     for token in ended_tokens:
         thread_number = token[0]
         end_time = token[1]
         thread_times[thread_number].append(end_time)
-    stdout = re.sub(r'AASP_ENDED_THREAD_(\d+)_([0-9]+)', '', stdout)
+    stdout = re.sub(r'AASP_ENDED_THREAD_(\d+)_([0-9]+)_AASP', '', stdout)
 
     thread_times = [",".join(times) for times in thread_times.values()]
     return stdout, thread_times
