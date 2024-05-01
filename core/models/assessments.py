@@ -65,7 +65,10 @@ class Assessment(models.Model):
     @property
     def total_score(self):
         TestCase = apps.get_model(app_label="core", model_name="TestCase")
-        total_score = TestCase.objects.filter(code_question__assessment=self).aggregate(Sum('score')).get("score__sum", 0)
+        if not TestCase.objects.filter(code_question__assessment=self).exists():
+            total_score = 0
+        else:
+            total_score = TestCase.objects.filter(code_question__assessment=self).aggregate(Sum('score')).get("score__sum", 0)
 
         McqQuestion = apps.get_model(app_label="core", model_name="McqQuestion")
         mcq_questions = McqQuestion.objects.filter(assessment=self)

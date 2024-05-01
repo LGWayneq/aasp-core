@@ -85,7 +85,9 @@ def assessment_report(request, assessment_id):
     # calculate mean and median score
     mean_score = best_attempts.aggregate(Avg('score'))['score__avg']
     count = best_attempts.count()
-    if count % 2 == 0:
+    if count == 0:
+        median_score = 0
+    elif count % 2 == 0:
         median_score = (best_attempts[count // 2 - 1].score + best_attempts[count // 2].score) / 2
     else:
         median_score = best_attempts[count // 2].score
