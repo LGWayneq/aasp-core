@@ -193,6 +193,7 @@ class TestCaseAttempt(models.Model):
         (14, "Exec Format Error"),
         (15, "Insufficient Threads Used"),
         (16, "Data Race Detected"),
+        (17, "Exceeded Threads Limit"),
     ]
 
     cq_submission = models.ForeignKey("CodeQuestionSubmission", null=False, blank=False, on_delete=models.CASCADE)

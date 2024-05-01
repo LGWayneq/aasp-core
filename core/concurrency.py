@@ -13,7 +13,8 @@ def append_concurrency_compiler_options(params, lang_id, test_case):
     elif lang_id == 76:
         params['compiler_options'] = "-fsanitize=thread"
 
-    params["max_processes_and_or_threads"] = test_case.max_threads
+    # params["max_processes_and_or_threads"] = test_case.max_threads
+    params["max_processes_and_or_threads"] = 50
     params["enable_per_process_and_thread_time_limit"] = True
     # params["enable_per_process_and_thread_memory_limit"] = True
     return params
@@ -155,8 +156,9 @@ void joinThread(std::thread& _thread) {
         params['source_code'] = cpp_counter_init + cpp_time_functions + cpp_counter_functions + code
     return params
 
-def evaluate_concurrency_results(stdout, expected_output, status_id, stderr):
+def evaluate_concurrency_results(stdout, expected_output, status_id, stderr, max_threads):
     sufficient_threads = re.search(r'AASP_\d+_THREADS_CREATED_SUFFICIENT', stdout) is not None
+    max_threads_used = get_max_threads_used(stdout)
 
     # remove thread counter tokens from output
     stdout = re.sub(r'AASP_\d+_THREADS_CREATED_SUFFICIENT', '', stdout)
@@ -182,7 +184,12 @@ def evaluate_concurrency_results(stdout, expected_output, status_id, stderr):
             status_id = 3
         else:
             status_id = 15
-    
+    # check for exceeded thread limit
+    elif max_threads_used > max_threads or (stderr and "Resource temporarily unavailable" in stderr.lower()):
+        stdout = ""
+        stderr = ""
+        status_id = 17
+
     # check for data race
     if stderr and "data race" in stderr.lower():
         status_id = 16

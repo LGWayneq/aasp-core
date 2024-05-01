@@ -553,6 +553,7 @@ def check_tc_result(token, status_only = False, vcd = False):
         14: "Exec Format Error",
         15: "Insufficient Threads Used",
         16: "Data Race Detected",
+        17: "Exceeded Threads Limit",
     }
     try:
         if status_only:
@@ -577,9 +578,12 @@ def check_tc_result(token, status_only = False, vcd = False):
             decode_judge0_params(data, "compile_output")
 
         stdout = data['stdout']
+        
         # post processing for concurrency question
+        test_case = TestCase.objects.filter(testcaseattempt__token=token).first()
+        max_threads = test_case.max_threads if test_case else 50
         if stdout and re.match(r'AASP_\d+_THREADS_CREATED_INSUFFICIENT', stdout): 
-            concurrency_results = evaluate_concurrency_results(stdout, data['expected_output'], data['status_id'], data['stderr'])
+            concurrency_results = evaluate_concurrency_results(stdout, data['expected_output'], data['status_id'], data['stderr'], max_threads)
             data["status_id"] = concurrency_results['status_id']
             data["stdout"] = concurrency_results['stdout']
 
@@ -734,7 +738,7 @@ def update_test_case_attempt_status(tca_id: int, token: str):
             
             # post processing for concurrency question
             if tca.test_case.code_question.is_concurrency_question:
-                concurrency_results = evaluate_concurrency_results(stdout, tca.test_case.stdout, status_id, stderr)
+                concurrency_results = evaluate_concurrency_results(stdout, tca.test_case.stdout, status_id, stderr, tca.test_case.max_threads)
                 tca.status = concurrency_results['status_id']
                 
                 # save number of threads used
@@ -768,7 +772,7 @@ def update_cqs_passed_flag(cqs_id):
     # only continue if it was not previously calculated
     if cqs.passed is None:
         # update the passed flag
-        passed = not TestCaseAttempt.objects.filter(cq_submission_id=cqs_id, status__range=(4, 16)).exists()
+        passed = not TestCaseAttempt.objects.filter(cq_submission_id=cqs_id, status__range=(4, 17)).exists()
         cqs.passed = passed
         cqs.save()
 
