@@ -127,6 +127,7 @@ Other user accounts can be created through the Django Admin Dashboard by logging
 | [Lee Jun Wei](https://www.linkedin.com/in/leejunweisg/) | Jan - Dec 2022 | [Report](./documents/leejunwei/SCSE21-0804_report.pdf) [Slides](./documents/leejunwei/final-presentation-slides.pdf) [Poster](./documents/leejunwei/fyp-poster.pdf) [Video](https://youtu.be/T0sULC8Wh7k) |
 | [Liu Wing Lam](https://www.linkedin.com/in/liuwinglam) | Aug 2022 - May 2023 | [Report](./documents/liuwinglam/SCSE22-0184_report.pdf) [Slides](./documents/liuwinglam/presentation-slides.pdf) |
 | [Chua Chong Yih](https://www.linkedin.com/in/chuachongyih) | Jan - Dec 2023 | |
+| [Liau G Wayne](https://www.linkedin.com/in/lgwayne1999) | Aug 2023 - May 2024 | |
 
 ### Others
 
